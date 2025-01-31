@@ -3,16 +3,25 @@
 - type: github
   icon: "fab fa-github"
 
-- type: twitter
-  icon: "fa-brands fa-x-twitter"
-
 - type: email
   icon: "fas fa-envelope"
   noblank: true # open link in current tab
 
-- type: rss
-  icon: "fas fa-rss"
-  noblank: true
+- type: linkedin
+  icon: "fab fa-linkedin"
+  url: "https://www.linkedin.com/in/nikita-fedik-981706227"
+
+- type: google-scholar
+  icon: "fas fa-fw fa-graduation-cap"
+  url: "https://scholar.google.com/citations?hl=en&user=xiXhXJoAAAAJ"
+
+- type: researchgate
+  icon: "fab fa-fw fa-researchgate"
+  url: "https://www.researchgate.net/profile/Nikita-Fedik"
+  
+# - type: rss
+#   icon: "fas fa-rss"
+#   noblank: true
 # Uncomment and complete the url below to enable more contact options
 #
 # - type: mastodon
