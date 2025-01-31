@@ -9,3 +9,10 @@
 
 /* append your custom style below */
 /* overrides.scss */
+.sidebar-bottom {
+  .icon-border {
+    width: 3px;
+    background-color: black;
+    /* any other propsrgb(255, 0, 0)want to change */
+  }
+}
