@@ -245,11 +245,13 @@ $sidebar-display: 'sidebar-display'; /* the attribute for sidebar display */
       @include mx.ml-mr(calc((v.$sb-btn-gap - $btn-border-width) / 2));
 
       background-color: var(--sidebar-btn-color);
-      content: '|';
-      width: 1px;
-      height: 2rem;
-      // border-radius: 0%;
+      content: '';
+      width: $btn-border-width;
+      height: $btn-border-width;
+      border-radius: 50%;
       margin-bottom: $btn-mb;
+      width: $btn-border-width;
+      height: $btn-border-width;
 
       @include bp.xxxl {
         @include mx.ml-mr(calc((v.$sb-btn-gap-lg - $btn-border-width) / 2));

@@ -245,11 +245,14 @@ $sidebar-display: 'sidebar-display'; /* the attribute for sidebar display */
       @include mx.ml-mr(calc((v.$sb-btn-gap - $btn-border-width) / 2));
 
       background-color: var(--sidebar-btn-color);
-      content: '|';
-      width: 1px;
-      height: 2rem;
-      // border-radius: 0%;
+      content: '';
+      width: 3px;      // stays narrow
+        // increased height to form a bar
+      // margin: 0 0.75rem;              // horizontal spacing
+      border-radius: 50%;
       margin-bottom: $btn-mb;
+      width: $btn-border-width;
+      height: $btn-border-width;
 
       @include bp.xxxl {
         @include mx.ml-mr(calc((v.$sb-btn-gap-lg - $btn-border-width) / 2));

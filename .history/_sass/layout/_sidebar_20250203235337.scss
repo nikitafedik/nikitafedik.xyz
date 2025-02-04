@@ -246,7 +246,7 @@ $sidebar-display: 'sidebar-display'; /* the attribute for sidebar display */
 
       background-color: var(--sidebar-btn-color);
       content: '|';
-      width: 1px;
+      width: $btn-border-width;
       height: 2rem;
       // border-radius: 0%;
       margin-bottom: $btn-mb;
