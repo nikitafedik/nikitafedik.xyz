@@ -197,7 +197,7 @@ $sidebar-display: 'sidebar-display'; /* the attribute for sidebar display */
     border: 2px solid var(--sidebar-border-color); // changed
     box-shadow: 0 0 4px var(--sidebar-border-color); // changed
  
-      color: light-dark(#472e93f6, #94a7d8);
+      color: light-dark(#281957, #94a7d8);
       // color: #946943;
       background-color: var(--sidebar-btn-bg);
       text-align: center;
@@ -238,7 +238,7 @@ $sidebar-display: 'sidebar-display'; /* the attribute for sidebar display */
       @extend %button;
       @extend %sidebar-links;
       @extend %sidebar-link-hover;
-      color: light-dark(#8d4b3e, #eea069 ); // changed color for dark mode switch button
+      color: light-dark(#4e3424, #eea069 ); // changed color for dark mode switch button
     }
 
     .icon-border {

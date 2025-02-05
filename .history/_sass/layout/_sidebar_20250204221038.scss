@@ -197,7 +197,7 @@ $sidebar-display: 'sidebar-display'; /* the attribute for sidebar display */
     border: 2px solid var(--sidebar-border-color); // changed
     box-shadow: 0 0 4px var(--sidebar-border-color); // changed
  
-      color: light-dark(#472e93f6, #94a7d8);
+      color: light-dark(#2b1b0b, #eea069);
       // color: #946943;
       background-color: var(--sidebar-btn-bg);
       text-align: center;
@@ -238,7 +238,6 @@ $sidebar-display: 'sidebar-display'; /* the attribute for sidebar display */
       @extend %button;
       @extend %sidebar-links;
       @extend %sidebar-link-hover;
-      color: light-dark(#8d4b3e, #eea069 ); // changed color for dark mode switch button
     }
 
     .icon-border {
@@ -246,13 +245,12 @@ $sidebar-display: 'sidebar-display'; /* the attribute for sidebar display */
       @include mx.ml-mr(calc((v.$sb-btn-gap - $btn-border-width) / 2));
 
       // background-color: var(--sidebar-btn-color);
-      // background-color: light-dark(#0e2941, #8ba6f1);
-      // color: var(--sidebar-btn-color);
+      color: light-dark(#0e2941, #8ba6f1);
       // content: '|';
-      width: $btn-border-width;
-      // height: 1rem;
+      // width: 1px;
+      // height: 2rem;
+      // border-radius: 0%;
       margin-bottom: $btn-mb;
-
 
       @include bp.xxxl {
         @include mx.ml-mr(calc((v.$sb-btn-gap-lg - $btn-border-width) / 2));
