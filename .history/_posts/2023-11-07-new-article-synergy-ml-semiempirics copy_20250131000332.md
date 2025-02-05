@@ -4,7 +4,6 @@ author: fns
 date: 2023-11-07
 categories: [news]
 tags: [ml, publication]
-comments: true
 ---
 
 Exciting news! Our article ***"Synergy of semiempirical models and machine learning in computational chemistry"*** has been featured on the front cover of the September issue of the Journal of Chemical Physics. Moreover, it is [open-acess](https://pubs.aip.org/aip/jcp/article-split/159/11/110901/2911476/Synergy-of-semiempirical-models-and-machine)! 
