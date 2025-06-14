@@ -223,7 +223,7 @@ $sidebar-display: 'sidebar-display'; /* the attribute for sidebar display */
       &:not(:last-child) {
         margin-right: v.$sb-btn-gap;
 
-        @include bp.xxxl {
+        @include bp.xxxl { 
           margin-right: v.$sb-btn-gap-lg;
         }
       }
