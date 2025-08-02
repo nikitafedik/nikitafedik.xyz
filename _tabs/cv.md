@@ -4,6 +4,9 @@ title: CV
 icon: fa-solid fa-file"
 order: 2
 ---
-📄[Download CV](https://usu-my.sharepoint.com/:b:/g/personal/a02271983_aggies_usu_edu/ES_5b5ChLZRKnIyvG3SgtXMBcnjzgkvriCwWKT3m8o89aA?e=e9eIQt)
+📄[Download CV](https://usu-my.sharepoint.com/:b:/g/personal/a02271983_aggies_usu_edu/EbvT_TgcI59MsYjv4FkMWEUBL_RzHaJdeDhoqz6FA9vxaA?e=XoiXSD)
 <br>  
-<iframe src="https://usu-my.sharepoint.com/personal/a02271983_aggies_usu_edu/_layouts/15/embed.aspx?UniqueId=906ff92f-2da1-4a94-9c8c-af1b74a0b573" width="850" height="1000" frameborder="0" scrolling="no" allowfullscreen title="Nikita_Fedik_CV.pdf"></iframe>
+<iframe src="https://usu-my.sharepoint.com/personal/a02271983_aggies_usu_edu/_layouts/15/Doc.aspx?sourcedoc={967ff38a-8eb3-456f-ab7c-3bfdbe1b95fa}&amp;action=embedview&amp;wdEmbedCode=0" width="850" height="1000" frameborder="0" scrolling="no" allowfullscreen title="Nikita_Fedik_CV.pdf"></iframe>
+
+
+<!-- <iframe src="https://usu-my.sharepoint.com/personal/a02271983_aggies_usu_edu/_layouts/15/Doc.aspx?sourcedoc={967ff38a-8eb3-456f-ab7c-3bfdbe1b95fa}&amp;action=embedview&amp;wdEmbedCode=0" width="476px" height="288px" frameborder="0">This is an embedded <a target="_blank" href="https://office.com">Microsoft Office</a> document, powered by <a target="_blank" href="https://office.com/webapps">Office</a>.</iframe> -->

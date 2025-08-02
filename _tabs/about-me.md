@@ -173,33 +173,33 @@ See a [dedicated tab](/cv) for CV 📄
 
 ## Work Experience
 
-### Staff Scientist  | Los Alamos National Laboratory (LANL) | 2024–Present  
+### Staff Scientist  | *LANL* | 2024–Present  
 - Developing PyTorch modules for excited-state simulations  
 - Maintenance of HPC applications and user consulting  
 - Active Learning Framework (ALF) integration with HPC systems  
 - Lead organizer of MLCM conference series  
 
-### Director’s Postdoctoral Fellow | LANL | 2022–2024  
+### Director’s Postdoctoral Fellow | *LANL* | 2022–2024  
 - GPU implementation of Davidson diagonalization for matrix-free methods  
 - Benchmarking transition path sampling using ML models  
 - Dataset generation and active learning workflows  
 
-### Research Assistant  | LANL & Utah State University | 2020–2022  
+### Research Assistant  | *LANL & Utah State University* | 2020–2022  
 - Machine learning parameterization of semi-empirical models  
 - Long-range electrostatics in ML interatomic potentials  
 - Generating datasets for training predictive models  
 
-### Research Assistant  | Utah State University | 2018–2020  
+### Research Assistant  | *Utah State University* | 2018–2020  
 - Investigated chemical bonding in clusters and materials  
 - Simulated spectra to align with experimental results  
 - Expanded HPC infrastructure to support computational projects  
 
 ## Research Internships
 
-### Center for Nonlinear Studies | LANL | Summer 2020 
+### Center for Nonlinear Studies | *LANL* | Summer 2020 
    - Data generation for ML-driven semi-empirical quantum chemistry  
 
-### Institute of Physical Organic Chemistry | Russia | summer 2018, 2019  
+### Institute of Physical Organic Chemistry | *Russia* | summer 2018, 2019  
    - Designed polyfunctional materials; studied bonding/dynamics in 2D systems  
 
 
@@ -207,9 +207,9 @@ See a [dedicated tab](/cv) for CV 📄
 
 ## Education
 
-### PhD in Physical/Computational Chemistry  | Utah State University | 2018–2022  
+### PhD in Physical/Computational Chemistry  | *Utah State University* | 2018–2022  
 Advisor: Prof. Alexander I. Boldyrev  
 magna cum laude | GPA = 4.0  
 
-### B.Sc in Fundamental & Applied Chemistry  | Southern Federal University | 2012–2017  
+### B.Sc in Fundamental & Applied Chemistry  | *Southern Federal University* | 2012–2017  
 magna cum laude | GPA = 4.0  
