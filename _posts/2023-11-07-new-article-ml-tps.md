@@ -1,5 +1,5 @@
 ---
-title: "📢 New work on transition path sampling and ML"
+title: "📢 New work on Transition Path Sampling and ML"
 author: fns
 date: 2025-06-14
 categories: [news]
