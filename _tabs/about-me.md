@@ -128,7 +128,7 @@ See a [dedicated tab](/cv) for CV 📄
 
   <div class="skill-item group1">
     <i class="fas fa-brain skill-icon"></i>
-    <p>M<br>Learning<br>Workflows</p>
+    <p>ML<br>Workflows</p>
   </div>
 
   <div class="skill-item group1">

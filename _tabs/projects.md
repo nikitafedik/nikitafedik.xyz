@@ -129,15 +129,27 @@ order: 2
     }
     
     .project-item {
-        height: 400px;
+        height: 450px; /* Taller for more vertical space */
+    }
+    
+    .project-item:hover {
+        transform: none;
+        filter: blur(0px);
+        z-index: 10;
+        position: relative;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
     }
     
     .project-item .project-image-container {
-        padding: 6px;
+        padding: 12px 6px 6px 6px;
+    }
+    
+    .project-item .project-image {
+        object-fit: cover;
     }
     
     .project-item .project-description {
-        font-size: min(14px, 2.2vw);
+        font-size: min(18px, 2.8vw); /* Larger font */
         padding: 10px 12px;
     }
 }
@@ -148,15 +160,27 @@ order: 2
     }
     
     .project-item {
-        height: 350px;
+        height: 400px; /* Taller for more vertical space */
+    }
+    
+    .project-item:hover {
+        transform: none;
+        filter: blur(0px);
+        z-index: 10;
+        position: relative;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
     
     .project-item .project-image-container {
-        padding: 4px;
+        padding: 15px 4px 4px 4px;
+    }
+    
+    .project-item .project-image {
+        object-fit: cover;
     }
     
     .project-item .project-description {
-        font-size: min(12px, 2.7vw);
+        font-size: min(16px, 3.5vw); /* Larger font */
         padding: 8px 10px;
     }
 }
@@ -237,8 +261,6 @@ order: 2
 
 ---
 
-
-
 # CODES
 
 <div class="projects-grid">
@@ -248,7 +270,7 @@ order: 2
         </div>
         <div class="project-description">
             <div class="description-text">
-                <strong>PYSEQM2.0:</strong> fast GPU-enabled package for static and dynamics semiempirical calculations in chemistry. New release 2.0 introduces large-scale excited state simulations and batched Davidson algorithm: you can get excitation energies for 1000-atoms system within minutes on a single GPU. 
+                <strong>PYSEQM2.0:</strong> fast GPU-enabled package for static and dynamic semiempirical calculations in chemistry. Large-scale excited state simulations and batched Davidson algorithm: excitation energies for 1000-atoms system within minutes on a single GPU.
             </div>
             <div class="description-links">
             <a href="https://github.com/lanl/PYSEQM" target="_blank">github</a>
@@ -261,7 +283,7 @@ order: 2
         </div>
         <div class="project-description">
             <div class="description-text">
-                <strong>Active Learning Framework [ALF]</strong>: scalable and modular framework for generating data for MLIPs.  Built on top of Parsl, it is designed to run autonomously on HPC systems. Equipped with several interfaces to QM packages and support of HIP-NN atomistic NN, it is ready to deploy for molecules and materials.
+                <strong>Active Learning Framework [ALF]</strong>: scalable and modular framework for generating data for MLIPs.  Built on top of Parsl, it is designed to run autonomously on HPC systems. Equipped with several interfaces to QM packages ans atomistic NNs, it is ready to deploy for molecules and materials.
             </div>
             <div class="description-links">
                 paper (soon) | <a href="https://github.com/lanl/ALF" target="_blank">github</a>
