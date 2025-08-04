@@ -16,7 +16,7 @@ timezone: America/Denver
 
 title: Nikita Fedik # the main title
 
-tagline: a personal page by tech enthusiast and computational chemistry expert # it will display as the subtitle
+tagline: a personal page by tech enthusiast and computational chemistry/ML expert # it will display as the subtitle
 
 description: >- # used by seo meta and the atom feed
   a personal page by tech enthusiast and computational chemistry expert

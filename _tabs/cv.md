@@ -9,4 +9,3 @@ order: 2
 <iframe src="https://usu-my.sharepoint.com/personal/a02271983_aggies_usu_edu/_layouts/15/Doc.aspx?sourcedoc={967ff38a-8eb3-456f-ab7c-3bfdbe1b95fa}&amp;action=embedview&amp;wdEmbedCode=0" width="850" height="1000" frameborder="0" scrolling="no" allowfullscreen title="Nikita_Fedik_CV.pdf"></iframe>
 
 
-<!-- <iframe src="https://usu-my.sharepoint.com/personal/a02271983_aggies_usu_edu/_layouts/15/Doc.aspx?sourcedoc={967ff38a-8eb3-456f-ab7c-3bfdbe1b95fa}&amp;action=embedview&amp;wdEmbedCode=0" width="476px" height="288px" frameborder="0">This is an embedded <a target="_blank" href="https://office.com">Microsoft Office</a> document, powered by <a target="_blank" href="https://office.com/webapps">Office</a>.</iframe> -->

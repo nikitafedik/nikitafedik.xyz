@@ -6,9 +6,6 @@ order: 1
 <style>
 
 /* Skills Grid Layout and Styling */
-/* Skills Grid Layout and Styling */
-/* Skills Grid Layout and Styling */
-/* Skills Grid Layout and Styling */
 .skills-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -129,7 +126,7 @@ See a [dedicated tab](/cv) for CV 📄
 
   <div class="skill-item group1">
     <i class="fas fa-brain skill-icon"></i>
-    <p>Machine<br>Learning<br>Workflows</p>
+    <p>M<br>Learning<br>Workflows</p>
   </div>
 
   <div class="skill-item group1">
