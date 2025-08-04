@@ -95,13 +95,15 @@ order: 1
 
 </style>
 
-Hi there! I’m a computational scientist and researcher with a passion and expertise for solving complex problems at the intersection of **machine learning**, **computational chemistry**, and **materials science**. 
+Hi there! I’m a computational researcher with a passion and expertise for solving complex problems at the intersection of **machine learning**, **computational chemistry**, and **high-performance computing**. 
 
 As a **Staff Scientist** at **Los Alamos National Laboratory** I focus on:  
-- ML interatomic potentials  
-- Active learning for chemical data generation 
-- GPU-enabled PyTorch modules for excited-state simulations  
+- ML models for chemistry
+- Active Learning for chemical data generation 
+- development of [PYSEQM2.0](https://github.com/lanl/PYSEQM): GPU-enabled PyTorch code for excited-state simulations  
 - Deploying/optimizing HPC applications and consulting users  
+- Running [MLCM](https://mlcm-25.github.io) conference series and various ML workshops/seminars 
+- Crafting cool scientific visuzailizations for projects and publications - see examples in the [projects tab](/projects)
 
 I’m also fascinated by new tech, productivity/ergonomics tools and hacks and scientific visualization. Whether it’s assembling hardware, writing the code or testing new LLMs, I like finding smarter and smoother ways to work.   
 
