@@ -100,14 +100,12 @@ Hi there! I’m a computational researcher with a passion and expertise for solv
 As a **Staff Scientist** at **Los Alamos National Laboratory** I focus on:  
 - ML models for chemistry
 - Active Learning for chemical data generation 
-- development of [PYSEQM2.0](https://github.com/lanl/PYSEQM): GPU-enabled PyTorch code for excited-state simulations  
+- Development of [PYSEQM2.0](https://github.com/lanl/PYSEQM): GPU-enabled PyTorch code for semiempirical calculations 
 - Deploying/optimizing HPC applications and consulting users  
 - Running [MLCM](https://mlcm-25.github.io) conference series and various ML workshops/seminars 
 - Crafting cool scientific visuzailizations for projects and publications - see examples in the [projects tab](/projects)
 
-I’m also fascinated by new tech, productivity/ergonomics tools and hacks and scientific visualization. Whether it’s assembling hardware, writing the code or testing new LLMs, I like finding smarter and smoother ways to work.   
-
-See a [dedicated tab](/cv) for CV 📄
+I’m also fascinated by new tech, productivity/ergonomics tools and visual information. Whether it’s assembling hardware, writing the code or testing new LLMs, I like finding smarter and smoother ways to work.   
 
 ---
 
