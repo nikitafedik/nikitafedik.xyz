@@ -7,7 +7,7 @@ order: 2
 <style>
 .projects-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, 1fr); /* Ensure at least 3 columns on wide screens */
     gap: 25px;
     padding: 10px;
     width: 100%;
@@ -28,8 +28,17 @@ order: 2
     filter: blur(0px);
     z-index: 10;
     position: relative;
-    transform: scale(1.5);
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
+        transform: scale(1.3); /* 1.3 zoom on hover */
+        transform-origin: center center;
+        will-change: transform;
+}
+
+/* Limit aggressive zoom on narrower viewports to avoid layout breakage */
+@media screen and (max-width: 900px) {
+    .project-item:hover {
+        transform: scale(1.08); /* gentler zoom on smaller screens */
+    }
 }
 
 .project-item {
@@ -37,11 +46,14 @@ order: 2
     flex-direction: column;
     border-radius: 12px;
     transition: all 0.3s ease;
-    height: 380px;
+    /* Content-driven height */
+    min-height: 340px;
     background-color: #fff;
-    min-width: 220px;
+    /* Lower min-width to allow more wrapping at narrow widths */
+    min-width: 200px;
     padding: 0;
     box-sizing: border-box;
+    overflow: hidden; /* Contain internal scaling */
 }
 
 /* Pastel colors for groups */
@@ -114,23 +126,41 @@ order: 2
 .project-description .description-text {
     flex: 1;
     margin-bottom: 8px;
+    overflow-wrap: anywhere; /* Prevent long uninterrupted strings from causing width growth */
+    overflow: hidden; /* Prevent pushing links out */
+    display: -webkit-box;
+    -webkit-line-clamp: 6; /* Clamp lines to keep uniform height */
+    -webkit-box-orient: vertical;
+}
+
+/* Expand full text when card hovered */
+.project-item:hover .project-description .description-text {
+    -webkit-line-clamp: unset; /* show full content */
+    display: block;
+    overflow: auto; /* scroll internally instead of pushing links */
+    scrollbar-width: thin;
 }
 
 .project-description .description-links {
     margin-top: auto;
     text-align: center;
     padding-top: 12px;
+    overflow-wrap: anywhere; /* Prevent long URLs pushing layout */
 }
 
 /* Responsive adjustments */
+@media screen and (max-width: 1100px) {
+    .projects-grid {
+        grid-template-columns: repeat(2, 1fr); /* Two columns on medium screens */
+    }
+}
+
 @media screen and (max-width: 768px) {
     .projects-grid {
         grid-template-columns: repeat(2, 1fr);
     }
     
-    .project-item {
-        height: 450px; /* Taller for more vertical space */
-    }
+    /* Removed fixed height for responsive auto expansion */
     
     .project-item:hover {
         transform: none;
@@ -156,12 +186,10 @@ order: 2
 
 @media screen and (max-width: 480px) {
     .projects-grid {
-        grid-template-columns: repeat(1, 1fr);
+        grid-template-columns: repeat(1, 1fr); /* Single column on very small screens */
     }
     
-    .project-item {
-        height: 400px; /* Taller for more vertical space */
-    }
+    /* Removed fixed height for responsive auto expansion */
     
     .project-item:hover {
         transform: none;
