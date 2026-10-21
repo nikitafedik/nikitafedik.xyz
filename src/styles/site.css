@@ -91,6 +91,33 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 footer { margin-top: auto; padding: 14px 40px 16px; font-size: 15px; color: var(--faint); }
 
 .sky-slot { min-height: 71px; align-self: stretch; padding: 10px 6px 0; margin-top: 4px; border-top: 1px solid color-mix(in srgb, var(--ink) 8%, transparent); }
+/* phones: the sidebar becomes a slim bar that stays at the top (portrait, name and a menu button); the menu opens the
+   tabs, the outside links and the theme switch under it. On a desktop the menu wrapper has no box of its own, so the
+   sidebar lays out as before */
+.menu-btn, .menu-scrim { display: none; }
+@media (min-width: 900px) { .side-menu { display: contents; } }
+@media (max-width: 899px) {
+  :root { --bar: 56px; }
+  .side { position: sticky; top: 0; z-index: 60; flex: 1 0 100%; flex-direction: row; align-items: center; gap: 10px; height: var(--bar); padding: 0 10px 0 16px;
+    background: color-mix(in srgb, var(--mica) 95%, transparent); -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: 0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent); }
+  .me { flex-direction: row; gap: 10px; text-align: left; }
+  .avatar { width: 30px; margin: 3px; }
+  .avatar .ring { inset: -3px; }
+  .me b { font-size: 16px; }
+  .me span { display: none; }
+  .menu-btn { display: flex; align-items: center; gap: 8px; margin-left: auto; height: 40px; padding: 0 12px; border: 0; border-radius: 12px; cursor: pointer;
+    font: 500 12px/1 var(--secondary); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); background: var(--paper); }
+  .menu-btn svg { width: 20px; height: 20px; fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linejoin: round; transition: transform .3s cubic-bezier(.2,.8,.2,1); }
+  .menu-open .menu-btn svg { transform: rotate(30deg); }
+  .menu-btn:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+  .side-menu { position: fixed; left: 0; right: 0; top: var(--bar); z-index: 59; max-height: calc(100dvh - var(--bar)); overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
+    padding: 10px 16px 18px; background: var(--mica); box-shadow: 0 24px 40px -20px rgba(0, 0, 0, .35);
+    opacity: 0; transform: translateY(-8px); visibility: hidden; transition: opacity .2s, transform .2s, visibility 0s .2s; }
+  .menu-open .side-menu { opacity: 1; transform: none; visibility: visible; transition: opacity .2s, transform .2s; }
+  .side-menu .elsewhere { margin-top: 0; }
+  .menu-scrim { display: block; position: fixed; inset: var(--bar) 0 0; z-index: 58; background: rgba(10, 12, 16, .35); opacity: 0; visibility: hidden; transition: opacity .2s, visibility 0s .2s; }
+  .menu-open .menu-scrim { opacity: 1; visibility: visible; transition: opacity .2s; }
+}
 ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
 /* the mono face for small supporting lines, the same as the home page */
 .me span em, .elsewhere, .meta, footer, .topbar { font-family: var(--secondary); }

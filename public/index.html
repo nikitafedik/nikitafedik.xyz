@@ -109,7 +109,7 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 /* the intro starts at the very top, already pinned: the text holds still while each line sharpens in turn,
    then it scrolls up and fades out at the top while the skills heading appears in its place in the reel */
 .intro { position: relative; z-index: 2; max-width: 40em; height: calc(100vh + 5 * 28vh); margin-top: -48px; }
-.intro-pin { position: sticky; top: env(safe-area-inset-top, 0px); height: 100vh; margin: 0 -24px; padding: 0 24px; overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 var(--mt, 0px), #000 var(--mb, 86%), transparent calc(var(--mb, 86%) + 30px)); mask-image: linear-gradient(transparent, #000 var(--mt, 0px), #000 var(--mb, 86%), transparent calc(var(--mb, 86%) + 30px)); }
+.intro-pin { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--bar, 0px)); height: calc(100vh - var(--bar, 0px)); margin: 0 -24px; padding: 0 24px; overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 var(--mt, 0px), #000 var(--mb, 86%), transparent calc(var(--mb, 86%) + 30px)); mask-image: linear-gradient(transparent, #000 var(--mt, 0px), #000 var(--mb, 86%), transparent calc(var(--mb, 86%) + 30px)); }
 .intro-list { position: absolute; left: 24px; right: 24px; top: 0; display: flex; flex-direction: column; gap: 30px; transform: translateY(var(--ly, 0px)); will-change: transform; }
 .intro-list > * { margin: 0; transform: scale(var(--s, 1)); transform-origin: left center; filter: blur(var(--bl, 0px)); opacity: var(--op, 1); text-shadow: var(--ab, none); will-change: transform, filter; }
 .sent-last { display: flex; flex-direction: column; gap: 10px; }
@@ -125,7 +125,7 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
    and the selector keeps the current skill sharp while the others blur and split into colour fringes */
 /* the reel shares its top with the intro (intro height 100vh + 5 * 28vh, the column gap 72px), set in CSS so nothing jumps at load */
 .reel { position: relative; height: calc(995vh + 5 * 28vh); margin-top: calc(-100vh - 5 * 28vh - 72px); }
-.reel-pin { position: sticky; top: env(safe-area-inset-top, 0px); height: 100vh; display: grid; grid-template-columns: minmax(220px, .85fr) minmax(0, 1.5fr); gap: 24px; align-items: center; }
+.reel-pin { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--bar, 0px)); height: calc(100vh - var(--bar, 0px)); display: grid; grid-template-columns: minmax(220px, .85fr) minmax(0, 1.5fr); gap: 24px; align-items: center; }
 .reel-picker { position: relative; height: min(68vh, 540px); margin: 0 -24px; padding: 0 24px; }
 .reel-head { position: absolute; left: 24px; right: 24px; top: 0; margin: 0; font-family: var(--display); font-size: var(--t-head); font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; }
 .reel-list { list-style: none; margin: 0; padding: 0; position: absolute; left: 0; right: 0; top: calc(var(--t-head) * 1.6); bottom: 0; overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 20%, #000 80%, transparent); mask-image: linear-gradient(transparent, #000 20%, #000 80%, transparent); }
@@ -135,6 +135,18 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 .reel-item[aria-current="step"] button { color: var(--ink); }
 /* the other skills are clickable: on hover (or keyboard focus) one comes into focus and glows in the accent */
 @property --hv { syntax: '<number>'; inherits: true; initial-value: 0; }
+/* the values the script changes every frame apply only to the element they are set on (not inherited), so a change
+   restyles that element alone, not everything inside it */
+@property --ly { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --mt { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --mb { syntax: '<length-percentage>'; inherits: false; initial-value: 86%; }
+@property --op { syntax: '<number>'; inherits: false; initial-value: 1; }
+@property --bl { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --ab { syntax: '*'; inherits: false; }
+@property --y { syntax: '<length-percentage>'; inherits: false; initial-value: -50%; }
+@property --s { syntax: '<number>'; inherits: false; initial-value: 1; }
+@property --o { syntax: '<number>'; inherits: false; initial-value: 1; }
+@property --b { syntax: '<length>'; inherits: false; initial-value: 0px; }
 .reel-item { transition: --hv .9s cubic-bezier(.4, 0, .2, 1); filter: blur(calc(var(--b, 0px) * (1 - .65 * var(--hv)))); opacity: calc(var(--o, 1) + (1 - var(--o, 1)) * .6 * var(--hv)); }
 .reel-item:not([aria-current]) button { color: color-mix(in srgb, var(--accent) calc(55% * var(--hv)), var(--ink)); }
 @media (hover: hover) { .reel-item:not([aria-current]):hover { --hv: 1; transition-duration: .6s; } }
@@ -434,6 +446,33 @@ label.app-row { cursor: pointer; }
 footer { margin-top: auto; padding: 14px 40px 16px; font-size: 15px; color: var(--faint); }
 
 .sky-slot { min-height: 71px; align-self: stretch; padding: 10px 6px 0; margin-top: 4px; border-top: 1px solid color-mix(in srgb, var(--ink) 8%, transparent); }
+/* phones: the sidebar becomes a slim bar that stays at the top (portrait, name and a menu button); the menu opens the
+   tabs, the outside links and the theme switch under it. On a desktop the menu wrapper has no box of its own, so the
+   sidebar lays out as before */
+.menu-btn, .menu-scrim { display: none; }
+@media (min-width: 900px) { .side-menu { display: contents; } }
+@media (max-width: 899px) {
+  :root { --bar: 56px; }
+  .side { position: sticky; top: 0; z-index: 60; flex: 1 0 100%; flex-direction: row; align-items: center; gap: 10px; height: var(--bar); padding: 0 10px 0 16px;
+    background: color-mix(in srgb, var(--mica) 95%, transparent); -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: 0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent); }
+  .me { flex-direction: row; gap: 10px; text-align: left; }
+  .avatar { width: 30px; margin: 3px; }
+  .avatar .ring { inset: -3px; }
+  .me b { font-size: 16px; }
+  .me span { display: none; }
+  .menu-btn { display: flex; align-items: center; gap: 8px; margin-left: auto; height: 40px; padding: 0 12px; border: 0; border-radius: 12px; cursor: pointer;
+    font: 500 12px/1 var(--secondary); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); background: var(--paper); }
+  .menu-btn svg { width: 20px; height: 20px; fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linejoin: round; transition: transform .3s cubic-bezier(.2,.8,.2,1); }
+  .menu-open .menu-btn svg { transform: rotate(30deg); }
+  .menu-btn:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+  .side-menu { position: fixed; left: 0; right: 0; top: var(--bar); z-index: 59; max-height: calc(100dvh - var(--bar)); overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
+    padding: 10px 16px 18px; background: var(--mica); box-shadow: 0 24px 40px -20px rgba(0, 0, 0, .35);
+    opacity: 0; transform: translateY(-8px); visibility: hidden; transition: opacity .2s, transform .2s, visibility 0s .2s; }
+  .menu-open .side-menu { opacity: 1; transform: none; visibility: visible; transition: opacity .2s, transform .2s; }
+  .side-menu .elsewhere { margin-top: 0; }
+  .menu-scrim { display: block; position: fixed; inset: var(--bar) 0 0; z-index: 58; background: rgba(10, 12, 16, .35); opacity: 0; visibility: hidden; transition: opacity .2s, visibility 0s .2s; }
+  .menu-open .menu-scrim { opacity: 1; visibility: visible; transition: opacity .2s; }
+}
 
 /* review bar and style panel: tools for the review, set apart from the site in a neutral dark chrome */
 .review { position: fixed; top: calc(10px + env(safe-area-inset-top, 0px)); right: 12px; z-index: 90; display: flex; align-items: center; gap: 4px; padding: 4px 4px 4px 12px; border-radius: 12px; background: rgba(18, 20, 26, .92); color: #E8EBF1; font-family: 'Roboto Mono', ui-monospace, Menlo, monospace; font-size: 12px; box-shadow: 0 8px 24px -10px rgba(0,0,0,.5); }
@@ -479,6 +518,8 @@ footer { margin-top: auto; padding: 14px 40px 16px; font-size: 15px; color: var(
       <b>Nikita Fedik</b>
       <span id="tagline">Computational chemist, tech enthusiast, visual artist <em>[by trial and render]</em></span>
     </div>
+    <button class="menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="sideMenu"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,2.5 20.23,7.25 20.23,16.75 12,21.5 3.77,16.75 3.77,7.25"/></svg>Menu</button>
+    <div class="side-menu" id="sideMenu">
     <nav class="tabs" aria-label="Main">
       <a href="./" aria-current="page"><svg class="bz" viewBox="0 0 24 24" aria-hidden="true"><polygon class="ring" points="12,2.5 20.23,7.25 20.23,16.75 12,21.5 3.77,16.75 3.77,7.25"/><path class="kek" pathLength="60" d="M12 5.2 L17.89 8.6 L17.89 15.4 L12 18.8 L6.11 15.4 L6.11 8.6 Z"/></svg>Home</a>
       <a href="projects.html"><svg class="bz" viewBox="0 0 24 24" aria-hidden="true"><polygon class="ring" points="12,2.5 20.23,7.25 20.23,16.75 12,21.5 3.77,16.75 3.77,7.25"/><path class="kek" pathLength="60" d="M12 5.2 L17.89 8.6 L17.89 15.4 L12 18.8 L6.11 15.4 L6.11 8.6 Z"/></svg>Projects<span class="nav-tag">[in dev]</span></a>
@@ -490,6 +531,8 @@ footer { margin-top: auto; padding: 14px 40px 16px; font-size: 15px; color: var(
       <a href="https://scholar.google.com/citations?user=xiXhXJoAAAAJ"><svg class="h2o" viewBox="0 0 24 24" aria-hidden="true"><g class="mol"><g class="hh hl"><line class="bd" x1="9.4" y1="12" x2="6.2" y2="14.5"/><circle class="h" cx="4.6" cy="15.7" r="2"/></g><g class="hh hr"><line class="bd" x1="14.6" y1="12" x2="17.8" y2="14.5"/><circle class="h" cx="19.4" cy="15.7" r="2"/></g><circle class="o" cx="12" cy="10" r="3.3"/></g></svg>Scholar</a>
     </div>
     <div class="sky-slot" id="skySlot"></div>
+    </div>
+    <div class="menu-scrim" aria-hidden="true"></div>
   </aside>
 
   <div class="main">
@@ -564,10 +607,11 @@ footer { margin-top: auto; padding: 14px 40px 16px; font-size: 15px; color: var(
 let animate = () => {}, stagger = () => 0;
 import('animejs').then(m => { animate = m.animate; stagger = m.stagger; }).catch(() => {});
 document.documentElement.lang = 'en';
-// wheel and trackpad scrolling glides (Lenis): each notch eases in over a few frames instead of jumping. Touch
-// scrolling stays native, and reduced motion keeps plain scrolling
+// wheel and trackpad scrolling glides (Lenis): each notch eases in over a few frames instead of jumping. It loads only
+// for a mouse or trackpad: phones scroll natively (Lenis would only add work to every finger move), and reduced
+// motion keeps plain scrolling
 let lenis = null;
-if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) import('https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.mjs').then(({ default: Lenis }) => { lenis = new Lenis({ lerp: 0.085, autoRaf: true, allowNestedScroll: true }); }).catch(() => {});
+if (window.matchMedia('(pointer: fine)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) import('https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.mjs').then(({ default: Lenis }) => { lenis = new Lenis({ lerp: 0.085, autoRaf: true, allowNestedScroll: true }); }).catch(() => {});
 if (!document.querySelector('meta[name=description]')) document.head.append(Object.assign(document.createElement('meta'), { name: 'description', content: 'Nikita Fedik, computational chemist: chemistry and materials with AI, scientific illustration, demos and tutorials.' }));
 import { mountSky } from './sky.js';
 // the Kekule swap on the current or hovered tab: every 2.6 s the double bonds slide to the other structure (2.68 s
@@ -647,7 +691,7 @@ function cacheIntro() {
   // each line takes about one and a half wheel notches, on any screen height
   lay.reveal = (n - 2) * Math.min(170, Math.max(120, h * 0.16));
   lay.ramp = h * 0.15;
-  lay.settle = introEl.getBoundingClientRect().top + scrollY > 40 ? h * 0.14 : 0;
+  lay.settle = introEl.getBoundingClientRect().top + scrollY - (parseFloat(getComputedStyle(introPin).top) || 0) > 40 ? h * 0.14 : 0;
   // where the newest line first reaches the bottom; the rise starts there (early enough that its speed stays below
   // the scroll's)
   let s1 = lay.reveal;
@@ -665,15 +709,30 @@ function cacheIntro() {
   lay.len = lay.reveal + travel + (1 - lay.v0) * lay.ramp / 2;
   introPin.style.setProperty('--mb', lay.mb.toFixed(0) + 'px');
 }
-// layout reads for one frame, taken before any style writes
+// where the intro and the reel sit on screen this frame, worked out from the scroll offset: their places on the page
+// are read only when the layout changes (cacheTops), so a frame never waits for the browser to lay out the page.
+// The reduced-motion branch still reads the heading and the last line directly
 const geo = { reel: 0, intro: 0, last: 0, head: 0 };
-function measureGeo() {
-  geo.reel = document.getElementById('skills').getBoundingClientRect().top;
-  geo.intro = introEl.getBoundingClientRect().top;
-  geo.last = introItems[introItems.length - 1].getBoundingClientRect().bottom;
-  geo.head = document.querySelector('.reel-head').getBoundingClientRect().top;
+const tops = { intro: 0, reel: 0, introLen: 1, reelH: 1, pinTop: 0, pinH: 1 };
+function cacheTops() {
+  const y = scrollY;
+  tops.intro = introEl.getBoundingClientRect().top + y;
+  tops.reel = document.getElementById('skills').getBoundingClientRect().top + y;
+  // the pins stick under the phone bar, so positions count from there and the pinned height is the pin's own
+  tops.pinTop = parseFloat(getComputedStyle(introPin).top) || 0;
+  tops.pinH = introPin.clientHeight || innerHeight;
+  tops.introLen = Math.max(1, introEl.offsetHeight - tops.pinH);
+  tops.reelH = document.getElementById('skills').offsetHeight;
 }
-const introLen = () => Math.max(1, introEl.offsetHeight - innerHeight);
+function measureGeo() {
+  const y = scrollY;
+  geo.intro = tops.intro - y - tops.pinTop; geo.reel = tops.reel - y - tops.pinTop;
+  if (reduceIntro) {
+    geo.last = introItems[introItems.length - 1].getBoundingClientRect().bottom;
+    geo.head = document.querySelector('.reel-head').getBoundingClientRect().top;
+  }
+}
+const introLen = () => tops.introLen;
 function paintIntro() {
   if (reduceIntro) return;
   const n = introItems.length, raw = -geo.intro, s = Math.min(lay.len, Math.max(0, raw));
@@ -933,8 +992,9 @@ function buildDemo(box, act) {
       const frame = now => {
         if (!app.isConnected) return;
         raf = requestAnimationFrame(frame);
-        if (now - last < 30) return;
-        const dt = Math.min(0.05, (now - last) / 1000), dk = dark(); last = now;
+        // about 30 frames a second, 20 on touch screens, where the same work weighs more
+        if (now - last < (touch ? 48 : 30)) return;
+        const dt = Math.min(0.06, (now - last) / 1000), dk = dark(); last = now;
         tiles.forEach(t => {
           if (!t.drag && !rm) t.spin += dt * 0.45;
           t.tip += (t.tipTo - t.tip) * Math.min(1, dt * 8);
@@ -1065,7 +1125,7 @@ const DWELL_AT = 4, SEGS = [0.6, 1, 2, 1, 1.6, 1, 1];
 let illScrub = 0;
 const stopFrac = st => SEGS.slice(0, st + (st > DWELL_AT ? 1 : 0)).reduce((a, b) => a + b, 0) / SEGS.reduce((a, b) => a + b, 0);
 function readStop() {
-  const lead = introLen(), total = reelEl.offsetHeight - innerHeight - lead;
+  const lead = introLen(), total = tops.reelH - tops.pinH - lead;
   // some transitions get more scroll than others: the surface turning into tokens is twice as long
   // the illustration (stop 4) has its own stretch of scroll (DWELL): there the scene stays and the scroll drives its
   // timeline, so the clay forms, the shutter fires and the render arrives even for a reader who keeps scrolling
@@ -1087,9 +1147,7 @@ function pickerPos(f) {
   for (let i = 1; i < K.length; i++) if (f <= K[i][0]) { const [a, pa] = K[i - 1], [b, pb] = K[i]; return pa + (pb - pa) * (f - a) / (b - a); }
   return 3;
 }
-function paintPicker() {
-  const pf = pickerPos(stopF);
-  // the picker stays out of the way while the intro sits over the atoms
+function paintHead() {
   // the heading waits under the text, blurred with a soft orange glow that fades once the reading starts, rises with
   // the text and sharpens as it lands in its place (paintIntro works out where)
   if (rm) reelHead.style.opacity = geo.head - geo.last > 0 ? '' : '0';
@@ -1104,6 +1162,9 @@ function paintPicker() {
       reelHead.style.color = glow > 0.01 ? `color-mix(in srgb, var(--accent) ${(45 * glow).toFixed(0)}%, var(--ink))` : '';
     }
   }
+}
+function paintPicker() {
+  const pf = pickerPos(stopF);
   // the skill's text and the list fade in over the first stretch of scroll after the intro, and out the same way on
   // the way back: tied to the scroll position, so both directions look the same
   const after = rm ? 1 : Math.min(1, Math.max(0, hand.past / (innerHeight * 0.16)));
@@ -1159,18 +1220,20 @@ let frameWant = { x: 0, y: 0, w: 0.55, h: 0.6 }, frameNow = null;
 function sizeIntro() {
   if (reduceIntro) return;
   cacheIntro();
-  const want = Math.round(innerHeight + lay.len);
+  const want = Math.round((introPin.clientHeight || innerHeight) + lay.len);
   if (Math.abs(introEl.offsetHeight - want) > 1) introEl.style.height = want + 'px';
 }
 function overlapIntro() {
   sizeIntro();
-  const off = reelEl.getBoundingClientRect().top - introEl.getBoundingClientRect().top, want = 995 * innerHeight / 100 + introLen();
+  const off = reelEl.getBoundingClientRect().top - introEl.getBoundingClientRect().top, want = 995 * innerHeight / 100 + Math.max(1, introEl.offsetHeight - (introPin.clientHeight || innerHeight));
   if (Math.abs(off) > 1) reelEl.style.marginTop = (parseFloat(getComputedStyle(reelEl).marginTop) - off) + 'px';
   if (Math.abs(reelEl.offsetHeight - want) > 1) reelEl.style.height = want + 'px';
-  measureGeo(); paintIntro();
+  cacheTops(); measureGeo(); paintIntro();
 }
 overlapIntro();
 addEventListener('resize', overlapIntro);
+// anything that moves the page above or around the intro (images loading in the phone header, fonts) re-reads the places
+new ResizeObserver(() => { cacheTops(); wakeReel(); }).observe(document.body);
 document.fonts && document.fonts.ready.then(overlapIntro);
 const reelList = reelEl.querySelector('.reel-list'), pickerEl = reelEl.querySelector('.reel-picker'), stageEl = reelEl.querySelector('.reel-stage');
 function measureFrame() {
@@ -1213,26 +1276,47 @@ function placeFinder() {
 // the photo into soft pixels (scroll back and they come together again)
 const shotEl = document.getElementById('shot'), shotImg = shotEl.querySelector('img'), shotCv = shotEl.querySelector('canvas');
 // the dissolve: the photo on a canvas, cut away cell by cell at the moments the 3D points take over those cells
-const peel = { cells: null, shown: null };
-function preparePeel() {
-  const info = reel3d && reel3d.photoPoints(shotImg);
+const peel = { cells: null, shown: null, bmp: null };
+// the peel canvas matches the photo's size on screen (not the 2400 px file), so redrawing cells stays cheap. Both
+// copies of the photo (that size, and the small one the 3D points are read from) are scaled by createImageBitmap
+// off the main thread; the work left here runs in two idle slices, so a phone scrolling past never stalls on it
+const idle = () => new Promise(res => (window.requestIdleCallback || setTimeout)(res, { timeout: 800 }));
+async function preparePeel() {
+  if (!reel3d) return;
+  const r = reel3d.photoRect(), k = Math.min(1.5, window.devicePixelRatio || 1), src = photo.src;
+  const w = Math.min(shotImg.naturalWidth, Math.round(r.w * k)), h = Math.min(shotImg.naturalHeight, Math.round(r.h * k));
+  let small = shotImg, big = null;
+  if (window.createImageBitmap) {
+    try { [small, big] = await Promise.all([createImageBitmap(shotImg, { resizeWidth: 176, resizeHeight: 110, resizeQuality: 'medium' }), createImageBitmap(shotImg, { resizeWidth: w, resizeHeight: h, resizeQuality: 'high' })]); }
+    catch (e) { small = shotImg; big = null; }
+  }
+  if (src !== photo.src) { if (big) { big.close(); small.close(); } return; }
+  await idle();
+  const info = reel3d.photoPoints(small);
+  if (small !== shotImg) small.close();
   if (!info) { peel.cells = null; return; }
-  // the peel canvas matches the photo's size on screen (not the 2400 px file), so redrawing cells stays cheap
-  const r = reel3d.photoRect(), k = Math.min(1.5, window.devicePixelRatio || 1);
-  shotCv.width = Math.min(shotImg.naturalWidth, Math.round(r.w * k)); shotCv.height = Math.min(shotImg.naturalHeight, Math.round(r.h * k));
-  shotCv.getContext('2d').drawImage(shotImg, 0, 0, shotCv.width, shotCv.height);
-  peel.cells = info; peel.shown = new Uint8Array(info.GW * info.GH).fill(1);
+  await idle();
+  if (src !== photo.src) { if (big) big.close(); return; }
+  shotCv.width = w; shotCv.height = h;
+  shotCv.getContext('2d').drawImage(big || shotImg, 0, 0, w, h);
+  if (peel.bmp) peel.bmp.close();
+  peel.bmp = big; peel.cells = info; peel.shown = new Uint8Array(info.GW * info.GH).fill(1);
 }
 function peelTo(p) {
   const c = peel.cells; if (!c) return;
-  const g = shotCv.getContext('2d'), cw = shotCv.width / c.GW, ch = shotCv.height / c.GH;
+  // the cells that change this frame are gathered into two paths, so the canvas sees two draws however many cells
+  // flip: one cut for the cells going, one copy of the photo through the cells coming back
+  const g = shotCv.getContext('2d'), cw = shotCv.width / c.GW, ch = shotCv.height / c.GH, cut = new Path2D(), back = new Path2D();
+  let nCut = 0, nBack = 0;
   for (let k = 0; k < c.start.length; k++) {
     const want = c.start[k] * 0.6 > p ? 1 : 0;
     if (want === peel.shown[k]) continue;
     peel.shown[k] = want;
     const i = k % c.GW, j = (k / c.GW) | 0, x0 = Math.round(i * cw), y0 = Math.round(j * ch), w = Math.round((i + 1) * cw) - x0, h = Math.round((j + 1) * ch) - y0;
-    if (want) { const sx = shotImg.naturalWidth / shotCv.width, sy = shotImg.naturalHeight / shotCv.height; g.drawImage(shotImg, x0 * sx, y0 * sy, w * sx, h * sy, x0, y0, w, h); } else g.clearRect(x0, y0, w, h);
+    if (want) { back.rect(x0, y0, w, h); nBack++; } else { cut.rect(x0, y0, w, h); nCut++; }
   }
+  if (nCut) { g.save(); g.clip(cut); g.clearRect(0, 0, shotCv.width, shotCv.height); g.restore(); }
+  if (nBack) { g.save(); g.clip(back); g.drawImage(peel.bmp || shotImg, 0, 0, shotCv.width, shotCv.height); g.restore(); }
 }
 const photo = { on: false, ready: false, timer: 0, src: '' };
 function photoSrc() {
@@ -1249,7 +1333,7 @@ function loadPhoto() {
   photo.src = src; photo.ready = false;
   // the 2400 px photo decodes off the main thread, and the peel cells are cut when the page is idle: done straight
   // from onload, the first draw decoded it on the main thread in the middle of a scroll
-  shotImg.onload = () => { photo.ready = true; shotImg.decode().catch(() => {}).then(() => (window.requestIdleCallback || setTimeout)(preparePeel, { timeout: 800 })); };
+  shotImg.onload = () => { photo.ready = true; shotImg.decode().catch(() => {}).then(preparePeel); };
   shotImg.onerror = () => { photo.ready = false; };
   shotImg.src = src;
 }
@@ -1312,7 +1396,7 @@ function paintFrame(dt) {
   if (opG !== paintFrame.op) { reelCanvas.style.opacity = opG; paintFrame.op = opG; }
   reel3d.setFit(mix('w'), mix('h'));
 }
-addEventListener('resize', () => { measureFrame(); if (demoApp.fit) demoApp.fit(); });
+addEventListener('resize', () => { paintLabels.bw = 0; measureFrame(); if (demoApp.fit) demoApp.fit(); });
 // short annotations that follow particles in the cloud
 const labelPool = [];
 function paintLabels() {
@@ -1321,10 +1405,10 @@ function paintLabels() {
   labelPool.forEach((n, i) => {
     const l = L[i];
     if (!l || l.alpha < 0.02) { n.style.opacity = 0; return; }
-    if (n.textContent !== l.text) n.textContent = l.text;
+    if (n.textContent !== l.text) { n.textContent = l.text; n._w = 0; }
     n.style.opacity = l.alpha.toFixed(2);
-    // keep each label inside the canvas
-    const w = n.offsetWidth, maxX = labelBox.clientWidth - w - 8;
+    // keep each label inside the canvas; its width is read once per text, not every frame
+    const w = n._w ||= n.offsetWidth, maxX = (paintLabels.bw ||= labelBox.clientWidth) - w - 8;
     const x = Math.max(8, Math.min(maxX, l.side === 'l' ? l.x - 14 - w : l.side === 'b' ? l.x - w / 2 : l.x + 10));
     n.style.transform = `translate(${x.toFixed(1)}px, ${(l.side === 'b' ? l.y + 4 : l.y - 8).toFixed(1)}px)`;
   });
@@ -1332,9 +1416,11 @@ function paintLabels() {
 function reelLoop(now) {
   if (!reelVisible) { reelRaf = 0; return; }
   reelRaf = requestAnimationFrame(reelLoop);
+  // the intro text and the heading follow the scroll on every frame; on touch screens the rest (the 3D scene, the
+  // picker) draws at 30 fps
+  measureGeo(); paintIntro(); paintHead();
   if (touch && now - lastFrame < 32) return;
   lastFrame = now;
-  measureGeo();
   // the displayed position chases the scroll position with a damped spring, so flicks glide instead of jumping
   const target = readStop(), frameDt = Math.min(0.25, Math.max(1 / 240, (now - (reelLoop.t || now)) / 1000 || 1 / 60));
   reelLoop.t = now;
@@ -1344,7 +1430,6 @@ function reelLoop(now) {
     for (let i = 0; i < steps; i++) { stopV += ((target - stopF) * 38 - stopV * 2 * Math.sqrt(38) * 0.95) * dt; stopF += stopV * dt; }
   }
   const tA = PERF && performance.now();
-  paintIntro();
   paintPicker();
   let tR = 0;
   if (reel3d) {
@@ -1376,13 +1461,13 @@ new IntersectionObserver(es => {
   if (reelVisible && !reelRaf) reelRaf = requestAnimationFrame(reelLoop);
 }).observe(reelEl);
 reelEl.querySelectorAll('button[data-stop]').forEach(btn => btn.addEventListener('click', () => {
-  const top = reelEl.getBoundingClientRect().top + scrollY, total = reelEl.offsetHeight - innerHeight;
+  const top = reelEl.getBoundingClientRect().top + scrollY - tops.pinTop, total = reelEl.offsetHeight - tops.pinH;
   const st = ITEM_STOP[+btn.dataset.stop], frac = stopFrac(st);
   const y = top + introLen() + frac * (total - introLen());
   if (lenis) lenis.scrollTo(y); else window.scrollTo({ top: y, behavior: rm ? 'auto' : 'smooth' });
 }));
 // the scene follows the scroll only; skill names do not preview on hover, so pointing never breaks the flow
-paintPicker();
+paintHead(); paintPicker();
 // the particle cloud loads quietly once the page has settled
 const whenIdle = window.requestIdleCallback || (cb => setTimeout(cb, 800));
 const startReel = () => whenIdle(() => import('./reel3d.js').then(m => {
@@ -1543,6 +1628,17 @@ function applyTheme(toDark, origin) {
 }
 root.dataset.theme = dark ? 'dark' : 'light';
 mountSky(document.getElementById('skySlot'), { dark, onChange: (d, o) => applyTheme(d, o) });
+// the phone menu: the bar's button opens the tabs, links and theme switch; a link, the dimmed page, Escape or a wider
+// window closes it
+const menuBtn = document.getElementById('menuBtn'), sideMenu = document.getElementById('sideMenu');
+if (menuBtn && sideMenu) {
+  const setMenu = open => { document.documentElement.classList.toggle('menu-open', open); menuBtn.setAttribute('aria-expanded', String(open)); };
+  menuBtn.addEventListener('click', () => setMenu(menuBtn.getAttribute('aria-expanded') !== 'true'));
+  sideMenu.addEventListener('click', e => { if (e.target.closest('a')) setMenu(false); });
+  document.querySelector('.menu-scrim')?.addEventListener('click', () => setMenu(false));
+  addEventListener('keydown', e => { if (e.key === 'Escape') setMenu(false); });
+  matchMedia('(min-width: 900px)').addEventListener('change', () => setMenu(false));
+}
 
 // ---- Byron: drag and fling the C60 anywhere (or click to toss it); he fetches it, pet him for the gallery ----
 const ballBtn = document.getElementById('ballBtn'), yard = document.querySelector('.yard');

@@ -1,5 +1,6 @@
 ---
 // The left sidebar shared by every page: portrait, name, tagline, main nav, outside links and the theme switch.
+// On phones it is a slim bar with a menu button; the menu holds the nav, the links and the theme switch.
 // The home page (public/index.html) still carries its own copy of this markup until it moves onto the layout.
 interface Props { current: 'home' | 'projects' | 'publications' }
 const { current } = Astro.props;
@@ -23,6 +24,8 @@ const elsewhere = [
     <b>Nikita Fedik</b>
     <span id="tagline">Computational chemist, tech enthusiast, visual artist <em>[by trial and render]</em></span>
   </div>
+  <button class="menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="sideMenu"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,2.5 20.23,7.25 20.23,16.75 12,21.5 3.77,16.75 3.77,7.25"/></svg>Menu</button>
+  <div class="side-menu" id="sideMenu">
   <nav class="tabs" aria-label="Main">
     {nav.map(item => (
       <a href={item.href} aria-current={item.key === current ? 'page' : undefined}>
@@ -36,4 +39,6 @@ const elsewhere = [
     ))}
   </div>
   <div class="sky-slot" id="skySlot"></div>
+  </div>
+  <div class="menu-scrim" aria-hidden="true"></div>
 </aside>
