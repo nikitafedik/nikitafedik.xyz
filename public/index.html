@@ -527,26 +527,25 @@ const introLen = () => Math.max(1, introEl.offsetHeight - innerHeight);
 const introTarget = () => 1 + Math.min(1, Math.max(0, -geo.intro / introLen())) * (introItems.length - 2);
 function paintIntro() {
   if (reduceIntro) return;
-  const f = introF, i0 = Math.floor(f), i1 = Math.min(introItems.length - 1, i0 + 1), u = f - i0;
-  const edge = introMetrics[i0] + (introMetrics[i1] - introMetrics[i0]) * u;
-  const h = introPin.clientHeight, top0 = h * 0.16;
-  // the list position follows the scroll itself (the lines' focus keeps its soft spring), so it never lags or jitters
-  const n = introItems.length, fr = Math.min(n - 1, Math.max(1, introTarget()));
-  const lyAt = x => {
-    const j0 = Math.floor(x), j1 = Math.min(n - 1, j0 + 1), ed = introMetrics[j0] + (introMetrics[j1] - introMetrics[j0]) * (x - j0);
-    return Math.min(top0, h * 0.8 - ed);
-  };
-  // over the last three lines one smooth curve takes over: the skills heading comes into view under the text, very
-  // blurred, and rises to its place in the reel, reaching it with the speed of the scroll just as the intro lets go,
-  // so it never stalls or jumps
-  const A0 = n - 4, step = introLen() / (n - 2), L = n - 1 - A0;
-  let ly;
-  if (fr <= A0) ly = lyAt(fr);
+  const h = introPin.clientHeight, top0 = h * 0.16, n = introItems.length;
+  // the text moves at one steady speed with the scroll, then eases smoothly up to the page's own scroll speed by the
+  // time the intro lets go, so its motion never changes speed abruptly, from the first line to the hand-off below
+  const sR = introLen(), sNow = Math.min(sR, Math.max(0, -geo.intro)), yEnd = geo.head - nextTop;
+  const Lb = sR * 0.35, T = top0 - yEnd, k0 = (T - 0.5 * Lb) / (sR - 0.5 * Lb), s1 = sR - Lb;
+  let travel;
+  if (sNow <= s1) travel = k0 * sNow;
   else {
-    const y0 = lyAt(A0), m0 = (lyAt(A0) - lyAt(A0 - 0.02)) / 0.02, y1 = geo.head - nextTop, u = (fr - A0) / L;
-    ly = (2 * u ** 3 - 3 * u * u + 1) * y0 + (u ** 3 - 2 * u * u + u) * L * m0 + (-2 * u ** 3 + 3 * u * u) * y1 + (u ** 3 - u * u) * L * -step;
+    // speed blends from k0 to 1 along a smoothstep; this is its integral
+    const u = (sNow - s1) / Lb, I = u * u * u - 0.5 * u * u * u * u;
+    travel = k0 * s1 + Lb * (k0 * u + (1 - k0) * I);
   }
+  const ly = top0 - travel;
   introList.style.setProperty('--ly', ly.toFixed(1) + 'px');
+  // each line sharpens as it rises past four fifths of the screen; lower ones wait blurred and faint
+  introItems.forEach((el, i) => {
+    const ad = Math.max(0, (ly + introMetrics[i] - h * 0.8) / (h * 0.14));
+    lensStyle(el, +ad.toFixed(3), ad > 1 ? Math.max(0, 0.68 - (ad - 1) * 0.6).toFixed(3) : undefined);
+  });
   // the skills heading glides to rest in its place: d is how far its spot in the list is from the heading's place,
   // and it is drawn at softplus(d), which equals d while far away and eases smoothly to 0 as the list moves past.
   // It only ever trails the lines above it, and it is at rest, in place, when it hands over to the reel's heading
@@ -556,11 +555,6 @@ function paintIntro() {
   introNext._offN = offN; introNext._ly = ly; introNext._g = g; introNext._d = d;
   const offS = offN.toFixed(1) + 'px';
   if (introNext._off !== offS) { introNext._off = offS; introNext.style.translate = `0 ${offS}`; }
-  // revealed lines stay sharp; the next line sharpens out of blur as you scroll, later ones wait faintly
-  introItems.forEach((el, i) => {
-    const ad = Math.max(0, i - f);
-    lensStyle(el, ad, ad > 1 ? Math.max(0, 0.68 - (ad - 1) * 0.6).toFixed(3) : undefined);
-  });
 }
 function stepIntro(dt) {
   const target = introTarget();
