@@ -103,7 +103,7 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 
 /* the intro starts at the very top, already pinned, so the first scroll reveals a line instead of moving the page */
 .intro { position: relative; z-index: 2; max-width: 40em; height: calc(100vh + 5 * 28vh); margin-top: -48px; }
-.intro-pin { position: sticky; top: env(safe-area-inset-top, 0px); height: 100vh; margin: 0 -24px; padding: 0 24px; overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent); }
+.intro-pin { position: sticky; top: env(safe-area-inset-top, 0px); height: 100vh; margin: 0 -24px; padding: 0 24px; overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 var(--mt, 14%), #000 86%, transparent); mask-image: linear-gradient(transparent, #000 var(--mt, 14%), #000 86%, transparent); }
 .intro-list { position: absolute; left: 24px; right: 24px; top: 0; display: flex; flex-direction: column; gap: 30px; transform: translateY(var(--ly, 0px)); will-change: transform; }
 .intro-list > * { margin: 0; transform: scale(var(--s, 1)); transform-origin: left center; filter: blur(var(--bl, 0px)); opacity: var(--op, 1); text-shadow: var(--ab, none); will-change: transform, filter; }
 .sent-last { display: flex; flex-direction: column; gap: 10px; }
@@ -520,6 +520,7 @@ function measureGeo() {
   geo.last = introItems[introItems.length - 1].getBoundingClientRect().bottom;
   geo.head = document.querySelector('.reel-head').getBoundingClientRect().top;
   geo.next = introNext.getBoundingClientRect().top;
+  geo.pin = introPin.getBoundingClientRect().top;
 }
 const introLen = () => Math.max(1, introEl.offsetHeight - innerHeight);
 // the greeting and the first line show from the start; each further line reveals as you scroll
@@ -542,10 +543,19 @@ function paintIntro() {
   let ly;
   if (fr <= A0) ly = lyAt(fr);
   else {
-    const y0 = lyAt(A0), m0 = (lyAt(A0) - lyAt(A0 - 0.02)) / 0.02, y1 = geo.head - nextTop, m1 = -step, u = (fr - A0) / L;
-    ly = (2 * u ** 3 - 3 * u * u + 1) * y0 + (u ** 3 - 2 * u * u + u) * L * m0 + (-2 * u ** 3 + 3 * u * u) * y1 + (u ** 3 - u * u) * L * m1;
+    const y0 = lyAt(A0), m0 = (lyAt(A0) - lyAt(A0 - 0.02)) / 0.02, y1 = geo.head - nextTop, u = (fr - A0) / L;
+    ly = (2 * u ** 3 - 3 * u * u + 1) * y0 + (u ** 3 - 2 * u * u + u) * L * m0 + (-2 * u ** 3 + 3 * u * u) * y1 + (u ** 3 - u * u) * L * -step;
   }
   introList.style.setProperty('--ly', ly.toFixed(1) + 'px');
+  // the skills heading glides to rest in its place: d is how far its spot in the list is from the heading's place,
+  // and it is drawn at softplus(d), which equals d while far away and eases smoothly to 0 as the list moves past.
+  // It only ever trails the lines above it, and it is at rest, in place, when it hands over to the reel's heading
+  const D = 34, d = (geo.next - (introNext._offN || 0)) + (ly - (introNext._ly ?? ly)) - geo.head;
+  const g = d > 8 * D ? d : D * Math.log1p(Math.exp(d / D));
+  const offN = g - d;
+  introNext._offN = offN; introNext._ly = ly; introNext._g = g; introNext._d = d;
+  const offS = offN.toFixed(1) + 'px';
+  if (introNext._off !== offS) { introNext._off = offS; introNext.style.translate = `0 ${offS}`; }
   // revealed lines stay sharp; the next line sharpens out of blur as you scroll, later ones wait faintly
   introItems.forEach((el, i) => {
     const ad = Math.max(0, i - f);
@@ -570,7 +580,7 @@ const reelCanvas = document.getElementById('reelCanvas'), reelDetail = document.
 const CAP_ORDER = ['ai', 'viz', 'demo', 'learn'], STOPS = 7;
 const ITEM_STOP = [null, 1, 3, 5, 6];                       // where each picker entry sits on the formation track
 const SKILL = {
-  ai: 'I am a chemist first, fluent in AI, with 10+ years of research across fields: a PhD in molecular design and chemical bonding, postdoc/staff years at LANL on MLIPs, excited states and surface chemistry, and now technical marketing, where technical depth meets the visual language of science. Day to day I use AI agents for coding and simulations, and I keep their work within scientific bounds and reality-check the results.',
+  ai: 'Chemist first, fluent in AI. 10+ years of research across fields: a PhD in molecular design and chemical bonding, postdoc/staff years at LANL on MLIPs, excited states and surface chemistry, and now technical marketing, where technical depth meets the visual language of science. Day to day I use AI agents for coding and simulations, and I keep their work within scientific bounds and reality-check the results.',
   viz: 'I poured countless hours into graphics even during my PhD: it was fun, and it helped me communicate my science better. I started in PowerPoint and added the full stack over time, where a hand-drawn sketch gradually turns into motion design or a render [and you can guess that I love coffee]. You will rarely find me generating raster AI images: I love the crispness and control of vector graphics and 3D scenes.',
   demo: 'I build demos around one clear result, often from a select partner collaboration. Interactive, hand-curated and backed by real simulations, they tell a visual story about new technology and how it shapes chemical and materials discovery.',
   learn: 'I create tutorials and hands-on workshops for major conferences and events, from first install to a working GPU-accelerated simulation. I like to mix hands-on practice, since what we know still grows with the time we put in, and agentic approaches, where the audience builds a whole research pipeline in a couple of hours.'
@@ -783,15 +793,24 @@ function paintPicker() {
   let headOp;
   if (rm) headOp = Math.min(1, Math.max(0, (geo.head - geo.last) / 120));
   else {
-    const dist = geo.next - geo.head, t = Math.min(1, Math.max(0, dist / (innerHeight * 0.55)));
-    headOp = Math.min(1, Math.max(0, 1 - dist / 24));
-    const op = ((0.5 + 0.5 * (1 - t)) * (1 - headOp)).toFixed(3), bl = (8 * t).toFixed(2) + 'px';
+    // the teaser arrives at the heading's exact place fully sharp and opaque, and the two swap there in one frame:
+    // the same text in the same spot, so the swap cannot be seen in either scroll direction. Near the top the intro's
+    // soft top edge eases off, so it does not fade the teaser just before it lands
+    // decided from where the heading is drawn this frame (not from the layout read before it moved), so the two
+    // layers never flicker between frames
+    const dist = introNext._g ?? (geo.next - geo.head), t = Math.min(1, Math.max(0, dist / (innerHeight * 0.55)));
+    headOp = dist <= 1.5 ? 1 : 0;
+    const e = 1 - t, op = headOp ? '0' : (0.5 + 0.5 * e * e * (3 - 2 * e)).toFixed(3), bl = (8 * t * t).toFixed(2) + 'px';
     if (introNext._k !== op + bl) { introNext._k = op + bl; introNext.style.setProperty('--op', op); introNext.style.setProperty('--bl', bl); }
+    const mt = (14 * Math.min(1, Math.max(0, dist / (innerHeight * 0.3)))).toFixed(1) + '%';
+    if (introPin._mt !== mt) { introPin._mt = mt; introPin.style.setProperty('--mt', mt); }
   }
-  reelHead.style.opacity = headOp.toFixed(3);
-  // the skill's text waits for the heading too
-  reelDetail.style.opacity = rm ? '' : Math.min(1, headOp * 1.5).toFixed(3);
-  reelList.style.opacity = Math.min(headOp, Math.max(0, (stopF - 0.35) / 0.55)).toFixed(3);
+  reelHead.style.opacity = headOp ? '' : '0';
+  // the skill's text and the list fade in over the first stretch of scroll after the heading lands, and out the same
+  // way on the way back: tied to the scroll position, so both directions look the same
+  const after = rm ? 1 : Math.min(1, Math.max(0, -(introNext._d ?? (geo.next - geo.head)) / (innerHeight * 0.16)));
+  reelDetail.style.opacity = rm ? '' : (after * after * (3 - 2 * after)).toFixed(3);
+  reelList.style.opacity = Math.min(after, Math.max(0, (stopF - 0.35) / 0.55)).toFixed(3);
   reelItems.forEach((el, i) => {
     const d = i - pf, ad = Math.abs(d);
     // skip the style writes when this item has not moved since the last frame
