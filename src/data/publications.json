@@ -1,0 +1,641 @@
+[
+ {
+  "id": "41",
+  "n": 41,
+  "year": 2026,
+  "title": "Ligand Control of the Work Function of CdSe Semiconductor Nanosurfaces",
+  "authors": "V. Oas, S. Westra, P. J. Lohr, <b>N. Fedik</b>, D. Kilin, S. Kilina, S. Ivanov, S. Tretiak",
+  "venue": "<i>Nano Letters</i>, 2026, 26(36), 12111-12119.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://pubs.acs.org/doi/10.1021/acs.nanolett.6c02896"
+  },
+  "note": null,
+  "cover": {
+   "label": "front cover",
+   "own": true,
+   "image": "nanolett"
+  },
+  "molecule": "cdse"
+ },
+ {
+  "id": "40",
+  "n": 40,
+  "year": 2026,
+  "title": "ALF: Open-Source Active Learning Framework for Atomistic Modeling",
+  "authors": "V. F. Grizzi, P. J. Lohr, <b>N. Fedik</b>, S. Anaya, J. Averitt, J. Gomes, Y. W. Li, K. Barros, N. Lubbers, R. A. Messerly, J. Janssen, M. Kulichenko, J. S. Smith, S. Tretiak, B. T. Nebgen",
+  "venue": "<i>Journal of Chemical Theory and Computation</i>, 2026, 22(16), 8145-8155.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://pubs.acs.org/doi/10.1021/acs.jctc.6c01122"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "39",
+  "n": 39,
+  "year": 2026,
+  "title": "Ground and Excited State Gradients with End-to-End Differentiable Semiempirical Quantum Chemistry",
+  "authors": "V. Athavale, M. Kulichenko, <b>N. Fedik</b>, S. Fernandez-Alberti, A. M. N. Niklasson, S. Tretiak",
+  "venue": "<i>The Journal of Chemical Physics</i>, 2026, 164(4), 044123.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://doi.org/10.1063/5.0310916"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "38",
+  "n": 38,
+  "year": 2025,
+  "title": "Entangled Two-Photon Absorption Cross-Section Measurements for Biologically Important Fluorophores",
+  "authors": "R. B. K.C., D. Graupner, <b>N. Fedik</b>, S. Tretiak, D. P. Ryan, J. H. Werner",
+  "venue": "<i>Quantum Communications and Quantum Imaging XXIII</i>, Proc. SPIE 13618, 2025.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://doi.org/10.1117/12.3071149"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "37",
+  "n": 37,
+  "year": 2025,
+  "title": "PYSEQM 2.0: Accelerated Semiempirical Excited-State Calculations on Graphical Processing Units",
+  "authors": "V. Athavale, <b>N. Fedik</b>, W. Colglazier, A. M. N. Niklasson, M. Kulichenko, S. Tretiak",
+  "venue": "<i>Journal of Chemical Theory and Computation</i>, 2025, 21(19), 9498-9510.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://pubs.acs.org/doi/10.1021/acs.jctc.5c00980"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "36",
+  "n": 36,
+  "year": 2025,
+  "title": "Computational Study of Entangled Two-Photon Absorption in Organic Dyes",
+  "authors": "D. Graupner, M. Kizmann, H. K. Yadalam, R. B. K.C., D. Ryan, S. Mukamel, J. Werner, <b>N. Fedik</b>, S. Tretiak",
+  "venue": "<i>ChemRxiv</i> [preprint], 2025.",
+  "link": {
+   "label": "open access",
+   "url": "https://doi.org/10.26434/chemrxiv-2025-ztzl6"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "35",
+  "n": 35,
+  "year": 2025,
+  "title": "Challenges and Opportunities for Machine Learning Potentials in Transition Path Sampling: Alanine Dipeptide and Azobenzene Studies",
+  "authors": "<b>N. Fedik</b>, W. Li, N. Lubbers, B. Nebgen, S. Tretiak, Y. W. Li",
+  "venue": "<i>Digital Discovery</i>, 2025, 4(5), 1158-1175.",
+  "link": {
+   "label": "open access",
+   "url": "https://pubs.rsc.org/en/content/articlelanding/2025/dd/d4dd00265b"
+  },
+  "note": null,
+  "cover": {
+   "label": "back cover",
+   "own": true,
+   "image": "dd"
+  },
+  "molecule": "azobenzene"
+ },
+ {
+  "id": "34",
+  "n": 34,
+  "year": 2024,
+  "title": "Data Generation for Machine Learning Interatomic Potentials and Beyond",
+  "authors": "M. Kulichenko, B. Nebgen, N. Lubbers, J. Smith, K. Barros, A. Allen, A. Habib, E. Shinkle, <b>N. Fedik</b>, Y. Wai Li, R. Messerly, S. Tretiak",
+  "venue": "<i>Chemical Reviews</i>, 2024, 124, 13681-13714.",
+  "link": {
+   "label": "open access",
+   "url": "https://pubs.acs.org/doi/full/10.1021/acs.chemrev.4c00572"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "33",
+  "n": 33,
+  "year": 2023,
+  "title": "Synergy of Semiempirical Models and Machine Learning in Computational Chemistry",
+  "authors": "<b>N. Fedik</b>, B. Nebgen, N. Lubbers, K. Barros, M. Kulichenko, Y. W. Li, R Zubatyuk, R. Messerly, O. Isayev, S. Tretiak",
+  "venue": "<i>The Journal of Chemical Physics</i>, 2023, 159, 110901.",
+  "link": {
+   "label": "open access",
+   "url": "https://pubs.aip.org/aip/jcp/article/159/11/110901/2911476"
+  },
+  "note": null,
+  "cover": {
+   "label": "featured, front cover",
+   "own": true,
+   "image": "jcp"
+  },
+  "molecule": "benzene"
+ },
+ {
+  "id": "32",
+  "n": 32,
+  "year": 2023,
+  "title": "NEXMD v2.0 Software Package for Nonadiabatic Excited State Molecular Dynamics Simulations",
+  "authors": "V. M. Freixas, W. Malone, X. Li, H. Song, H. Negrin-Yuvero, R. Pérez-Castillo, A. White, T. R. Gibson, D. V. Makhov, D. V. Shalashilin, Y. Zhang, <b>N. Fedik</b>, M. Kulichenko, R, Messerly, L. N. Mohanam, S. Sharifzadeh, A. Bastida, S. Mukamel, S. Fernandez-Alberti, S. Tretiak",
+  "venue": "<i>Journal of Chemical Theory and Computation</i>, 2023, 19, 5356-5368.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://pubs.acs.org/doi/full/10.1021/acs.jctc.3c00583"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "31",
+  "n": 31,
+  "year": 2023,
+  "title": "Semi-Empirical Shadow Molecular Dynamics: A PyTorch implementation",
+  "authors": "M. Kulichenko, K. Barros, N. Lubbers, <b>N. Fedik</b>, G. Zhou, S. Tretiak, B. Nebgen, A, M. N. Niklasson",
+  "venue": "<i>Journal of Chemical Theory and Computation</i>, 2023, 19, 3209-3222.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://pubs.acs.org/doi/full/10.1021/acs.jctc.3c00234"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "30",
+  "n": 30,
+  "year": 2022,
+  "title": "Extending machine learning beyond interatomic potentials for predicting molecular properties",
+  "authors": "<b>N. Fedik</b>, R. Zubatyuk, M. Kulichenko, N. Lubbers, J. S. Smith, B. Nebgen, R. Messerly, Y. W. Li, A. I Boldyrev, K. Barros, O. Isayev, S. Tretiak",
+  "venue": "<i>Nature Reviews Chemistry</i>, 2022, 6, 653-672.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://www.nature.com/articles/s41570-022-00416-3"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "29",
+  "n": 29,
+  "year": 2021,
+  "title": "Mechanisms of nitric oxide generation in living systems",
+  "authors": "O. Burov, M. Kletskii, S. Kurbatov, A. Lisovin, <b>N. Fedik</b>",
+  "venue": "<i>Nitric Oxide</i>, 2021 , 118, 1-16.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://www.sciencedirect.com/science/article/abs/pii/S1089860321001075"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "28",
+  "n": 28,
+  "year": 2021,
+  "title": "The Rise of Neural Networks for Materials and Chemical Dynamics",
+  "authors": "M. Kulichenko, J. Smith, B. Nebgen, Y. W. Li, <b>N. Fedik</b>, A. I. Boldyrev, N. Lubbers, K. Barros, S. Tretiak",
+  "venue": "<i>The Journal of Physical Chemistry Letters</i>, 2021, 12(26), 6227-6243.",
+  "link": {
+   "label": "open access",
+   "url": "https://pubs.acs.org/doi/abs/10.1021/acs.jpclett.1c01357"
+  },
+  "note": null,
+  "cover": {
+   "label": "inside cover",
+   "own": false,
+   "image": null
+  },
+  "molecule": "naphthalene"
+ },
+ {
+  "id": "27",
+  "n": 27,
+  "year": 2021,
+  "title": "Band Gap Engineering and 14 Electron Superatoms in 2D Superoctahedral Boranes B<sub>4</sub>X<sub>2</sub> (B, N, P, As, Sb)",
+  "authors": "<b>N. Fedik</b>, D. Steglenko, A. Muñoz-Castro, R. M. Minyaev, V. I. Minkin",
+  "venue": "<i>The Journal of Physical Chemistry C</i>, 2021, 125(31), 17280-17290.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://pubs.acs.org/doi/pdf/10.1021/acs.jpcc.1c02939"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "26",
+  "n": 26,
+  "year": 2021,
+  "title": "Spherical aromaticity in inorganic chemistry",
+  "authors": "M. Kulichenko, <b>N. Fedik</b>, N. V. Tkachenko, A. Muñoz-Castro, Z-M. Sun, A. I. Boldyrev",
+  "venue": "Aromaticity, edited by Israel Fernandez, Elsevier, 2021, 447-489.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://www.sciencedirect.com/book/9780128227237/aromaticity"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "25",
+  "n": 25,
+  "year": 2021,
+  "title": "Bridging Aromatic/Antiaromatic Units: Recent Advances in Aromaticity and Antiaromaticity in Main‐group and Transition‐Metal Clusters from Bonding and Magnetic Analyses",
+  "authors": "N. V. Tkachenko, I. A. Popov, M. Kulichenko, <b>N. Fedik</b>, Z-M. Sun, A. Muñoz-Castro, A. I. Boldyrev",
+  "venue": "European Journal of Inorganic Chemistry, 2021.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://chemistry-europe-onlinelibrary-wiley-com.dist.lib.usu.edu/doi/10.1002/ejic.202100519"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "24",
+  "n": 24,
+  "year": 2020,
+  "title": "“Bottled” spiro-doubly aromatic trinuclear [Pd<sub>2</sub>Ru]<sup>+</sup> complexes",
+  "authors": "M. Kulichenko, <b>N. Fedik</b>, A. Monfredini, A. Muñoz-Castro, D. Balestri, A. I. Boldyrev, G. Maestri",
+  "venue": "<i>Chemical Science</i>, 2020, 12(1), 477-486.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://chemistry-europe.onlinelibrary.wiley.com/doi/full/10.1002/chem.202001159"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "23",
+  "n": 23,
+  "year": 2020,
+  "title": "Boron-made N<sub>2</sub>: Realization of a B≡B Triple Bond in the B<sub>2</sub>Al<sub>3</sub><sup>-</sup> Cluster",
+  "authors": "<b>N. Fedik</b>, C. Mu, I. A. Popov, W. Wang, H. Wang, K. H. Bowen, A. I. Boldyrev, X. Zhang",
+  "venue": "<i>Chemistry – A European Journal</i>, 2020, 26(36), 8017-8021.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://pubs.rsc.org/en/content/articlehtml/2021/sc/d0sc04469e"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "22",
+  "n": 22,
+  "year": 2020,
+  "title": "Reply to the Comment on “Realization of Lewis Basic Sodium Anion in the NaBH<sub>3</sub><sup>-</sup> Cluster”",
+  "authors": "G. Liu, <b>N. Fedik</b>, C. Martinez-Martinez, S. Ciborowski, X. Zhang, A. I. Boldyrev, K. Bowen",
+  "venue": "<i>Angewandte Chemie International Edition</i>, 2020, 59(23), 8760-8764.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://onlinelibrary.wiley.com/doi/full/10.1002/anie.202005259"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "21",
+  "n": 21,
+  "year": 2020,
+  "title": "Can aromaticity be a kinetic trap? Example of mechanically interlocked aromatic polycatenanes built of cyclo[18]carbon",
+  "authors": "<b>N. Fedik</b>, M. Kulichenko, D. Steglenko, A. I. Boldyrev",
+  "venue": "<i>Chemical Communications</i>, 2020, 56(18), 2711-2714.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://pubs.rsc.org/en/content/articlelanding/cc/2020/c9cc09483k"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "20",
+  "n": 20,
+  "year": 2020,
+  "title": "Periodic F-defects on the MgO Surface as Potential Single-Defect Catalysts with Non-Linear Optical properties",
+  "authors": "M. Kulichenko, <b>N. Fedik</b>, D. Steglenko, R. M. Minyaev, V. I. Minkin, A. I. Boldyrev",
+  "venue": "<i>Chemical Physics</i>, 2020, 532, 110680.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://www.sciencedirect.com/science/article/pii/S0301010419314685"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "19",
+  "n": 19,
+  "year": 2019,
+  "title": "Expansion of aromaticity magnetic criteria on multi-layer structures: Magnetic response and Spherical Aromaticity of Matryoshka-like [Sn@Cu<sub>12</sub>@Sn<sub>20</sub>]<sub> 12</sub><sup>-</sup> cluster",
+  "authors": "M. Kulichenko, <b>N. Fedik</b>, A. Muñoz-Castro, A. I. Boldyrev",
+  "venue": "<i>Chemistry – A European Journal</i>, 2019, 26(10), 2263-2268.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://chemistry-europe.onlinelibrary.wiley.com/doi/abs/10.1002/chem.201905088"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "18",
+  "n": 18,
+  "year": 2019,
+  "title": "Realization of Lewis Basic Sodium Anion in the NaBH<sub>3</sub><sup>-</sup> Cluster",
+  "authors": "G. Liu, <b>N. Fedik</b>, C. Martinez-Martinez, S. Ciborowski, X. Zhang, A. I. Boldyrev, K. Bowen",
+  "venue": "<i>Angewandte Chemie International Edition</i>, 2019, 59(23), 58, 13789-13793.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://onlinelibrary.wiley.com/doi/abs/10.1002/anie.201907089"
+  },
+  "note": "vip article - top 10%",
+  "cover": null,
+  "molecule": "nabh3"
+ },
+ {
+  "id": "17",
+  "n": 17,
+  "year": 2019,
+  "title": "Structure and Bonding in [Sb@In<sub>8</sub>Sb<sub>12</sub>]<sub>3</sub><sup>-</sup>",
+  "authors": "C. Liu, N. V. Tkachenko, I. A. Popov, <b>N. Fedik</b>, X. Min, A. I. Boldyrev, Z.-M. Sun",
+  "venue": "<i>Angewandte Chemie International Edition</i>, 2019, 58(25), 8367-8371.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://onlinelibrary.wiley.com/doi/abs/10.1002/anie.201907089"
+  },
+  "note": null,
+  "cover": {
+   "label": "inside cover",
+   "own": false,
+   "image": "anie"
+  },
+  "molecule": "sbin"
+ },
+ {
+  "id": "16",
+  "n": 16,
+  "year": 2019,
+  "title": "Hydrated Sulfate Clusters SO<sub>4</sub><sup>2-</sup>(H2O)<sub>n</sub>(n=1-40): Charge Distribution through Solvation Shells and Stabilization",
+  "authors": "M. Kulichenko, <b>N. Fedik</b>, K. Bozhenko, A. I. Boldyrev",
+  "venue": "<i>The Journal of Physical Chemistry B</i>, 2019, 123(18), 4065-4069.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://pubs.acs.org/doi/abs/10.1021/acs.jpcb.9b01744"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "15",
+  "n": 15,
+  "year": 2019,
+  "title": "Two Names of Stability: Spherical Aromatic or Superatomic Intermetalloid Cluster [Pd<sub>3</sub>Sn<sub>8</sub>Bi<sub>3</sub>]<sub>4</sub><sup>-</sup>",
+  "authors": "<b>N. Fedik</b>, M. Kulichenko, A. I. Boldyrev",
+  "venue": "<i>Chemical Physics</i>, 2019, 522, 134-137.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://pubs.acs.org/doi/abs/10.1021/acs.jpcb.9b01744"
+  },
+  "note": null,
+  "cover": {
+   "label": "front cover",
+   "own": false,
+   "image": null
+  },
+  "molecule": "pdsnbi"
+ },
+ {
+  "id": "14",
+  "n": 14,
+  "year": 2019,
+  "title": "New Inorganic Molecular Electride Mg<sub>4</sub>O<sub>3</sub>: Structure, Bonding and Nonlinear Optical Properties",
+  "authors": "M. Kulichenko, <b>N. Fedik</b>, K. V. Bozhenko, A. I. Boldyrev",
+  "venue": "<i>Chemistry – A European Journal</i>, 2019, 25(20), 5311-5315.",
+  "link": {
+   "label": "full text",
+   "url": "https://par.nsf.gov/servlets/purl/10099153"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "13",
+  "n": 13,
+  "year": 2019,
+  "title": "Aromatic character of [Au<sub>13</sub>]<sub>5</sub><sup>+</sup> and [MAu<sub>12</sub>]<sub>4</sub><sup>+</sup>/<sub>6</sub><sup>+</sup>(M= Pd, Pt) cores in ligand protected gold nanoclusters–interplay between spherical and planar σ-aromatics",
+  "authors": "<b>N. Fedik</b>, A. I. Boldyrev, A. Muñoz-Castro",
+  "venue": "<i>Physical Chemistry Chemical Physics</i>, 2019, 21(45), 25215-25219.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://pubs.rsc.org/en/content/articlelanding/2019/cp/c9cp04477a"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "12",
+  "n": 12,
+  "year": 2019,
+  "title": "Superoctahedral two-dimensional metallic boron with peculiar magnetic properties",
+  "authors": "N. V. Tkachenko, D. Steglenko, <b>N. Fedik</b>, N. M. Boldyreva, R. M. Minyaev, V. I. Minkin, A. I. Boldyrev",
+  "venue": "<i>Physical Chemistry Chemical Physics</i>, 2019, 21(36), 19764-19771.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://pubs.rsc.org/en/content/articlelanding/2019/cp/c9cp03786a"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "11",
+  "n": 11,
+  "year": 2019,
+  "title": "Comprehensive study of nitrofuroxanoquinolines. New perspective donors of NO molecules",
+  "authors": "<b>N. Fedik</b>, M. E. Kletskii, O. N. Burov, A. V. Lisovin, S. V. Kurbatov, V. A. Chistyakov, P. G. Morozov",
+  "venue": "<i>Nitric Oxide</i>, 2019, 93, 15-24.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://www.sciencedirect.com/science/article/abs/pii/S1089860319301958"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "10",
+  "n": 10,
+  "year": 2019,
+  "title": "Structure and bonding of new boron and carbon superpolyhedra",
+  "authors": "O. A. Gapurenko, R. M. Minyaev, <b>N. Fedik</b>, V. V. Koval, A. I. Boldyrev, V. I. Minkin",
+  "venue": "<i>Structural Chemistry</i>, 2019, 30(3), 805-814.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://link.springer.com/article/10.1007/s11224-019-1279-5"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "9",
+  "n": 9,
+  "year": 2018,
+  "title": "Insight into The Nature of Rim Bonds in Coronene",
+  "authors": "<b>N. Fedik</b>, A. I. Boldyrev",
+  "venue": "<i>The Journal of Physical Chemistry A</i>, 2018, 122(43), 8585-8590.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://pubs.acs.org/doi/abs/10.1021/acs.jpca.8b07937"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "8",
+  "n": 8,
+  "year": 2017,
+  "title": "Thiol-induced nitric oxide donation mechanisms in substituted nitrobenzofuroxans",
+  "authors": "М. Е. Kletskii, O. N. Burov, <b>N. Fedik</b>, S. V. Kurbatov",
+  "venue": "<i>Nitric Oxide</i>, 2017, 62, 44-51.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://www.sciencedirect.com/science/article/abs/pii/S1089860316301422"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "7",
+  "n": 7,
+  "year": 2016,
+  "title": "10-Dimethylamino Derivatives of Benzo[h]quinolone and Benzo[h]quinazolines: Fluorescent Proton Sponge Analogues with Opposed peri-NMe<sub>2</sub>/-N=Groups. How to Distinguish between Proton Sponges and Pseudo-Proton Sponges",
+  "authors": "A. F. Pozharskii, V. A. Ozeryanski, V. I. Mikshiev, A. S. Antonov, A. V.Chernyshev, A. V. Metelitsa, G. S. Borodkin, <b>N. Fedik</b>, O.V. Dyablo",
+  "venue": "<i>Journal of Organic Chemistry</i>, 2016, 81(13), 5574-5587.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://pubs.acs.org/doi/abs/10.1021/acs.joc.6b00917"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "6",
+  "n": 6,
+  "year": 2016,
+  "title": "Mechanisms for the formation of five-membered rings in ethene addition reactions with azomethine ylide and allyl anion",
+  "authors": "М. Е. Kletskii, O. N. Burov, <b>N. Fedik</b>, S. V. Kurbatov",
+  "venue": "<i>Chemistry of Hetererocylic Compounds</i>, 2016, 52(09), 700-710.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://link.springer.com/article/10.1007/s10593-016-1952-1"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "5",
+  "n": 5,
+  "year": 2016,
+  "title": "Synthesis and Study of Conformation of 8-Hydroxy-2-(2-(Pyridin-4-Yl)Vinyl)Quinoline By NMR Spectroscopy Correlation",
+  "authors": "D. A. Svetlichnyy, <b>N. Fedik</b>",
+  "venue": "<i>St. Petersburg State University</i>, 2016, 3(61), 171-179 (DOI: 10.21638/11701/spbu04.2016.205).",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://dspace.spbu.ru/bitstream/11701/3935/1/Svetlichniy.pdf"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "4",
+  "n": 4,
+  "year": 2015,
+  "title": "Molecular structure and protonation trends in 6-methoxy- and 8-methoxy-2,4,5-tris(dimethylamino)-quinolines",
+  "authors": "O. V. Dyablo, A. F. Pozharskii, E. A. Shmoilova, V. A. Ozeryanski, <b>N. Fedik</b>, K. Yu. Suponitsky",
+  "venue": "<i>Journal of Molecular Structure</i>, 2015, 1107, 305-315.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://www.sciencedirect.com/science/article/abs/pii/S0022286015304609"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "3",
+  "n": 3,
+  "year": 2015,
+  "title": "Experimental and quantum-chemical study of nucleophilic substitution mechanism in berberine",
+  "authors": "O.N. Burov, М.Е. Kletskii, <b>N. Fedik</b>, А. N. Lisovin, S.V. Kurbatov",
+  "venue": "<i>Chemistry of Hetererocylic Compounds</i>, 2015, 51(11/12), 997-1007.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://link.springer.com/article/10.1007/s10593-016-1810-1"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "2",
+  "n": 2,
+  "year": 2015,
+  "title": "Mechanism of thiol-induced nitrogen(II) oxide donation by furoxans: a quantum chemical study",
+  "authors": "O. N. Burov, М. Е. Kletskii, <b>N. Fedik</b>, А. N. Lisovin, S. V. Kurbatov",
+  "venue": "<i>Chemistry of Heterocylic Compounds</i>, 2015, 51(11/12), 951-960.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://hgs.osi.lv/index.php/hgs/article/view/2719"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ },
+ {
+  "id": "1",
+  "n": 1,
+  "year": 2015,
+  "title": "Cycloaddition of [3]dendralene derivatives to dinitrobenzofuroxan and nitrobenzodifuroxan",
+  "authors": "P. G. Morozov, S. V. Kurbatov, Yu. P. Semenyuk, O. N. Burov, М. Е. Kletskii, <b>N. Fedik</b>, K. F. Suzdalev",
+  "venue": "<i>Chemistry of Heterocylic Compounds</i>, 2015, 51(10), 903-912.",
+  "link": {
+   "label": "on publisher site",
+   "url": "https://hgs.osi.lv/index.php/hgs/article/view/2710"
+  },
+  "note": null,
+  "cover": null,
+  "molecule": null
+ }
+]

@@ -1,0 +1,39 @@
+---
+// The left sidebar shared by every page: portrait, name, tagline, main nav, outside links and the theme switch.
+// The home page (public/index.html) still carries its own copy of this markup until it moves onto the layout.
+interface Props { current: 'home' | 'projects' | 'publications' }
+const { current } = Astro.props;
+const nav = [
+  { key: 'home', href: './', label: 'Home' },
+  { key: 'projects', href: 'projects.html', label: 'Projects', tag: '[in dev]' },
+  { key: 'publications', href: 'publications.html', label: 'Publications' },
+];
+const elsewhere = [
+  { href: 'https://www.linkedin.com/in/nfedik/', label: 'LinkedIn' },
+  { href: 'https://github.com/nikitafedik', label: 'GitHub' },
+  { href: 'https://scholar.google.com/citations?user=xiXhXJoAAAAJ', label: 'Scholar' },
+];
+---
+<aside class="side">
+  <div class="me">
+    <div class="avatar">
+      <div class="ring hexclip" aria-hidden="true"></div>
+      <img class="hexclip" src="img/portrait-240.webp" srcset="img/portrait-240.webp 240w, img/portrait.webp 300w" sizes="116px" width="240" height="339" fetchpriority="high" alt="Portrait of Nikita Fedik">
+    </div>
+    <b>Nikita Fedik</b>
+    <span id="tagline">Computational chemist, tech enthusiast, visual artist <em>[by trial and render]</em></span>
+  </div>
+  <nav class="tabs" aria-label="Main">
+    {nav.map(item => (
+      <a href={item.href} aria-current={item.key === current ? 'page' : undefined}>
+        <svg class="bz" viewBox="0 0 24 24" aria-hidden="true"><polygon class="ring" points="12,2.5 20.23,7.25 20.23,16.75 12,21.5 3.77,16.75 3.77,7.25"/><path class="kek" pathLength="60" d="M12 5.2 L17.89 8.6 L17.89 15.4 L12 18.8 L6.11 15.4 L6.11 8.6 Z"/></svg>{item.label}{item.tag && <span class="nav-tag">{item.tag}</span>}
+      </a>
+    ))}
+  </nav>
+  <div class="elsewhere">
+    {elsewhere.map(l => (
+      <a href={l.href}><svg class="h2o" viewBox="0 0 24 24" aria-hidden="true"><g class="mol"><g class="hh hl"><line class="bd" x1="9.4" y1="12" x2="6.2" y2="14.5"/><circle class="h" cx="4.6" cy="15.7" r="2"/></g><g class="hh hr"><line class="bd" x1="14.6" y1="12" x2="17.8" y2="14.5"/><circle class="h" cx="19.4" cy="15.7" r="2"/></g><circle class="o" cx="12" cy="10" r="3.3"/></g></svg>{l.label}</a>
+    ))}
+  </div>
+  <div class="sky-slot" id="skySlot"></div>
+</aside>

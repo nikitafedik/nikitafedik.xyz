@@ -1,0 +1,38 @@
+---
+import { getCollection } from 'astro:content';
+import Site from '../layouts/Site.astro';
+// Newest first. Cover papers get a spinning molecule under the number; Nikita's own cover art also gets a
+// "see my cover" chip that opens the cover large. Other team members' covers get a plain note after the venue.
+const pubs = (await getCollection('publications')).map(e => e.data).sort((a, b) => b.n - a.n);
+---
+<Site title="Publications" description="Publications by Nikita Fedik" current="publications">
+  <header class="page-head">
+    <h1>Publications</h1>
+    <p>Full list on <a href="https://scholar.google.com/citations?user=xiXhXJoAAAAJ">Google Scholar</a>. For a copy of any paper, message me on <a href="https://www.researchgate.net/profile/Nikita-Fedik">ResearchGate</a>.</p>
+  </header>
+  <ol class="pubs">
+    {pubs.map(p => {
+      const own = p.cover?.own ?? false;
+      const cap = own ? `${p.cover!.label}, my cover art` : '';
+      const note = !own && p.cover ? p.cover.label : p.note;
+      return (
+        <li class="pub">
+          <span class="n">{p.n}{p.molecule && <svg class="mol" data-mol={p.molecule} viewBox="-1 -1 2 2" aria-hidden="true"></svg>}{own && p.cover!.image && <button type="button" class="cv-chip" data-cover={`img/covers/${p.cover!.image}-lg.webp`} data-label={cap} title={cap}>see my cover</button>}</span>
+          <div class="body">
+            <p class="t" set:html={p.title} />
+            <p class="au" set:html={p.authors} />
+            <p class="venue"><Fragment set:html={p.venue} />{p.link && <> <a href={p.link.url}>{p.link.label}</a></>}{note && <> <span class="badge">{note}</span></>}</p>
+          </div>
+        </li>
+      );
+    })}
+  </ol>
+  <dialog class="cover-box" id="coverBox" aria-label="Journal cover">
+    <img alt="Journal cover">
+    <p></p>
+  </dialog>
+  <Fragment slot="scripts">
+    <script is:inline type="module" src="mol.js"></script>
+    <script is:inline type="module" src="covers.js"></script>
+  </Fragment>
+</Site>

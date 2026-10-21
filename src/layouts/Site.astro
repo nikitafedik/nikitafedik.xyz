@@ -1,0 +1,38 @@
+---
+// Page shell for every page except the home page: theme set before paint, fonts, the sidebar and the footer.
+// Markdown pages can use it too:  ---  layout: ../layouts/Site.astro  title: ...  ---
+import Sidebar from '../components/Sidebar.astro';
+import '../styles/site.css';
+interface Props { title: string; description?: string; current?: 'home' | 'projects' | 'publications'; frontmatter?: { title?: string; description?: string } }
+const fm = Astro.props.frontmatter;
+const title = Astro.props.title ?? fm?.title ?? 'Nikita Fedik';
+const description = Astro.props.description ?? fm?.description ?? '';
+const current = Astro.props.current ?? 'home';
+---
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>{title} | Nikita Fedik</title>
+  {description && <meta name="description" content={description}>}
+  <script is:inline>try { const s = JSON.parse(localStorage.getItem('nf-style') || '{}'); if (s.theme) document.documentElement.dataset.theme = s.theme; } catch (e) {}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap">
+  <slot name="head" />
+</head>
+<body>
+  <div class="shell">
+    <Sidebar current={current} />
+    <div class="main">
+      <main class="content page">
+        <slot />
+      </main>
+      <footer>&copy; {new Date().getFullYear()} Nikita Fedik. Personal site; views are my own.</footer>
+    </div>
+  </div>
+  <script is:inline type="module" src="site.js"></script>
+  <slot name="scripts" />
+</body>
+</html>

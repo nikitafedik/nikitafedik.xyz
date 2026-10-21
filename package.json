@@ -1,0 +1,14 @@
+{
+  "name": "nikitafedik-xyz",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "build:artifact": "astro build && node scripts/relativize.mjs dist",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "7.3.5"
+  }
+}

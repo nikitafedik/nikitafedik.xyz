@@ -1,0 +1,1540 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sidebar Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap">
+<style>
+/* Layout A, Chirpy kept: the site's current left sidebar (portrait, name, tabs, links) and topbar stay; the home column holds a short intro, the five live-preview skill tiles and selected work. No blog tabs, no search. */
+/* Arial tuned to Roboto's metrics, so text does not shift when Roboto arrives */
+@font-face { font-family: 'Roboto Fallback'; src: local('Arial'), local('Liberation Sans'), local('Helvetica'); size-adjust: 100.3%; ascent-override: 92.49%; descent-override: 24.34%; line-gap-override: 0%; }
+:root {
+  --bg: #F3F5F9; --side: #EAEEF4; --paper: #FFFFFF; --well: #E4E8EF; --line: #CED5E0;
+  --ink: #131722; --muted: #3E4558; --faint: #545C70;
+  --accent: #FF8A3D; --link-l: #B4410A; --link-d: #FFA56A; --link: var(--link-l); --on-accent: #131722;
+  --sky: #CFE2FA; --sky-night: #1A2238; --sun: #FFB547; --moon: #E8EBF1;
+  --field: rgba(19, 23, 34, 0.30); --shadow: rgba(30, 38, 56, 0.22);
+  --display: 'Roboto', 'Roboto Fallback', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'Roboto Mono', ui-monospace, Menlo, Consolas, monospace;
+  --secondary: var(--mono);
+  /* one type scale shared by the intro and the skills reel */
+  --t-head: clamp(32px, 3.4vw, 42px); --t-line: clamp(19px, 1.55vw, 22px); --t-body: 17px; --t-small: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101318; --side: #0C0F13; --paper: #181C24; --well: #141820; --line: #2A303C; --ink: #E8EBF1; --muted: #B3BAC8; --faint: #9CA4B4;
+    --link: var(--link-d); --field: rgba(232, 235, 241, 0.20); --shadow: rgba(0, 0, 0, 0.6); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101318; --side: #0C0F13; --paper: #181C24; --well: #141820; --line: #2A303C; --ink: #E8EBF1; --muted: #B3BAC8; --faint: #9CA4B4;
+  --link: var(--link-d); --field: rgba(232, 235, 241, 0.20); --shadow: rgba(0, 0, 0, 0.6); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scrollbar-color: var(--line) var(--bg); }
+body { background: var(--bg); color: var(--ink); font-family: var(--display); font-size: 17px; line-height: 1.6; caret-color: var(--accent); }
+::selection { background: var(--accent); color: var(--on-accent); }
+a { color: var(--link); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; border-radius: 4px; }
+h1, h2, h3 { text-wrap: balance; }
+.hexclip { clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+
+.shell { display: flex; flex-wrap: wrap; min-height: 100%; }
+/* a faint, fixed field of colour behind everything, so the sidebar's mica has something to diffuse */
+body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; background:
+  radial-gradient(40vmax 30vmax at 8% 18%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%),
+  radial-gradient(36vmax 28vmax at 2% 78%, rgba(79, 116, 214, .14), transparent 70%),
+  radial-gradient(30vmax 24vmax at 20% 50%, rgba(217, 85, 63, .08), transparent 70%); }
+/* sidebar as a darker mica: a tinted, mostly opaque surface that softly blurs what is behind it */
+.side { flex: 1 0 260px; max-width: 100%; display: flex; flex-direction: column; gap: 36px; padding: 48px 20px 28px;
+  background: color-mix(in srgb, var(--mica) 86%, transparent); -webkit-backdrop-filter: blur(28px) saturate(1.3); backdrop-filter: blur(28px) saturate(1.3);
+  box-shadow: inset -1px 0 0 color-mix(in srgb, var(--ink) 8%, transparent); }
+:root { --mica: #DCE1EA; }
+:root[data-theme="dark"] { --mica: #090B0F; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --mica: #090B0F; } }
+@media (min-width: 900px) { .side { position: sticky; top: env(safe-area-inset-top, 0px); align-self: flex-start; height: 100vh; overflow-y: auto; gap: 28px; } }
+.me { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.avatar { position: relative; width: 116px; aspect-ratio: 1 / 1.1547; margin: 12px; }
+.avatar .ring { position: absolute; inset: -8px; background: var(--accent); opacity: .3; }
+.avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.me b { font-size: 23px; font-weight: 700; letter-spacing: -0.015em; }
+.me span { font-size: 15px; line-height: 1.45; color: var(--muted); max-width: 16em; }
+.me span em { font-style: normal; color: var(--faint); white-space: nowrap; }
+.tabs { display: flex; flex-direction: column; gap: 2px; }
+/* nav rows: capitals in the mono face, each row 44px tall */
+.tabs a, .elsewhere a { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 16px; border-radius: 12px; text-decoration: none; color: var(--muted); font-family: var(--secondary); font-weight: 500; font-size: 13px; letter-spacing: 0; transition: background .2s, color .2s; }
+.nav-tag { margin-left: auto; font-size: 11px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--faint); }
+.tabs a { text-transform: uppercase; letter-spacing: .08em; font-size: 12.5px; }
+.tabs a:hover, .tabs a[aria-current="page"], .elsewhere a:hover { color: var(--ink); background: var(--paper); }
+/* tab marker: a small filled hexagon at rest; on hover (or for the current page) it opens into a benzene ring and its three alternating double bonds draw in */
+.bz { width: 30px; height: 30px; flex: 0 0 30px; margin: 0 -4px 0 -6px; overflow: visible; }
+.bz .ring { fill: var(--line); stroke: var(--line); stroke-width: 1.4; stroke-linejoin: round; transform-box: fill-box; transform-origin: center; transform: scale(.4); transition: transform .45s cubic-bezier(.2,.8,.2,1), fill .25s, stroke .25s; }
+.bz .kek { fill: none; stroke: var(--accent); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 7 13; stroke-dashoffset: -1.5; opacity: 0; transition: opacity .3s .15s, stroke-dashoffset .52s ease-in-out; }
+.tabs a:hover .bz .ring, .tabs a:focus-visible .bz .ring, .tabs a[aria-current="page"] .bz .ring { transform: scale(1); fill: transparent; stroke: var(--accent); }
+/* the three double bonds rest on real bonds, then slide along the inner contour to the other Kekulé structure */
+.tabs a:hover .bz .kek, .tabs a:focus-visible .bz .kek, .tabs a[aria-current="page"] .bz .kek { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .bz .kek, .h2o .hh { animation: none !important; } }
+/* external links: a water molecule drawn like the benzene markers: a small filled shape in the line colour at rest,
+   opening on hover into thin accent outlines while the hydrogens bend in and out (the scissoring mode) */
+.h2o { width: 30px; height: 30px; flex: 0 0 30px; margin: 0 -4px 0 -6px; overflow: visible; }
+.h2o .mol { transform-box: view-box; transform-origin: 12px 12px; transform: scale(.55); transition: transform .45s cubic-bezier(.2,.8,.2,1); }
+.h2o .bd { stroke: var(--line); stroke-width: 1.4; stroke-linecap: round; transition: stroke .25s; }
+.h2o .o, .h2o .h { fill: var(--line); stroke: var(--line); stroke-width: 1.4; transition: fill .25s, stroke .25s; }
+.h2o .hh { transform-box: view-box; transform-origin: 12px 10px; }
+.elsewhere a:hover .h2o .mol, .elsewhere a:focus-visible .h2o .mol { transform: scale(1); }
+.elsewhere a:hover .h2o .o, .elsewhere a:hover .h2o .h, .elsewhere a:focus-visible .h2o .o, .elsewhere a:focus-visible .h2o .h { fill: transparent; stroke: var(--accent); }
+.elsewhere a:hover .h2o .bd, .elsewhere a:focus-visible .h2o .bd { stroke: var(--accent); }
+.elsewhere a:hover .h2o .hl, .elsewhere a:focus-visible .h2o .hl { animation: scissorL 1.6s ease-in-out .5s infinite; }
+.elsewhere a:hover .h2o .hr, .elsewhere a:focus-visible .h2o .hr { animation: scissorR 1.6s ease-in-out .5s infinite; }
+@keyframes scissorL { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-8deg); } }
+@keyframes scissorR { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(8deg); } }
+.elsewhere { display: flex; flex-direction: column; gap: 2px; margin-top: auto; }
+
+.main { flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; min-height: 64px; padding: 12px 40px; border-bottom: 1px solid var(--line); font-weight: 600; color: var(--faint); }
+.content { width: 100%; max-width: 1080px; padding: 48px 40px 0; display: flex; flex-direction: column; gap: 72px; }
+@media (max-width: 560px) { .content { padding-inline: 16px; } .topbar { padding-inline: 16px; } }
+
+/* the intro starts at the very top, already pinned, so the first scroll reveals a line instead of moving the page */
+.intro { position: relative; z-index: 2; max-width: 40em; height: calc(100vh + 5 * 28vh); margin-top: -48px; }
+.intro-pin { position: sticky; top: env(safe-area-inset-top, 0px); height: 100vh; margin: 0 -24px; padding: 0 24px; overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent); }
+.intro-list { position: absolute; left: 24px; right: 24px; top: 0; display: flex; flex-direction: column; gap: 30px; transform: translateY(var(--ly, 0px)); will-change: transform; }
+.intro-list > * { margin: 0; transform: scale(var(--s, 1)); transform-origin: left center; filter: blur(var(--bl, 0px)); opacity: var(--op, 1); text-shadow: var(--ab, none); will-change: transform, filter; }
+.sent-last { display: flex; flex-direction: column; gap: 10px; }
+/* the skills heading waits under the intro, blurred, and rises into its place in the reel */
+.intro .intro-next { margin: 0; max-width: none; font-family: var(--display); font-weight: 700; font-size: var(--t-head); line-height: 1.05; letter-spacing: -0.02em; color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .intro { height: auto; } .intro-pin { position: static; height: auto; overflow: visible; -webkit-mask-image: none; mask-image: none; } .intro-list { position: static; transform: none; } .intro-next { display: none; } }
+.intro h1 { margin: 0; font-weight: 700; font-size: var(--t-head); line-height: 1.05; letter-spacing: -0.02em; }
+.intro h1 mark { color: inherit; background: linear-gradient(transparent 60%, color-mix(in srgb, var(--accent) 55%, transparent) 60%); padding-inline: 2px; }
+.about p { margin: 0; font-size: var(--t-line); line-height: 1.5; letter-spacing: -0.005em; color: var(--muted); max-width: 34em; }
+/* key words carry a soft accent marker, the same mark as "molecules." in the greeting */
+.about .key { color: var(--ink); font-weight: 500; background: linear-gradient(transparent 64%, color-mix(in srgb, var(--accent) 32%, transparent) 64%); padding-inline: 1px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.about abbr { text-decoration: underline dotted; text-underline-offset: 3px; cursor: help; }
+
+/* skills reel: the section pins while scrolling; one particle cloud morphs through a formation per skill,
+   and the selector keeps the current skill sharp while the others blur and split into colour fringes */
+/* the reel shares its top with the intro (intro height 100vh + 5 * 28vh, the column gap 72px), set in CSS so nothing jumps at load */
+.reel { position: relative; height: calc(995vh + 5 * 28vh); margin-top: calc(-100vh - 5 * 28vh - 72px); }
+.reel-pin { position: sticky; top: env(safe-area-inset-top, 0px); height: 100vh; display: grid; grid-template-columns: minmax(220px, .85fr) minmax(0, 1.5fr); gap: 24px; align-items: center; }
+.reel-picker { position: relative; height: min(68vh, 540px); margin: 0 -24px; padding: 0 24px; }
+.reel-head { position: absolute; left: 24px; right: 24px; top: 0; margin: 0; font-family: var(--display); font-size: var(--t-head); font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; }
+.reel-list { list-style: none; margin: 0; padding: 0; position: absolute; left: 0; right: 0; top: calc(var(--t-head) * 1.6); bottom: 0; overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 20%, #000 80%, transparent); mask-image: linear-gradient(transparent, #000 20%, #000 80%, transparent); }
+.reel-item { position: absolute; left: 24px; right: 24px; top: 50%; transform: translateY(var(--y, -50%)) scale(var(--s, 1)); transform-origin: left center; filter: blur(var(--b, 0px)); opacity: var(--o, 1); text-shadow: var(--ab, none); will-change: transform, filter; }
+.reel-item button { all: unset; box-sizing: border-box; display: block; padding: 6px 0; cursor: pointer; font-family: var(--display); font-size: clamp(21px, 2.1vw, 28px); font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; color: var(--ink); text-wrap: balance; }
+.reel-item button:focus-visible { outline: 2px solid var(--link); outline-offset: 4px; border-radius: 6px; }
+.reel-item[aria-current="step"] button { color: var(--ink); }
+.reel-stage { position: relative; z-index: 1; height: min(92vh, 820px); display: flex; flex-direction: column; justify-content: flex-end; pointer-events: none; }
+.reel-stage > * { pointer-events: auto; }
+.reel-canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; z-index: 0; pointer-events: none; }
+/* the Blender render of the illustration shot, laid exactly over the camera's view once the clay frame has "rendered";
+   when the scroll moves on it breaks into soft, drifting pixels drawn on its canvas */
+/* the photo is clipped on the left where the 3D canvas starts, so it never reaches the sidebar; on the right it runs to
+   the window edge (set in script). The render itself fades to transparent well inside its edges */
+.shot-clip { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; z-index: 0; overflow: hidden; pointer-events: none; }
+/* the photo appears at once, under the shutter's flash, and fades out only when the scene is left */
+.shot { position: absolute; left: 0; top: 0; pointer-events: none; opacity: 0; transition: opacity .3s ease; will-change: transform, opacity; }
+.shot.on { opacity: 1; transition: none; }
+.shot img, .shot canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.shot canvas { visibility: hidden; }
+/* once the render is in, the viewport frame goes: what is left is the picture */
+.finder.done { opacity: 0 !important; transition: opacity .6s ease .2s; }
+.reel-picker { z-index: 1; }
+.reel-detail { flex: 0 0 auto; min-height: 190px; max-width: 34em; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.reel-detail[hidden] { display: flex !important; visibility: hidden; }
+.reel-desc { margin: 0; font-size: var(--t-body); line-height: 1.55; color: var(--muted); }
+.reel-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ctl { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--paper); color: var(--ink); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: inset 0 0 0 1.5px var(--line); transition: box-shadow .2s, background .2s; }
+.ctl:hover { box-shadow: inset 0 0 0 1.5px var(--ink); }
+.ctl[aria-pressed="true"], .ctl.primary { background: var(--accent); color: var(--on-accent); box-shadow: none; }
+.ctl:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; }
+.ctl-range { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); font-family: var(--secondary); }
+.ctl-range input { width: min(220px, 40vw); accent-color: var(--accent); min-height: 32px; }
+.reel-readout { margin: 0; min-height: 1.5em; font-family: var(--secondary); font-size: 14px; color: var(--faint); }
+.reel-labels { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+/* a camera viewport for the composition step: a 16:9 frame with crop corners, rule-of-thirds lines and a centre mark;
+   it starts a little wide and tightens onto the shot as the framing is set */
+.finder { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; opacity: 0; transform-origin: 50% 50%; --fc: color-mix(in srgb, var(--ink) 30%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 22%, transparent); }
+.finder i { position: absolute; background: var(--fc); }
+.finder i:nth-child(1), .finder i:nth-child(2) { top: 0; bottom: 0; width: 1px; }
+.finder i:nth-child(1) { left: 33.333%; } .finder i:nth-child(2) { left: 66.667%; }
+.finder i:nth-child(3), .finder i:nth-child(4) { left: 0; right: 0; height: 1px; }
+.finder i:nth-child(3) { top: 33.333%; } .finder i:nth-child(4) { top: 66.667%; }
+.finder b { position: absolute; width: 28px; height: 28px; border: 0 solid var(--ink); }
+.finder b:nth-of-type(1) { left: -1px; top: -1px; border-width: 2.5px 0 0 2.5px; } .finder b:nth-of-type(2) { right: -1px; top: -1px; border-width: 2.5px 2.5px 0 0; }
+.finder b:nth-of-type(3) { left: -1px; bottom: -1px; border-width: 0 0 2.5px 2.5px; } .finder b:nth-of-type(4) { right: -1px; bottom: -1px; border-width: 0 2.5px 2.5px 0; }
+/* the shutter: two curtains close over the frame and open again, with an exposure flash */
+.finder .sh { position: absolute; left: 0; right: 0; height: 0; background: #07080b; }
+.finder .sh-top { top: 0; } .finder .sh-bot { bottom: 0; }
+.finder .flash { position: absolute; inset: 0; background: #fff; opacity: 0; }
+.finder.snap .sh { animation: shutter .34s cubic-bezier(.5,0,.5,1); }
+.finder.snap .flash { animation: flash .6s ease-out .14s; }
+@keyframes shutter { 0% { height: 0; } 45%, 55% { height: 50.5%; } 100% { height: 0; } }
+@keyframes flash { 0% { opacity: .75; } 100% { opacity: 0; } }
+.finder::after { content: ''; position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; background: linear-gradient(var(--ink), var(--ink)) center / 1.5px 100% no-repeat, linear-gradient(var(--ink), var(--ink)) center / 100% 1.5px no-repeat; opacity: .55; }
+.reel-label { position: absolute; left: 0; top: 0; font-family: var(--secondary); font-size: 13px; color: var(--muted); white-space: nowrap; }
+/* mock app screens for the demo skill */
+.app { width: min(54em, 100%); border-radius: 14px; background: var(--paper); box-shadow: inset 0 0 0 1px var(--line), 0 18px 40px -28px var(--shadow); overflow: hidden; font-size: 14px; }
+.app-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 14px; border-bottom: 1px solid var(--line); }
+.app-title { font-weight: 600; font-size: 13.5px; color: var(--ink); }
+.app-steps { list-style: none; margin: 0; padding: 0; display: flex; gap: 12px; font-family: var(--secondary); font-size: 11.5px; color: var(--faint); }
+.app-steps li { padding-bottom: 2px; }
+.app-steps li.on { color: var(--ink); box-shadow: inset 0 -2px 0 var(--accent); }
+.app-steps button { all: unset; cursor: pointer; }
+.app-steps button:disabled { cursor: default; opacity: .55; }
+.app-steps button:not(:disabled):hover { color: var(--ink); }
+.app-steps button:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; border-radius: 3px; }
+.app-body { padding: 4px 14px 8px; display: grid; grid-template-columns: minmax(0, 1fr) 9.5em; gap: 18px; align-items: start; }
+.app-list { display: flex; flex-direction: column; }
+.app-row { display: grid; grid-template-columns: 1.4em 4.2em minmax(3em, 1fr) 5.6em 4.6em 7.4em; align-items: center; gap: 10px; min-height: 28px; font-family: var(--secondary); font-size: 12.5px; color: var(--muted); border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+.app-row:last-child { border-bottom: 0; }
+label.app-row { cursor: pointer; }
+.app-row .span { grid-column: 3 / -1; }
+.app-row .r { text-align: right; font-variant-numeric: tabular-nums; }
+/* the demo card runs wider, with a top view of the adsorption site in its right corner; its text sits under the card */
+.reel-detail.wide { max-width: 54em; }
+.reel-detail.wide .reel-controls { align-self: stretch; }
+.reel-detail.wide .reel-desc { order: 3; max-width: 40em; }
+.reel-detail.wide .reel-readout { order: 4; }
+.app-main { min-width: 0; }
+/* the orientation toggle in the select table */
+.app-orient { all: unset; box-sizing: border-box; justify-self: start; padding: 2px 8px; border-radius: 7px; cursor: pointer; font: inherit; color: var(--ink); background: var(--well); box-shadow: inset 0 0 0 1px var(--line); white-space: nowrap; }
+.app-orient:hover { box-shadow: inset 0 0 0 1px var(--ink); }
+.app-orient:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.app-top { margin: 8px 0 6px; display: flex; flex-direction: column; gap: 4px; }
+.app-top figcaption { font-family: var(--secondary); font-size: 11.5px; color: var(--faint); }
+.app-top svg { display: block; width: 100%; height: auto; border-radius: 10px; }
+.app-top .mol { transition: opacity .35s; }
+.app-top .halo { transition: opacity .5s; }
+.app-row b { font-family: var(--display); font-weight: 600; color: var(--ink); font-size: 13.5px; }
+.app-head, .app-head b { color: var(--faint); font-family: var(--secondary); font-size: 11.5px; font-weight: 500; }
+.app-row input[type="checkbox"] { width: 15px; height: 15px; margin: 0; accent-color: var(--accent); }
+.app-bar-track { height: 5px; border-radius: 3px; background: var(--well); overflow: hidden; }
+.app-bar-track i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .12s linear; }
+.app-num, .app-st, .app-res span:last-child, .app-head span:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.app .ok { color: #2F9E63; }
+.app-actions { display: flex; justify-content: flex-end; padding-top: 6px; }
+.app-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 14px; border-top: 1px solid var(--line); font-family: var(--secondary); font-size: 11px; color: var(--faint); }
+/* the illustration grid: real images fade into the tile frames the particles draw */
+.works { position: absolute; left: 0; top: 0; z-index: 1; transform-origin: 50% 50%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.2%; opacity: 0; pointer-events: none; }
+.works.live { pointer-events: auto; }
+.work-tile { position: relative; display: block; aspect-ratio: 3 / 2.1; border-radius: 10px; overflow: hidden; background: var(--well); box-shadow: inset 0 0 0 1px var(--line); }
+.work-tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .45s cubic-bezier(.2,.8,.2,1); }
+.work-tile:hover img, .work-tile:focus-visible img { transform: scale(1.04); }
+.work-tile span { position: absolute; left: 8px; bottom: 7px; max-width: calc(100% - 16px); padding: 3px 7px; border-radius: 6px; background: rgba(12, 14, 18, .74); color: #E8EBF1; font-family: var(--secondary); font-size: 11px; opacity: 0; transition: opacity .2s; }
+.work-tile:hover span, .work-tile:focus-visible span { opacity: 1; }
+.work-tile:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.legend { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 12px; font-family: var(--secondary); font-size: 12px; color: var(--muted); }
+.legend li { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0,0,0,.18); }
+.mock-status { margin: 2px 0 0; font-family: var(--secondary); font-size: 12px; color: var(--faint); min-height: 1.4em; }
+@media (max-width: 899px) {
+  .reel-pin { grid-template-columns: 1fr; grid-template-rows: 30vh 1fr; gap: 0; align-items: stretch; }
+  .reel-picker { height: 30vh; }
+  .reel-head { top: 14px; }
+  .reel-list { top: calc(var(--t-head) * 1.6 + 14px); }
+  .reel-stage { height: auto; padding-bottom: 12px; }
+  .reel-desc { font-size: 15px; }
+  .app-body { min-height: 150px; padding: 4px 10px 8px; }
+  .app-bar, .app-foot { padding-inline: 10px; }
+  .app-row { grid-template-columns: 1.1em 4.3em minmax(2em, 1fr) 4.4em 6.6em; gap: 6px; font-size: 11px; }
+  .app-row > :nth-child(5) { display: none; }   /* phones drop the height column */
+  .app-body { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .app-top { flex-direction: row; align-items: center; gap: 10px; margin: 4px 0 0; }
+  .app-top svg { width: 5.5em; }
+  .app-foot { display: none; }
+  .app-title { font-size: 12.5px; white-space: nowrap; }
+  .app-steps { gap: 8px; font-size: 10.5px; }
+  .app-steps li { white-space: nowrap; }
+  .app-bar { gap: 8px; }
+  .work-tile { border-radius: 6px; }
+  .work-tile span { display: none; }
+}
+.appdlg { width: min(760px, calc(100vw - 32px)); padding: 16px; border: 0; border-radius: 22px; background: var(--paper); color: var(--ink); box-shadow: 0 40px 90px -30px rgba(0,0,0,.5); }
+.appdlg::backdrop { background: rgba(10, 12, 18, .55); }
+.appdlg header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; padding-left: 6px; font-size: 18px; }
+.appdlg-body { height: min(480px, 70vh); }
+.appdlg-body .ma { height: 100%; }
+
+/* Byron easter egg: throw the ball, he fetches it, pet him for the gallery */
+.ball-btn { display: inline-grid; place-items: center; width: 44px; height: 44px; margin: -12px -6px -12px -4px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; vertical-align: middle; }
+.ball-btn { touch-action: none; }
+.ball-btn img { width: 24px; height: 24px; display: block; animation: nudge 3.6s ease-in-out infinite; pointer-events: none; }
+.ball-btn:hover img { animation-duration: .9s; }
+.flyball img, .byron-mouth img { width: 100%; height: 100%; display: block; }
+.ball-btn[data-thrown] { visibility: hidden; }
+.aim { position: fixed; inset: 0; z-index: 71; pointer-events: none; opacity: 0; transition: opacity .15s; }
+.aim.on { opacity: 1; }
+.aim i { position: absolute; left: 0; top: 0; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.aim-pow { position: absolute; left: 0; top: 0; font-family: var(--secondary); font-size: 12px; color: var(--faint); }
+@keyframes nudge { 0%, 70%, 100% { transform: translateY(0) rotate(0); } 78% { transform: translateY(-5px) rotate(-20deg); } 86% { transform: translateY(0) rotate(0); } 92% { transform: translateY(-2px); } }
+.yard { position: fixed; left: 0; bottom: 0; width: 0; height: 0; z-index: 70; }
+.flyball { position: fixed; left: 0; top: 0; width: 22px; height: 22px; z-index: 71; pointer-events: none; }
+.byron { position: fixed; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); left: 0; padding: 8px 12px 6px; pointer-events: none; }
+.byron-art { display: block; margin: 0; font-family: var(--secondary); font-size: 15px; line-height: 1; color: color-mix(in oklab, #D0712F 82%, var(--ink)); white-space: pre; }
+.byron.right .byron-art { transform: scaleX(-1); }
+/* the C60 sits in the mouth cell of the current frame: --r row, --c column, counted in the art's own grid */
+.byron-mouth { position: absolute; width: 20px; height: 20px; font-family: var(--secondary); font-size: 15px; line-height: 1; left: calc(12px + (var(--c, 0) + .5) * 1ch - 10px); top: calc(8px + (var(--r, 0) + .5) * 1em - 10px); }
+.byron.right .byron-mouth { left: auto; right: calc(12px + (var(--c, 0) + .5) * 1ch - 10px); }
+.byron-mouth[hidden] { display: none; }
+@media (max-width: 480px) { .byron-art, .byron-mouth { font-size: 13px; } }
+/* what to do with Byron: a small card in the page's own language, a hairline paper card with mono capitals like the nav */
+.pet-bar { position: fixed; bottom: calc(200px + env(safe-area-inset-bottom, 0px)); z-index: 72; display: flex; align-items: center; gap: 4px; padding: 5px; border-radius: 14px; background: var(--paper); box-shadow: inset 0 0 0 1px var(--line), 0 14px 30px -16px var(--shadow); font-family: var(--secondary); }
+.pet-bar::before { content: 'byron'; padding: 0 8px 0 9px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+.pet-btn { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px; border-radius: 10px; cursor: pointer; font-family: var(--secondary); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); transition: background .2s, transform .2s cubic-bezier(.2,.8,.2,1); }
+.pet-btn svg { width: 14px; height: 14px; flex: none; }
+.pet-btn:hover { background: var(--well); }
+.pet-btn:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.pet-btn.go { background: var(--accent); color: var(--on-accent); }
+.pet-btn.go:hover { background: var(--accent); transform: translateY(-1px); }
+.pet-btn.go:active { transform: scale(.97); }
+.woof { position: absolute; left: 4px; top: -30px; padding: 4px 10px; border-radius: 12px; background: var(--ink); color: var(--bg); font-family: var(--secondary); font-weight: 700; font-size: 14px; white-space: nowrap; transform-origin: bottom left; }
+.byron.right .woof { left: auto; right: 4px; transform-origin: bottom right; }
+.heart { position: fixed; z-index: 72; color: #F05A7E; font-size: 20px; pointer-events: none; }
+.gallery { width: min(920px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 24px; border: 0; border-radius: 22px; background: var(--paper); color: var(--ink); box-shadow: 0 40px 90px -30px rgba(0,0,0,.5); }
+.gallery::backdrop { background: rgba(10, 12, 18, .55); }
+.gallery header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.gallery h2 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+.gallery header p { margin: 4px 0 0; color: var(--faint); font-size: 15px; }
+.gallery-close { width: 44px; height: 44px; flex: 0 0 44px; border: 0; border-radius: 12px; background: var(--well); color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 12px; }
+.gallery figure { margin: 0; aspect-ratio: 1 / 1; max-width: 100%; border-radius: 14px; overflow: hidden; background: var(--well); display: grid; place-items: center; text-align: center; padding: 16px; color: var(--faint); font-size: 14px; box-shadow: inset 0 0 0 1.5px var(--line); }
+.gallery figure img { width: 100%; height: 100%; object-fit: cover; }
+.btns { display: flex; flex-wrap: wrap; gap: 12px; }
+.btn { display: inline-flex; align-items: center; min-height: 48px; padding: 0 22px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 16px; white-space: nowrap; transition: transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s; }
+.btn.primary { background: var(--accent); color: var(--on-accent); }
+.btn.primary:hover { transform: translateY(-2px); box-shadow: 0 10px 22px -8px color-mix(in srgb, var(--accent) 70%, transparent); }
+.btn.ghost { color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--line); }
+.btn.ghost:hover { box-shadow: inset 0 0 0 1.5px var(--ink); }
+
+.sec { display: flex; flex-direction: column; gap: 24px; }
+.sec h2 { margin: 0; font-weight: 700; font-size: var(--t-head); line-height: 1.05; letter-spacing: -0.025em; }
+.sec > p { margin: 0; max-width: 42em; color: var(--muted); }
+.skills { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; padding: 12px; border-radius: 22px; background: var(--well); }
+.skills .wide { grid-column: span 3; }
+.skills .third { grid-column: span 2; }
+@media (max-width: 1100px) { .skills { grid-template-columns: repeat(2, minmax(0, 1fr)); } .skills .wide, .skills .third { grid-column: span 1; } .skills .tile:first-of-type { grid-column: 1 / -1; } }
+@media (max-width: 560px) { .skills { grid-template-columns: 1fr; } }
+
+.work { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 24px; }
+@media (max-width: 760px) { .work { grid-template-columns: 1fr; } }
+.work article { display: flex; flex-direction: column; gap: 14px; }
+.work .lead { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 28px; align-items: center; }
+@media (max-width: 760px) { .work .lead { grid-template-columns: 1fr; } }
+.img { aspect-ratio: 16 / 10; max-width: 100%; overflow: hidden; border-radius: 18px; background: var(--paper); box-shadow: 0 1px 0 var(--line), 0 18px 40px -24px var(--shadow); }
+.img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .7s cubic-bezier(.2,.8,.2,1); }
+.work article:hover .img img { transform: scale(1.04); }
+.work .txt { display: flex; flex-direction: column; gap: 8px; }
+.work h3 { margin: 0; font-weight: 700; font-size: 22px; letter-spacing: -0.015em; line-height: 1.15; }
+.work .lead h3 { font-size: 28px; }
+.work p { margin: 0; color: var(--muted); }
+.meta { font-size: 14px; font-weight: 600; color: var(--faint); }
+.links { display: flex; gap: 18px; flex-wrap: wrap; font-weight: 600; font-size: 15px; }
+/* the page ends right after the last skill: a slim footer line, no empty band */
+footer { margin-top: auto; padding: 14px 40px 16px; font-size: 15px; color: var(--faint); }
+
+.sky-slot { min-height: 71px; align-self: stretch; padding: 10px 6px 0; margin-top: 4px; border-top: 1px solid color-mix(in srgb, var(--ink) 8%, transparent); }
+
+/* review bar and style panel: tools for the review, set apart from the site in a neutral dark chrome */
+.review { position: fixed; top: calc(10px + env(safe-area-inset-top, 0px)); right: 12px; z-index: 90; display: flex; align-items: center; gap: 4px; padding: 4px 4px 4px 12px; border-radius: 12px; background: rgba(18, 20, 26, .92); color: #E8EBF1; font-family: 'Roboto Mono', ui-monospace, Menlo, monospace; font-size: 12px; box-shadow: 0 8px 24px -10px rgba(0,0,0,.5); }
+.review-tag { color: #8C93A3; margin-right: 6px; }
+.review-btn { min-height: 32px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.review-btn:hover, .review-btn[aria-expanded="true"], .review-btn[aria-pressed="true"] { background: rgba(255,255,255,.12); }
+.review-btn:focus-visible { outline: 2px solid #FFA56A; outline-offset: 1px; }
+.perf-hud { display: flex; gap: 12px; padding: 0 8px; color: #C9CFDA; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.perf-hud[hidden] { display: none; }
+.perf-hud b { font-weight: 500; color: #fff; }
+.perf-hud .bad { color: #FF8A7A; }
+/* on phones the review bar sits at the bottom so it never covers the pinned headings */
+@media (max-width: 560px) { .review { left: 8px; right: 8px; top: auto; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); flex-wrap: wrap; } .perf-hud { gap: 8px; flex-wrap: wrap; } }
+.style-panel { max-height: calc(100vh - 72px); overflow-y: auto; position: fixed; right: 12px; top: calc(56px + env(safe-area-inset-top, 0px)); z-index: 89; width: min(320px, calc(100vw - 32px)); padding: 18px; border-radius: 18px; background: var(--paper); box-shadow: 0 0 0 1px var(--line), 0 28px 60px -24px var(--shadow); display: flex; flex-direction: column; gap: 18px; }
+@media (max-width: 560px) { .style-panel { left: 8px; right: 8px; width: auto; top: auto; bottom: calc(60px + env(safe-area-inset-bottom, 0px)); max-height: calc(100vh - 120px); } }
+.style-panel[hidden] { display: none; }
+.style-panel fieldset { margin: 0; padding: 0; border: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.style-panel legend { padding: 0; margin-bottom: 10px; font-size: 14px; font-weight: 700; color: var(--ink); }
+.swatch { position: relative; }
+.swatch input, .font-opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.swatch span { display: block; width: 36px; height: 36px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 2px var(--paper); cursor: pointer; }
+.swatch input:checked + span { box-shadow: inset 0 0 0 3px var(--paper), 0 0 0 2px var(--ink); }
+.swatch input:focus-visible + span, .font-opt input:focus-visible + span { outline: 2px solid var(--link); outline-offset: 3px; }
+.font-opt span { display: inline-flex; align-items: center; min-height: 40px; padding: 6px 12px; line-height: 1.3; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--line); cursor: pointer; font-size: 15px; }
+.font-opt input:checked + span { box-shadow: inset 0 0 0 2px var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.style-panel p { margin: 0; font-size: 13px; color: var(--faint); }
+
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+/* two voices: the display face for names, headings and sentences; the mono face for every small supporting line */
+.me span em, .elsewhere, .meta, footer, .topbar, .style-panel p, .byron-art, .reel-readout, .reel-label, .ctl-range, .mock-h span, .ads-row, .legend, .mock-status { font-family: var(--secondary); }
+.me span em, .meta, footer, .topbar { font-size: .88em; letter-spacing: -0.01em; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+</style>
+</head>
+<body>
+<!-- review bar: tools for trying options and measuring; it sits above the site and is not part of the design -->
+<div class="review" role="toolbar" aria-label="Review controls">
+  <span class="review-tag">review</span>
+  <button type="button" class="review-btn" id="styleBtn" aria-expanded="false" aria-controls="stylePanel">fonts and colors</button>
+  <button type="button" class="review-btn" id="perfBtn" aria-pressed="false">perf</button>
+  <output class="perf-hud" id="perfHud" hidden></output>
+</div>
+
+<div class="shell">
+  <aside class="side">
+    <div class="me">
+      <div class="avatar">
+        <div class="ring hexclip" aria-hidden="true"></div>
+        <img class="hexclip" src="img/portrait-240.webp" srcset="img/portrait-240.webp 240w, img/portrait.webp 300w" sizes="116px" width="240" height="339" fetchpriority="high" alt="Portrait of Nikita Fedik">
+      </div>
+      <b>Nikita Fedik</b>
+      <span id="tagline">Computational chemist, tech enthusiast, visual artist <em>[by trial and render]</em></span>
+    </div>
+    <nav class="tabs" aria-label="Main">
+      <a href="./" aria-current="page"><svg class="bz" viewBox="0 0 24 24" aria-hidden="true"><polygon class="ring" points="12,2.5 20.23,7.25 20.23,16.75 12,21.5 3.77,16.75 3.77,7.25"/><path class="kek" pathLength="60" d="M12 5.2 L17.89 8.6 L17.89 15.4 L12 18.8 L6.11 15.4 L6.11 8.6 Z"/></svg>Home</a>
+      <a href="projects.html"><svg class="bz" viewBox="0 0 24 24" aria-hidden="true"><polygon class="ring" points="12,2.5 20.23,7.25 20.23,16.75 12,21.5 3.77,16.75 3.77,7.25"/><path class="kek" pathLength="60" d="M12 5.2 L17.89 8.6 L17.89 15.4 L12 18.8 L6.11 15.4 L6.11 8.6 Z"/></svg>Projects<span class="nav-tag">[in dev]</span></a>
+      <a href="publications.html"><svg class="bz" viewBox="0 0 24 24" aria-hidden="true"><polygon class="ring" points="12,2.5 20.23,7.25 20.23,16.75 12,21.5 3.77,16.75 3.77,7.25"/><path class="kek" pathLength="60" d="M12 5.2 L17.89 8.6 L17.89 15.4 L12 18.8 L6.11 15.4 L6.11 8.6 Z"/></svg>Publications</a>
+    </nav>
+    <div class="elsewhere">
+      <a href="https://www.linkedin.com/in/nfedik/"><svg class="h2o" viewBox="0 0 24 24" aria-hidden="true"><g class="mol"><g class="hh hl"><line class="bd" x1="9.4" y1="12" x2="6.2" y2="14.5"/><circle class="h" cx="4.6" cy="15.7" r="2"/></g><g class="hh hr"><line class="bd" x1="14.6" y1="12" x2="17.8" y2="14.5"/><circle class="h" cx="19.4" cy="15.7" r="2"/></g><circle class="o" cx="12" cy="10" r="3.3"/></g></svg>LinkedIn</a>
+      <a href="https://github.com/nikitafedik"><svg class="h2o" viewBox="0 0 24 24" aria-hidden="true"><g class="mol"><g class="hh hl"><line class="bd" x1="9.4" y1="12" x2="6.2" y2="14.5"/><circle class="h" cx="4.6" cy="15.7" r="2"/></g><g class="hh hr"><line class="bd" x1="14.6" y1="12" x2="17.8" y2="14.5"/><circle class="h" cx="19.4" cy="15.7" r="2"/></g><circle class="o" cx="12" cy="10" r="3.3"/></g></svg>GitHub</a>
+      <a href="https://scholar.google.com/citations?user=xiXhXJoAAAAJ"><svg class="h2o" viewBox="0 0 24 24" aria-hidden="true"><g class="mol"><g class="hh hl"><line class="bd" x1="9.4" y1="12" x2="6.2" y2="14.5"/><circle class="h" cx="4.6" cy="15.7" r="2"/></g><g class="hh hr"><line class="bd" x1="14.6" y1="12" x2="17.8" y2="14.5"/><circle class="h" cx="19.4" cy="15.7" r="2"/></g><circle class="o" cx="12" cy="10" r="3.3"/></g></svg>Scholar</a>
+    </div>
+    <div class="sky-slot" id="skySlot"></div>
+  </aside>
+
+  <div class="main">
+    <div class="content">
+      <section class="intro" aria-labelledby="headline">
+        <div class="intro-pin">
+          <div class="about intro-list" id="introList">
+            <h1 id="headline">Hi there, I'm Nikita. I love telling <mark>visual stories</mark> about molecules.</h1>
+            <p class="sent">I'm a computational chemist working across the full stack of <span class="key">AI</span> for <span class="key">chemistry and materials science</span>.</p>
+            <p class="sent">Today I'm a Senior Technical Marketing Engineer at NVIDIA, where I design and lead demos, benchmarks, technical tutorials and visuals for AI-accelerated simulation.</p>
+            <p class="sent">Before that, I spent five years at LANL developing ML models for chemistry and GPU-enabled semiempirical methods.</p>
+            <p class="sent">Outside of work, I'm an explorer and a foodie at heart, and I'm drawn to good <span class="key">design</span> in every form: architecture, a well-made gadget, a good 3D render or a beautifully crafted video game.</p>
+            <p class="sent">My favorite time off is with Byron, my dog, and he's around here somewhere <button type="button" class="ball-btn" id="ballBtn" aria-label="Throw the C60 for Byron: press to toss, or drag back to aim and release"><img src="img/c60.webp" alt="" draggable="false"></button></p>
+            <div class="sent-last">
+              <p class="sent">Let's stay in touch on <a href="https://www.linkedin.com/in/nfedik/">LinkedIn</a>!</p>
+            </div>
+            <p class="intro-next" id="introNext" aria-hidden="true">What I do best</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="reel" id="skills" aria-labelledby="reelTitle">
+        <div class="reel-pin">
+          <canvas class="reel-canvas" id="reelCanvas" aria-hidden="true"></canvas>
+          <div class="shot-clip" aria-hidden="true"><div class="shot" id="shot"><img alt="" decoding="async"><canvas></canvas></div></div>
+          <div class="reel-labels" id="reelLabels" aria-hidden="true"></div>
+          <div class="finder" id="finder" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b><b></b><b></b><b></b><s class="sh sh-top"></s><s class="sh sh-bot"></s><u class="flash"></u></div>
+          <div class="reel-picker">
+            <h2 class="reel-head" id="reelTitle">What I do best</h2>
+            <ol class="reel-list">
+              <li class="reel-item"><button type="button" data-stop="1">Chemistry and materials [+AI]</button></li>
+              <li class="reel-item"><button type="button" data-stop="2">Scientific illustration &amp; 3D design</button></li>
+              <li class="reel-item"><button type="button" data-stop="3">Scientific demo design</button></li>
+              <li class="reel-item"><button type="button" data-stop="4">Tutorials &amp; workshops</button></li>
+            </ol>
+          </div>
+          <div class="reel-stage">
+            <div class="reel-detail" id="reelDetail" aria-live="polite" hidden>
+              <p class="reel-desc" id="reelDesc"></p>
+              <div class="reel-controls" id="reelControls"></div>
+              <p class="reel-readout" id="reelReadout" aria-live="polite"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <footer>&copy; 2026 Nikita Fedik. Personal site; views are my own.</footer>
+  </div>
+</div>
+
+<div class="yard"></div>
+<dialog class="gallery" id="byronGallery" aria-labelledby="byronTitle">
+  <header>
+    <div><h2 id="byronTitle">Byron</h2><p>Good boy. Thanks for playing fetch.</p></div>
+    <button type="button" class="gallery-close" id="galleryClose" aria-label="Close"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </header>
+  <div class="gallery-grid">
+    <figure>Byron photo 1</figure><figure>Byron photo 2</figure><figure>Byron photo 3</figure>
+    <figure>Byron photo 4</figure><figure>Byron photo 5</figure><figure>Byron photo 6</figure>
+  </div>
+</dialog>
+
+<div class="style-panel" id="stylePanel" role="dialog" aria-label="Style options" hidden>
+  <fieldset id="accents"><legend>Accent</legend></fieldset>
+  <fieldset id="fonts"><legend>Typeface</legend></fieldset>
+  <fieldset id="tags"><legend>Tagline aside</legend></fieldset>
+  <p>For trying options only. Your choice is remembered in this browser.</p>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.min.js",
+  "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.js": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.min.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/",
+  "animejs": "https://cdn.jsdelivr.net/npm/animejs@4.5.0/dist/bundles/anime.esm.min.js"
+} }
+</script>
+<script type="module">
+// anime.js only adds small flourishes, so it loads after the page is laid out
+let animate = () => {}, stagger = () => 0;
+import('animejs').then(m => { animate = m.animate; stagger = m.stagger; }).catch(() => {});
+document.documentElement.lang = 'en';
+if (!document.querySelector('meta[name=description]')) document.head.append(Object.assign(document.createElement('meta'), { name: 'description', content: 'Nikita Fedik, computational chemist: chemistry and materials with AI, scientific illustration, demos and tutorials.' }));
+import { mountSky } from './sky.js';
+// the Kekule swap on the current or hovered tab: every 2.6 s the double bonds slide to the other structure (2.68 s
+// after the tab turns active). Each slide is a short CSS transition: an endless keyframe animation with long holds
+// recalculated style on every frame of the holds as well
+if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('.tabs a').forEach(a => {
+  const kek = a.querySelector('.bz .kek');
+  if (!kek) return;
+  let timer = 0, off = -1.5, hovered = false;
+  const set = (v, instant) => { off = v; if (instant) kek.style.transition = 'opacity .3s .15s'; kek.style.strokeDashoffset = v; if (instant) { getComputedStyle(kek).strokeDashoffset; kek.style.transition = ''; } };
+  const slide = () => { if (off <= -21.5) set(-1.5, true); set(off - 10); timer = setTimeout(slide, 2600); };
+  const update = () => {
+    const on = a.getAttribute('aria-current') === 'page' || hovered || a.matches(':focus-visible');
+    if (on && !timer) timer = setTimeout(slide, 2680);
+    if (!on && timer) { clearTimeout(timer); timer = 0; set(-1.5, true); }
+  };
+  a.addEventListener('pointerenter', () => { hovered = true; update(); });
+  a.addEventListener('pointerleave', () => { hovered = false; update(); });
+  a.addEventListener('focus', update); a.addEventListener('blur', update);
+  update();
+});
+// ---- intro: pinned, one line in focus at a time, the same lens as the skills picker ----
+const reduceIntro = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function lensStyle(el, ad, opOverride) {
+  const key = ad.toFixed(3) + (opOverride ?? '');
+  if (el._lens === key) return;
+  el._lens = key;
+  el.style.setProperty('--op', opOverride ?? Math.max(0.12, 1 - ad * 0.32).toFixed(3));
+  el.style.setProperty('--bl', reduceIntro ? '0px' : Math.min(7, ad * 3.4).toFixed(2) + 'px');
+  const ab = reduceIntro ? 0 : Math.min(4.5, ad * 2.8);
+  el.style.setProperty('--ab', ab > 0.25 ? `${ab.toFixed(1)}px 0 rgba(255,40,90,.5), ${(-ab).toFixed(1)}px 0 rgba(0,180,255,.5)` : 'none');
+}
+const introEl = document.querySelector('.intro'), introList = document.getElementById('introList'), introItems = [...introList.children].filter(el => el.id !== 'introNext'), introNext = document.getElementById('introNext'), introPin = introEl.querySelector('.intro-pin');
+let introF = 1, introV = 0, introMetrics = [];
+let nextTop = 0;
+function cacheIntro() { introMetrics = introItems.map(el => el.offsetTop + el.offsetHeight); nextTop = introNext.offsetTop; }
+cacheIntro();
+document.fonts && document.fonts.ready.then(cacheIntro);
+// layout reads for one frame, taken before any style writes
+const geo = { reel: 0, intro: 0, last: 0, head: 0, next: 0 };
+function measureGeo() {
+  geo.reel = document.getElementById('skills').getBoundingClientRect().top;
+  geo.intro = introEl.getBoundingClientRect().top;
+  geo.last = introItems[introItems.length - 1].getBoundingClientRect().bottom;
+  geo.head = document.querySelector('.reel-head').getBoundingClientRect().top;
+  geo.next = introNext.getBoundingClientRect().top;
+}
+const introLen = () => Math.max(1, introEl.offsetHeight - innerHeight);
+// the greeting and the first line show from the start; each further line reveals as you scroll
+const introTarget = () => 1 + Math.min(1, Math.max(0, -geo.intro / introLen())) * (introItems.length - 2);
+function paintIntro() {
+  if (reduceIntro) return;
+  const f = introF, i0 = Math.floor(f), i1 = Math.min(introItems.length - 1, i0 + 1), u = f - i0;
+  const edge = introMetrics[i0] + (introMetrics[i1] - introMetrics[i0]) * u;
+  const h = introPin.clientHeight, top0 = h * 0.16;
+  // the list position follows the scroll itself (the lines' focus keeps its soft spring), so it never lags or jitters
+  const n = introItems.length, fr = Math.min(n - 1, Math.max(1, introTarget()));
+  const lyAt = x => {
+    const j0 = Math.floor(x), j1 = Math.min(n - 1, j0 + 1), ed = introMetrics[j0] + (introMetrics[j1] - introMetrics[j0]) * (x - j0);
+    return Math.min(top0, h * 0.8 - ed);
+  };
+  // over the last three lines one smooth curve takes over: the skills heading comes into view under the text, very
+  // blurred, and rises to its place in the reel, reaching it with the speed of the scroll just as the intro lets go,
+  // so it never stalls or jumps
+  const A0 = n - 4, step = introLen() / (n - 2), L = n - 1 - A0;
+  let ly;
+  if (fr <= A0) ly = lyAt(fr);
+  else {
+    const y0 = lyAt(A0), m0 = (lyAt(A0) - lyAt(A0 - 0.02)) / 0.02, y1 = geo.head - nextTop, m1 = -step, u = (fr - A0) / L;
+    ly = (2 * u ** 3 - 3 * u * u + 1) * y0 + (u ** 3 - 2 * u * u + u) * L * m0 + (-2 * u ** 3 + 3 * u * u) * y1 + (u ** 3 - u * u) * L * m1;
+  }
+  introList.style.setProperty('--ly', ly.toFixed(1) + 'px');
+  // revealed lines stay sharp; the next line sharpens out of blur as you scroll, later ones wait faintly
+  introItems.forEach((el, i) => {
+    const ad = Math.max(0, i - f);
+    lensStyle(el, ad, ad > 1 ? Math.max(0, 0.68 - (ad - 1) * 0.6).toFixed(3) : undefined);
+  });
+}
+function stepIntro(dt) {
+  const target = introTarget();
+  if (reduceIntro) { introF = target; return; }
+  const steps = Math.min(8, Math.ceil(dt / (1 / 60))), h = dt / steps;
+  for (let i = 0; i < steps; i++) { introV += ((target - introF) * 38 - introV * 2 * Math.sqrt(38) * 0.95) * h; introF += introV * h; }
+}
+paintIntro();
+addEventListener('resize', () => { cacheIntro(); paintIntro(); });
+
+// ---- skills reel ----
+const reelHead = document.getElementById('reelTitle');
+const reelEl = document.getElementById('skills'), reelItems = [...reelEl.querySelectorAll('.reel-item')];
+const reelCanvas = document.getElementById('reelCanvas'), reelDetail = document.getElementById('reelDetail'), labelBox = document.getElementById('reelLabels');
+// formations along the scroll: out-of-focus atoms, molecules -> network -> energy surface for AI,
+// the rings then the grid of real illustrations, the demo, the lecture room
+const CAP_ORDER = ['ai', 'viz', 'demo', 'learn'], STOPS = 7;
+const ITEM_STOP = [null, 1, 3, 5, 6];                       // where each picker entry sits on the formation track
+const SKILL = {
+  ai: 'I am a chemist first, fluent in AI, with 10+ years of research across fields: a PhD in molecular design and chemical bonding, postdoc/staff years at LANL on MLIPs, excited states and surface chemistry, and now technical marketing, where technical depth meets the visual language of science. Day to day I use AI agents for coding and simulations, and I keep their work within scientific bounds and reality-check the results.',
+  viz: 'I poured countless hours into graphics even during my PhD: it was fun, and it helped me communicate my science better. I started in PowerPoint and added the full stack over time, where a hand-drawn sketch gradually turns into motion design or a render [and you can guess that I love coffee]. You will rarely find me generating raster AI images: I love the crispness and control of vector graphics and 3D scenes.',
+  demo: 'I build demos around one clear result, often from a select partner collaboration. Interactive, hand-curated and backed by real simulations, they tell a visual story about new technology and how it shapes chemical and materials discovery.',
+  learn: 'I create tutorials and hands-on workshops for major conferences and events, from first install to a working GPU-accelerated simulation. I like to mix hands-on practice, because what we know still grows with the time we put in, with agentic approaches where the audience builds a whole research pipeline in a couple of hours.'
+};
+// the demo's systems; energies and heights come from the engine's MOLS table
+const SYSTEMS = [['CO', 'CO'], ['NH3', 'NH<sub>3</sub>'], ['CO2', 'CO<sub>2</sub>'], ['N2', 'N<sub>2</sub>']];
+const SYS_HTML = Object.fromEntries(SYSTEMS);
+// how each molecule meets the surface (every site is a top site): the suffix names the engine's variant
+const ORIENT = { CO: [['', 'C down'], ['O', 'O down']], NH3: [['', 'N down'], ['H', 'H down']], CO2: [['', 'flat'], ['O', 'end-on']], N2: [['', 'flat'], ['N', 'end-on']] };
+const vname = k => { const o = ORIENT[k][demoApp.orient[k] || 0][0]; return o ? `${k}@${o}` : k; };
+const ELEMENTS = [['Cu', '#B8703F'], ['C', '#5B6578'], ['O', '#D9553F'], ['N', '#4F74D6'], ['H', '#F2F4F8']];
+const autoPlayed = new Set();
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); kids.forEach(k => e.append(k)); return e; };
+const fmt = (x, d = 2) => (x < 0 ? '&minus;' : '') + Math.abs(x).toFixed(d);
+// height above the surface; a molecule that desorbed has none
+const fmtH = r => r.h == null ? '&ndash;' : r.h.toFixed(2);
+const kind = r => r.binds ? 'chemisorbed' : r.desorbed ? 'desorbed' : 'physisorbed';
+// the demo as a small app window: select systems, relax them, read the results
+// results and progress are kept per variant (system and orientation), so each orientation keeps its own saved result
+const demoApp = { screen: 'select', picked: new Set(['CO', 'NH3', 'CO2']), orient: {}, prog: {}, results: {}, running: false, views: {} };
+const STEP_NAMES = ['select', 'relax', 'results'];
+function buildDemo(box, act) {
+  // the step names double as tabs: results open as soon as one system is done
+  const steps = el('ol', { className: 'app-steps' }, ...STEP_NAMES.map((s, i) => el('li', {}, el('button', { type: 'button', textContent: `${i + 1} ${s}`, onclick: () => show(s) }))));
+  const body = el('div', { className: 'app-body' });
+  const legend = el('ul', { className: 'legend' }, ...ELEMENTS.map(([sym, c]) => { const li = el('li', {}, el('i'), sym); li.firstChild.style.setProperty('--c', c); return li; }));
+  const app = el('div', { className: 'app', id: 'demoApp' }, el('div', { className: 'app-bar' }, el('span', { className: 'app-title', innerHTML: 'adsorption on Cu(100)' }), steps), body, el('div', { className: 'app-foot' }, legend));
+  box.append(app);
+  const ready = () => [...demoApp.picked].some(k => demoApp.results[vname(k)]);
+  function tabs() {
+    const ok = { select: true, relax: demoApp.running || Object.keys(demoApp.prog).length > 0, results: ready() };
+    [...steps.children].forEach((li, i) => { li.classList.toggle('on', STEP_NAMES[i] === demoApp.screen); li.firstChild.disabled = !ok[STEP_NAMES[i]]; });
+  }
+  const status = k => { const r = demoApp.results[k], p = demoApp.prog[k]; return r ? (p && p.saved ? 'saved' : 'converged') : p ? (p.step ? `step ${p.step}/${p.steps}` : p.st || 'queued') : 'ready'; };
+  function show(screen) {
+    demoApp.screen = screen;
+    tabs();
+    body.replaceChildren();
+    const head = third => el('div', { className: 'app-row app-head', innerHTML: `<span></span><b>system</b><span>${third}</span><span class="r">E<sub>ads</sub>, eV</span><span class="r">h, &Aring;</span><span class="r">status</span>` });
+    if (screen === 'select') {
+      const list = el('div', { className: 'app-list' }, head('facing'), ...SYSTEMS.map(([k, label]) => {
+        const cb = el('input', { type: 'checkbox', checked: demoApp.picked.has(k), onchange: () => { cb.checked ? demoApp.picked.add(k) : demoApp.picked.delete(k); label_(); tabs(); } });
+        const r = demoApp.results[vname(k)];
+        // the orientation toggles between the molecule's two ways onto the surface
+        const or = el('button', { type: 'button', className: 'app-orient', textContent: ORIENT[k][demoApp.orient[k] || 0][1], title: 'Which way the molecule meets the surface', onclick: e => { e.preventDefault(); demoApp.orient[k] = ((demoApp.orient[k] || 0) + 1) % ORIENT[k].length; show('select'); } });
+        return el('label', { className: 'app-row' }, cb, el('b', { innerHTML: label }), or, el('span', { className: 'r', innerHTML: r ? fmt(r.e) : '' }), el('span', { className: 'r', innerHTML: r ? fmtH(r) : '' }), el('span', { className: 'r' + (r && r.binds ? ' ok' : ''), textContent: r ? 'saved' : 'ready' }));
+      }));
+      const go = el('button', { type: 'button', className: 'ctl primary', onclick: () => run() });
+      // systems with saved results are not relaxed again
+      const label_ = () => { const n = [...demoApp.picked].filter(k => !demoApp.results[vname(k)]).length; go.disabled = !demoApp.picked.size || !reel3d; go.textContent = n ? `Relax ${n} system${n === 1 ? '' : 's'}` : 'Show results'; };
+      label_();
+      body.append(el('div', { className: 'app-main' }, list, el('div', { className: 'app-actions' }, go)), params());
+    }
+    if (screen === 'relax') {
+      demoApp.rows = {};
+      body.append(el('div', { className: 'app-main' }, el('div', { className: 'app-list' }, head('progress'), ...[...demoApp.picked].map(b => {
+        const k = vname(b);
+        const bar = el('i'), e = el('span', { className: 'r' }), h = el('span', { className: 'r' }), st = el('span', { className: 'r' });
+        demoApp.rows[k] = { bar, e, h, st };
+        paintRow(k);
+        return el('div', { className: 'app-row' }, el('span'), el('b', { innerHTML: SYS_HTML[b] }), el('span', { className: 'app-bar-track' }, bar), e, h, st);
+      }))), params());
+    }
+    if (screen === 'results') {
+      const rows = [...demoApp.picked].map(b => { const k = vname(b), r = demoApp.results[k]; return el('div', { className: 'app-row app-res', innerHTML: r ? `<span></span><b>${SYS_HTML[b]}</b><span class="app-bar-track"><i style="width:100%;background:${r.binds ? '#3FA96B' : 'var(--faint)'}"></i></span><span class="r">${fmt(r.e)}</span><span class="r">${fmtH(r)}</span><span class="r ${r.binds ? 'ok' : ''}">${kind(r)}</span>` : `<span></span><b>${SYS_HTML[b]}</b><span class="app-bar-track"></span><span class="r"></span><span class="r"></span><span class="r">${status(k)}</span>` }); });
+      body.append(el('div', { className: 'app-main' }, el('div', { className: 'app-list' }, head('converged'), ...rows), el('div', { className: 'app-actions' }, el('button', { type: 'button', className: 'ctl', textContent: 'New run', disabled: demoApp.running, onclick: () => { act('reset'); demoApp.results = {}; demoApp.prog = {}; demoApp.views = {}; show('select'); } }))), params());
+    }
+  }
+  function paintRow(k) {
+    const row = demoApp.rows && demoApp.rows[k];
+    if (!row) return;
+    const p = demoApp.prog[k] || {}, r = demoApp.results[k], v = r || p;
+    row.bar.style.width = (r ? 100 : p.steps ? 100 * p.step / p.steps : 0).toFixed(0) + '%';
+    row.e.innerHTML = v.e !== undefined ? fmt(v.e) : '';
+    row.h.innerHTML = v.h !== undefined ? fmtH(v) : '';
+    row.st.textContent = status(k);
+    row.st.classList.toggle('ok', !!(r && r.binds));
+  }
+  demoApp.paintRow = paintRow; demoApp.tabs = tabs;
+  // in the right corner, the surface seen from above: grey where nothing interacts; the molecules come down onto
+  // their sites, and where one binds the copper takes its colour and glows green
+  function params() {
+    const fig = el('figure', { className: 'app-top' });
+    fig.innerHTML = `<figcaption>top view</figcaption><svg id="topView" viewBox="0 0 100 100" aria-label="The adsorption site seen from above"></svg>`;
+    drawTop(fig.querySelector('svg'));
+    return fig;
+  }
+  function run() {
+    if (!reel3d || !demoApp.picked.size) return;
+    const todo = SYSTEMS.map(s => s[0]).filter(k => demoApp.picked.has(k) && !demoApp.results[vname(k)]).map(vname);
+    demoApp.prog = {}; demoApp.views = {};
+    demoApp.picked.forEach(b => { const k = vname(b); demoApp.prog[k] = demoApp.results[k] ? { saved: true } : { st: 'queued' }; });
+    if (!todo.length) { show('results'); return; }
+    demoApp.running = true;
+    show('relax');
+    act('run', todo);
+  }
+  demoApp.show = show; demoApp.run = run;
+  show(demoApp.screen === 'relax' && !demoApp.running ? 'select' : demoApp.screen);
+}
+// the Cu(100) surface from above, 7 x 7 top atoms with the layer below showing through the hollows (1 A is about
+// 5.6 units here). The surface stays grey; a bound molecule shows as a green glow around its site
+const TOP_MOLS = {
+  CO: [['C', 0, 0, 3.9], ['O', 1, -1, 4.3]],
+  NH3: [['N', 0, 0, 4.3], ['H', 0, -5.3, 2.6], ['H', 4.6, 2.6, 2.6], ['H', -4.6, 2.6, 2.6]],
+  CO2: [['C', 0, 0, 3.9], ['O', -6.5, 0, 4.3], ['O', 6.5, 0, 4.3]],
+  N2: [['N', -3.1, 0, 4.1], ['N', 3.1, 0, 4.1]],
+  'CO@O': [['O', 0, 0, 4.3], ['C', 1, -1, 3.9]],
+  'NH3@H': [['H', 0, -5.3, 2.6], ['H', 4.6, 2.6, 2.6], ['H', -4.6, 2.6, 2.6], ['N', 0, 0, 4.3]],
+  'CO2@O': [['O', 0, 0, 4.3], ['C', 0.6, -0.6, 3.9], ['O', 1.2, -1.2, 4.3]],
+  'N2@N': [['N', 0, 0, 4.1], ['N', 0.8, -0.8, 4.1]]
+};
+const ECOL = Object.fromEntries(ELEMENTS), TV = 100 / 7;
+const tvXY = site => [50 + site[0] * TV, 50 + site[1] * TV];
+const tvMol = (name, v) => {
+  const [x, y] = tvXY(v.site), near = v.st === 'near', s = near ? 1 + 0.35 * (1 - v.n) : v.st === 'phys' ? 1.1 : 1, op = near ? 0.45 + 0.4 * v.n : v.st === 'phys' ? 0.75 : 1;
+  return `<g id="tm-${name}" opacity="${op.toFixed(2)}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${s.toFixed(3)})">` + TOP_MOLS[name].map(([e, mx, my, r]) => `<circle cx="${mx}" cy="${my}" r="${r}" fill="${ECOL[e]}" stroke="rgba(0,0,0,.35)" stroke-width=".7"/>`).join('') + '</g>';
+};
+function drawTop(svg) {
+  if (!svg) return;
+  const views = Object.entries(demoApp.views), bound = views.filter(([, v]) => v.st === 'bound');
+  const atomsAt = (fill, below) => {
+    let h = '';
+    for (let i = 0; i <= 7; i++) for (let j = 0; j <= 7; j++) h += `<circle cx="${(i * TV).toFixed(1)}" cy="${(j * TV).toFixed(1)}" r="6.1" fill="${below}"/>`;
+    for (let i = 0; i < 7; i++) for (let j = 0; j < 7; j++) h += `<circle cx="${(TV / 2 + i * TV).toFixed(1)}" cy="${(TV / 2 + j * TV).toFixed(1)}" r="6.7" fill="${fill}"/>`;
+    return h;
+  };
+  let h = `<defs>
+    <radialGradient id="tvGrey" cx="38%" cy="34%" r="70%"><stop offset="0" stop-color="#9DA3AC"/><stop offset=".6" stop-color="#737983"/><stop offset="1" stop-color="#4D525A"/></radialGradient>
+    <radialGradient id="tvGlow"><stop offset="0" stop-color="#3FA96B" stop-opacity=".8"/><stop offset=".55" stop-color="#3FA96B" stop-opacity=".3"/><stop offset="1" stop-color="#3FA96B" stop-opacity="0"/></radialGradient>
+    </defs>
+    <rect width="100" height="100" fill="#2b2e33"/>${atomsAt('url(#tvGrey)', '#41454c')}`;
+  h += bound.map(([, v]) => { const [x, y] = tvXY(v.site); return `<circle cx="${x}" cy="${y}" r="17" fill="url(#tvGlow)"/>`; }).join('');
+  if (!views.length) h += `<circle cx="50" cy="50" r="9" fill="none" stroke="#F2F4F8" stroke-opacity=".6" stroke-width="1" stroke-dasharray="2.6 2"/>`;
+  h += views.map(([name, v]) => tvMol(name, v)).join('');
+  svg.innerHTML = h;
+}
+function demoInfo(d) {
+  const p = d.name && (demoApp.prog[d.name] = demoApp.prog[d.name] || {});
+  // each system is its own calculation, so the top view shows the current one alone on the surface
+  if (d.type === 'start') { p.st = 'relaxing'; demoApp.views = { [d.name]: { site: [0, 0], st: 'near', n: 0 } }; drawTop(document.getElementById('topView')); }
+  if (d.type === 'step') {
+    Object.assign(p, { step: d.step, steps: d.steps, e: d.e, h: d.h });
+    // the molecule comes down as the optimiser steps
+    const tv = demoApp.views[d.name], g = !d.done && tv && document.getElementById('tm-' + d.name);
+    if (tv) tv.n = d.step / d.steps;
+    if (g) g.outerHTML = tvMol(d.name, tv);
+    if (d.done) {
+      demoApp.results[d.name] = { e: d.e, h: d.h, binds: d.binds, desorbed: d.desorbed };
+      if (tv) tv.st = d.binds ? 'bound' : 'phys';
+      // a molecule that drifted out of the cell is gone from the surface too
+      if (d.desorbed) delete demoApp.views[d.name];
+      drawTop(document.getElementById('topView'));
+      if (demoApp.screen === 'results' && demoApp.show) demoApp.show('results');
+      if (demoApp.tabs) demoApp.tabs();
+    }
+  }
+  if (d.name && demoApp.paintRow) demoApp.paintRow(d.name);
+  if (d.type === 'end') {
+    demoApp.running = false;
+    if (demoApp.screen === 'results' && demoApp.show) demoApp.show('results');
+    if (demoApp.tabs) demoApp.tabs();
+    setTimeout(() => { if (demoApp.screen === 'relax' && demoApp.show) demoApp.show('results'); }, 700);
+  }
+}
+function buildControls(name) {
+  const box = document.getElementById('reelControls'), act = (a, v) => reel3d && reel3d.act(name, a, v);
+  box.replaceChildren();
+  if (name === 'demo') buildDemo(box, act);
+  box.querySelectorAll('.ctl-range input, :scope > button').forEach(c => { c.disabled = !reel3d; });
+}
+const rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches, touch = window.matchMedia('(pointer: coarse)').matches;
+const clampN = (v, a, b) => Math.min(b, Math.max(a, v));
+let stopF = 0, stopV = 0, shown = -2, reel3d = null, reelRaf = 0, reelVisible = false, lastFrame = 0;
+// the reel shares its top with the intro; its own track starts once the intro lets go of its pin
+// scroll weight of each transition (the surface turning into tokens is twice as long), with the illustration's own
+// stretch inserted after stop 4
+const DWELL_AT = 4, SEGS = [0.6, 1, 2, 1, 1.6, 1, 1];
+let illScrub = 0;
+const stopFrac = st => SEGS.slice(0, st + (st > DWELL_AT ? 1 : 0)).reduce((a, b) => a + b, 0) / SEGS.reduce((a, b) => a + b, 0);
+function readStop() {
+  const lead = introLen(), total = reelEl.offsetHeight - innerHeight - lead;
+  // some transitions get more scroll than others: the surface turning into tokens is twice as long
+  // the illustration (stop 4) has its own stretch of scroll (DWELL): there the scene stays and the scroll drives its
+  // timeline, so the clay forms, the shutter fires and the render arrives even for a reader who keeps scrolling
+  const f = clampN((-geo.reel - lead) / total, 0, 1), sum = SEGS.reduce((a, b) => a + b, 0);
+  let acc = 0, i = 0;
+  while (i < SEGS.length - 1 && f > (acc + SEGS[i]) / sum) { acc += SEGS[i]; i++; }
+  const x = clampN((f - acc / sum) / (SEGS[i] / sum), 0, 1);
+  illScrub = i < DWELL_AT ? 0 : i > DWELL_AT ? 1 : x;
+  if (i === DWELL_AT) return DWELL_AT;
+  const k = i > DWELL_AT ? i - 1 : i;
+  // detents: around each finished scene a stretch of scroll changes nothing, so small scrolls keep the picture whole
+  const HOLD = 0.22, u = clampN((x - HOLD) / (1 - 2 * HOLD), 0, 1);
+  return Math.min(STOPS - 1, k + u * u * (3 - 2 * u));
+}
+// picker position for a formation position: holds on the AI entry while its three formations play
+function pickerPos(f) {
+  // the heading passes while the atoms zoom into the molecules, then the AI entry holds through its three scenes
+  const K = [[0, -1], [1, 0], [2, 0], [3, 1], [4, 1], [5, 2], [6, 3]];
+  for (let i = 1; i < K.length; i++) if (f <= K[i][0]) { const [a, pa] = K[i - 1], [b, pb] = K[i]; return pa + (pb - pa) * (f - a) / (b - a); }
+  return 3;
+}
+function paintPicker() {
+  const pf = pickerPos(stopF);
+  // the picker stays out of the way while the intro sits over the atoms
+  // the blurred heading under the intro sharpens as it rises, then hands over to the reel heading in the same spot
+  let headOp;
+  if (rm) headOp = Math.min(1, Math.max(0, (geo.head - geo.last) / 120));
+  else {
+    const dist = geo.next - geo.head, t = Math.min(1, Math.max(0, dist / (innerHeight * 0.55)));
+    headOp = Math.min(1, Math.max(0, 1 - dist / 24));
+    const op = ((0.5 + 0.5 * (1 - t)) * (1 - headOp)).toFixed(3), bl = (8 * t).toFixed(2) + 'px';
+    if (introNext._k !== op + bl) { introNext._k = op + bl; introNext.style.setProperty('--op', op); introNext.style.setProperty('--bl', bl); }
+  }
+  reelHead.style.opacity = headOp.toFixed(3);
+  // the skill's text waits for the heading too
+  reelDetail.style.opacity = rm ? '' : Math.min(1, headOp * 1.5).toFixed(3);
+  reelList.style.opacity = Math.min(headOp, Math.max(0, (stopF - 0.35) / 0.55)).toFixed(3);
+  reelItems.forEach((el, i) => {
+    const d = i - pf, ad = Math.abs(d);
+    // skip the style writes when this item has not moved since the last frame
+    const key = d.toFixed(3);
+    if (el._pk === key) return;
+    el._pk = key;
+    el.style.setProperty('--y', `calc(-50% + ${(Math.sign(d) * Math.pow(ad, 0.8) * 104).toFixed(1)}px)`);
+    el.style.setProperty('--s', (1 - Math.min(ad, 2.2) * 0.15).toFixed(3));
+    el.style.setProperty('--o', Math.max(0, 1 - ad * 0.32).toFixed(2));
+    el.style.setProperty('--b', rm ? '0px' : Math.min(7, ad * 3.4).toFixed(2) + 'px');
+    const ab = rm ? 0 : Math.min(4.5, ad * 2.8);
+    el.style.setProperty('--ab', ab > 0.25 ? `${ab.toFixed(1)}px 0 rgba(255,40,90,.5), ${(-ab).toFixed(1)}px 0 rgba(0,180,255,.5)` : 'none');
+    if (ad < 0.5) el.setAttribute('aria-current', 'step'); else el.removeAttribute('aria-current');
+  });
+  // the first skill's text waits until its name has nearly arrived, so it never overlaps the intro
+  const idx = pf < -0.2 ? -1 : Math.max(0, Math.round(pf));
+  if (idx !== shown) {
+    shown = idx;
+    if (idx < 0) { reelDetail.hidden = true; }
+    else {
+      const name = CAP_ORDER[idx];
+      document.getElementById('reelDesc').textContent = SKILL[name];
+      document.getElementById('reelReadout').textContent = '';
+      buildControls(name);
+      reelDetail.classList.toggle('wide', name === 'demo');
+      reelDetail.hidden = false;
+      if (reel3d) {
+        reel3d.refresh(name);
+        // each demo plays once by itself the first time its skill comes into focus
+        if (!autoPlayed.has(name)) {
+          autoPlayed.add(name);
+          setTimeout(() => {
+            if (shown !== idx) return;
+          }, name === 'demo' ? 1100 : 700);
+        }
+      }
+      if (!rm) animate(reelDetail.children, { opacity: [0, 1], translateY: [10, 0], duration: 520, ease: 'outExpo', delay: stagger(60) });
+    }
+    measureFrame();
+  }
+  if (reel3d) reel3d.setStop(stopF);
+}
+// the free area for the cloud: right of the picker and above the detail block on desktop,
+// between the picker and the detail block on phones; values are fractions of the canvas
+let frameWant = { x: 0, y: 0, w: 0.55, h: 0.6 }, frameNow = null;
+// CSS already lays the overlap out; this only corrects it if the real viewport differs (phone toolbars, reduced motion)
+function overlapIntro() {
+  const off = reelEl.getBoundingClientRect().top - introEl.getBoundingClientRect().top, want = 995 * innerHeight / 100 + introLen();
+  if (Math.abs(off) > 1) reelEl.style.marginTop = (parseFloat(getComputedStyle(reelEl).marginTop) - off) + 'px';
+  if (Math.abs(reelEl.offsetHeight - want) > 1) reelEl.style.height = want + 'px';
+}
+overlapIntro();
+addEventListener('resize', overlapIntro);
+document.fonts && document.fonts.ready.then(overlapIntro);
+const reelList = reelEl.querySelector('.reel-list'), pickerEl = reelEl.querySelector('.reel-picker'), stageEl = reelEl.querySelector('.reel-stage');
+function measureFrame() {
+  const c = reelCanvas.getBoundingClientRect(), wide = innerWidth >= 900;
+  if (!c.width || !c.height) return;
+  const p = pickerEl.getBoundingClientRect(), st = stageEl.getBoundingClientRect(), d = reelDetail.getBoundingClientRect();
+  const left = wide ? st.left : c.left, right = c.right - (wide ? 16 : 0);
+  // the demo's cell sits close above its app card and takes a little more of the space
+  const demo = CAP_ORDER[shown] === 'demo';
+  const top = wide ? c.top + c.height * (demo ? 0.03 : 0.05) : p.bottom - 8;
+  const bottom = shown >= 0 ? Math.min(c.bottom, d.top) - (demo ? 0 : 14) : c.bottom - c.height * 0.08;
+  frameWant = { x: ((left + right) / 2 - c.left) / c.width - 0.5, y: ((top + bottom) / 2 - c.top) / c.height - 0.5,
+    w: Math.max(0.2, (right - left) / c.width * 0.9), h: Math.max(0.18, (bottom - top) / c.height * (demo ? 0.98 : 0.9)) };
+}
+let canvasW = 1, canvasH = 1;
+new ResizeObserver(([e]) => { canvasW = e.contentRect.width; canvasH = e.contentRect.height; }).observe(reelCanvas);
+const finderEl = document.getElementById('finder');
+function placeFinder() {
+  if (!frameNow || finderEl.style.opacity === '' || +finderEl.style.opacity < 0.01) return;
+  // the frame takes the whole shot area, so it never crops the molecule
+  const fw = frameNow.w * canvasW, fh = frameNow.h * canvasH, w = fw * 1.04, h = fh * 1.08;
+  const left = (0.5 + frameNow.x) * canvasW - w / 2, top = (0.5 + frameNow.y) * canvasH - h / 2;
+  const key = `${left.toFixed(0)},${top.toFixed(0)},${w.toFixed(0)}`;
+  if (key === placeFinder.k) return;
+  placeFinder.k = key;
+  Object.assign(finderEl.style, { transform: `translate(${left.toFixed(1)}px, ${top.toFixed(1)}px) scale(${finderEl.dataset.scale || 1})`, width: w.toFixed(1) + 'px', height: h.toFixed(1) + 'px' });
+}
+// ---- the illustration photo ----
+// after the shutter, a render bar fills and the clay viewport is swapped for the Blender render; scrolling on breaks
+// the photo into soft pixels (scroll back and they come together again)
+const shotEl = document.getElementById('shot'), shotImg = shotEl.querySelector('img'), shotCv = shotEl.querySelector('canvas');
+// the dissolve: the photo on a canvas, cut away cell by cell at the moments the 3D points take over those cells
+const peel = { cells: null, shown: null };
+function preparePeel() {
+  const info = reel3d && reel3d.photoPoints(shotImg);
+  if (!info) { peel.cells = null; return; }
+  // the peel canvas matches the photo's size on screen (not the 2400 px file), so redrawing cells stays cheap
+  const r = reel3d.photoRect(), k = Math.min(1.5, window.devicePixelRatio || 1);
+  shotCv.width = Math.min(shotImg.naturalWidth, Math.round(r.w * k)); shotCv.height = Math.min(shotImg.naturalHeight, Math.round(r.h * k));
+  shotCv.getContext('2d').drawImage(shotImg, 0, 0, shotCv.width, shotCv.height);
+  peel.cells = info; peel.shown = new Uint8Array(info.GW * info.GH).fill(1);
+}
+function peelTo(p) {
+  const c = peel.cells; if (!c) return;
+  const g = shotCv.getContext('2d'), cw = shotCv.width / c.GW, ch = shotCv.height / c.GH;
+  for (let k = 0; k < c.start.length; k++) {
+    const want = c.start[k] * 0.6 > p ? 1 : 0;
+    if (want === peel.shown[k]) continue;
+    peel.shown[k] = want;
+    const i = k % c.GW, j = (k / c.GW) | 0, x0 = Math.round(i * cw), y0 = Math.round(j * ch), w = Math.round((i + 1) * cw) - x0, h = Math.round((j + 1) * ch) - y0;
+    if (want) { const sx = shotImg.naturalWidth / shotCv.width, sy = shotImg.naturalHeight / shotCv.height; g.drawImage(shotImg, x0 * sx, y0 * sy, w * sx, h * sy, x0, y0, w, h); } else g.clearRect(x0, y0, w, h);
+  }
+}
+const photo = { on: false, ready: false, timer: 0, src: '' };
+function photoSrc() {
+  const dark = document.documentElement.dataset.theme === 'dark', big = (shotEl.offsetWidth || innerWidth) * (window.devicePixelRatio || 1) > 1300;
+  return `img/illus-${dark ? 'dark' : 'light'}${big ? '' : '-1200'}.webp`;
+}
+// the clip runs from the canvas's left edge to the window's right edge
+const shotClip = shotEl.parentElement;
+function fitClip() { shotClip.style.width = Math.max(0, document.documentElement.clientWidth - reelCanvas.getBoundingClientRect().left) + 'px'; }
+function loadPhoto() {
+  fitClip();
+  const src = photoSrc();
+  if (photo.src === src) return;
+  photo.src = src; photo.ready = false;
+  // the 2400 px photo decodes off the main thread, and the peel cells are cut when the page is idle: done straight
+  // from onload, the first draw decoded it on the main thread in the middle of a scroll
+  shotImg.onload = () => { photo.ready = true; shotImg.decode().catch(() => {}).then(() => (window.requestIdleCallback || setTimeout)(preparePeel, { timeout: 800 })); };
+  shotImg.onerror = () => { photo.ready = false; };
+  shotImg.src = src;
+}
+new MutationObserver(() => { if (photo.src) loadPhoto(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+addEventListener('resize', () => { if (photo.src) loadPhoto(); });
+// the shutter: the curtains close and flash; the render bar and the photo then follow the illustration's timeline
+function shotTaken() {
+  if (photo.on) return;
+  if (rm) { photo.on = photo.ready; shotEl.classList.toggle('on', photo.on); if (reel3d) reel3d.setPhoto(photo.on); return; }
+  finderEl.classList.remove('snap', 'done'); void finderEl.offsetWidth; finderEl.classList.add('snap');
+}
+// the render replaces the clay frame at the peak of the shutter's flash, so the swap itself is hidden under the white
+function paintRender() {
+  if (rm || photo.on || !photo.ready) return;
+  const T = reel3d.illT, S0 = reel3d.shotAt;
+  if (T < 0 || T < S0 + 0.16) return;
+  finderEl.classList.add('done');
+  photo.on = true; shotImg.style.opacity = ''; shotEl.classList.add('on');
+  reel3d.setPhoto(true, true);
+}
+function paintPhoto() {
+  if (!reel3d) return;
+  // the photo is picked once (size and theme); a resize or a theme switch picks again
+  if (stopF > 2.5 && !photo.src) loadPhoto();
+  reel3d.setScrub(illScrub);
+  paintRender();
+  // how far the scroll has left the illustration: 0 on it, 1 a whole scene away (same easing as the 3D blend)
+  const d = Math.min(1, Math.abs(stopF - 4)), e = Math.min(1, Math.max(0, (d - 0.1) / 0.8)), p = e * e * (3 - 2 * e);
+  if (photo.on && p >= 0.999) { photo.on = false; shotEl.classList.remove('on'); finderEl.classList.remove('done'); reel3d.setPhoto(false); reel3d.photoDissolve(1); shotImg.style.opacity = '0'; shotCv.style.visibility = 'hidden'; peelTo(0); }
+  if (!photo.on) return;
+  const r = reel3d.photoRect(), key = `${r.cx.toFixed(0)},${r.cy.toFixed(0)},${r.h.toFixed(0)}`;
+  if (paintPhoto.k !== key) { paintPhoto.k = key; Object.assign(shotEl.style, { width: r.w.toFixed(1) + 'px', height: r.h.toFixed(1) + 'px', transform: `translate(${(r.cx - r.w / 2).toFixed(1)}px, ${(r.cy - r.h / 2).toFixed(1)}px)` }); }
+  // scrolling on, the photo comes apart cell by cell: each cell leaves the picture as a soft glowing point in the 3D
+  // scene and drifts away; until its moment the picture stays whole
+  if (rm) { shotEl.style.opacity = p < 0.5 ? '' : '0'; return; }
+  const breaking = p > 0.001 && peel.cells;
+  shotImg.style.visibility = breaking ? 'hidden' : '';
+  shotCv.style.visibility = breaking ? 'visible' : 'hidden';
+  if (peel.cells) peelTo(p);
+  reel3d.photoDissolve(p);
+}
+function paintFrame(dt) {
+  if (!reel3d) return;
+  if (!frameNow) frameNow = { ...frameWant };
+  const k = rm ? 1 : Math.min(1, dt * 3.5), t = Math.min(1, Math.max(0, stopF)), g = t * t * (3 - 2 * t);
+  for (const key in frameWant) frameNow[key] += (frameWant[key] - frameNow[key]) * k;
+  const band = { x: 0, y: 0, w: 1, h: 1 }, mix = key => band[key] + (frameNow[key] - band[key]) * g;
+  reel3d.setOffset(mix('x'), mix('y'));
+  // the atoms start as a soft, out-of-focus background and come into focus as the scroll zooms into them
+  const maxBlur = touch ? 20 : 32, focus = rm ? 0 : maxBlur * (1 - Math.min(1, Math.max(0, stopF / 0.75)));
+  // the blur runs inside the 3D renderer, so it can ease continuously without the browser re-blurring the page
+  reel3d.setDefocus(focus);
+  // the canvas fades in once after loading, then stays dimmed while out of focus
+  const fadeIn = rm ? 1 : Math.min(1, (performance.now() - (paintFrame.born ||= performance.now())) / 700);
+  // out of focus the background is dimmed, more so on the dark theme where bright spots stand out
+  const dim = document.documentElement.dataset.theme === 'dark' ? 0.84 : 0.62;
+  const op = (fadeIn * (1 - dim * focus / maxBlur)).toFixed(3);
+  // the works grid sits where the particles draw the tile frames and takes over from them
+  const opG = op;
+  if (opG !== paintFrame.op) { reelCanvas.style.opacity = opG; paintFrame.op = opG; }
+  reel3d.setFit(mix('w'), mix('h'));
+}
+addEventListener('resize', () => measureFrame());
+// short annotations that follow particles in the cloud
+const labelPool = [];
+function paintLabels() {
+  const L = reel3d ? reel3d.labels() : [];
+  while (labelPool.length < L.length) { const n = el('span', { className: 'reel-label' }); labelBox.append(n); labelPool.push(n); }
+  labelPool.forEach((n, i) => {
+    const l = L[i];
+    if (!l || l.alpha < 0.02) { n.style.opacity = 0; return; }
+    if (n.textContent !== l.text) n.textContent = l.text;
+    n.style.opacity = l.alpha.toFixed(2);
+    // keep each label inside the canvas
+    const w = n.offsetWidth, maxX = labelBox.clientWidth - w - 8;
+    const x = Math.max(8, Math.min(maxX, l.side === 'l' ? l.x - 14 - w : l.side === 'b' ? l.x - w / 2 : l.x + 10));
+    n.style.transform = `translate(${x.toFixed(1)}px, ${(l.side === 'b' ? l.y + 4 : l.y - 8).toFixed(1)}px)`;
+  });
+}
+function reelLoop(now) {
+  if (!reelVisible) { reelRaf = 0; return; }
+  reelRaf = requestAnimationFrame(reelLoop);
+  if (touch && now - lastFrame < 32) return;
+  lastFrame = now;
+  measureGeo();
+  // the displayed position chases the scroll position with a damped spring, so flicks glide instead of jumping
+  const target = readStop(), frameDt = Math.min(0.25, Math.max(1 / 240, (now - (reelLoop.t || now)) / 1000 || 1 / 60));
+  reelLoop.t = now;
+  if (rm) { stopF = target; stopV = 0; }
+  else {
+    const steps = Math.min(8, Math.ceil(frameDt / (1 / 60))), dt = frameDt / steps;
+    for (let i = 0; i < steps; i++) { stopV += ((target - stopF) * 38 - stopV * 2 * Math.sqrt(38) * 0.95) * dt; stopF += stopV * dt; }
+  }
+  const tA = PERF && performance.now();
+  stepIntro(frameDt); paintIntro();
+  paintPicker();
+  let tR = 0;
+  if (reel3d) {
+    paintFrame(frameDt);
+    placeFinder();
+    paintPhoto();
+    // full rate only while something moves: 20 fps for the out-of-focus background, 30 fps when the cloud is at rest
+    // draw only while something changes: scrolling, a running animation, particles still settling, a resize;
+    // after a short quiet spell the last frame stays on screen and the GPU rests
+    const still = Math.abs(stopV) < 0.002 && Math.abs(target - stopF) < 0.002;
+    reelLoop.quiet = still ? (reelLoop.quiet || 0) + frameDt : 0;
+    const resting = reel3d.motion < 0.004 && !reel3d.animating && Math.abs(stopV) < 0.003, gap = stopF <= 0.02 ? 48 : resting ? 32 : 0;
+    const asleep = reelLoop.quiet > 1.2 && reel3d.idle;
+    reelLoop.asleep = asleep && Math.abs(introF - introTarget()) < 0.001 && !perfOn;
+    if (!asleep && now - (reelLoop.r || 0) >= gap) { const t = PERF && performance.now(); reel3d.render(now); reelLoop.r = now; if (PERF) tR = performance.now() - t; }
+    paintLabels();
+  }
+  if (PERF) { PERF.push({ t: now, js: performance.now() - tA - tR, render: tR, stop: stopF }); if (PERF.length > 2000) PERF.splice(0, 1000); }
+  // nothing to do until the next scroll, resize or input: stop scheduling frames altogether
+  if (reelLoop.asleep) { cancelAnimationFrame(reelRaf); reelRaf = 0; }
+}
+function wakeReel() { reelLoop.quiet = 0; if (reelVisible && !reelRaf) { reelLoop.t = performance.now(); reelRaf = requestAnimationFrame(reelLoop); } }
+['scroll', 'resize', 'pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(ev => addEventListener(ev, wakeReel, { passive: true }));
+new MutationObserver(wakeReel).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'style'] });
+// ?perf in the address records per-frame timings in window.__perf, for measuring only
+let PERF = new URLSearchParams(location.search).has('perf') ? (window.__perf = []) : null;
+new IntersectionObserver(es => {
+  reelVisible = es[0].isIntersecting;
+  if (reelVisible && !reelRaf) reelRaf = requestAnimationFrame(reelLoop);
+}).observe(reelEl);
+reelEl.querySelectorAll('button[data-stop]').forEach(btn => btn.addEventListener('click', () => {
+  const top = reelEl.getBoundingClientRect().top + scrollY, total = reelEl.offsetHeight - innerHeight;
+  const st = ITEM_STOP[+btn.dataset.stop], frac = stopFrac(st);
+  window.scrollTo({ top: top + introLen() + frac * (total - introLen()), behavior: rm ? 'auto' : 'smooth' });
+}));
+// the scene follows the scroll only; skill names do not preview on hover, so pointing never breaks the flow
+paintPicker();
+// the particle cloud loads quietly once the page has settled
+const whenIdle = window.requestIdleCallback || (cb => setTimeout(cb, 800));
+const startReel = () => whenIdle(() => import('./reel3d.js').then(m => {
+  const r = m.initReel(reelCanvas, () => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
+  // the reel appears once its lighting is loaded and every shader is compiled, so the intro never stalls on it
+  return r && r.ready.then(() => showReel(r));
+}));
+function showReel(r) {
+  reel3d = r;
+  if (PERF) window.__reel = reel3d;   // measuring only
+  if (!reel3d) return;
+  reel3d.onInfo((name, data) => {
+    if (name === 'viz-wipe') { const r = document.getElementById('vizWipe'); if (r) r.value = Math.round(data * 100); return; }
+    if (name === 'demo') { demoInfo(data); return; }
+    if (name === 'ill-shot') { shotTaken(); return; }
+    if (name === 'ill-guides') { finderEl.style.opacity = Math.min(1, +data * 1.2).toFixed(3); finderEl.dataset.scale = (1.14 - 0.14 * Math.min(1, +data * 1.6)).toFixed(3); placeFinder.k = ''; return; }
+    if (CAP_ORDER[shown] === name) document.getElementById('reelReadout').textContent = data;
+  });
+  shown = -2;   // rebuild the current detail so its controls bind to the live reel
+  wakeReel();
+}
+document.readyState === 'complete' ? startReel() : window.addEventListener('load', startReel, { once: true });
+
+
+// ---- style panel: accents and typefaces, for quick comparison ----
+const ACCENTS = [
+  { name: 'Orange', c: '#FF8A3D', l: '#B4410A', d: '#FFA56A' },
+  { name: 'Cyan', c: '#2EC4D6', l: '#0B6F7C', d: '#6FE3EF' },
+  { name: 'Emerald', c: '#2FBF71', l: '#137A43', d: '#6EE0A0' },
+  { name: 'Cobalt', c: '#5B7BFF', l: '#2D46C4', d: '#9DB0FF' },
+  { name: 'Rose', c: '#F05A7E', l: '#B0244A', d: '#FF92AB' }
+];
+
+const FONTS = [
+  { name: 'Roboto + Roboto Mono', display: 'Roboto', secondary: 'Roboto Mono' },
+  { name: 'Familjen Grotesk', display: 'Familjen Grotesk' },
+  { name: 'Bricolage Grotesque', display: 'Bricolage Grotesque' },
+  { name: 'Schibsted Grotesk', display: 'Schibsted Grotesk' },
+  { name: 'Instrument Sans', display: 'Instrument Sans' }
+];
+const root = document.documentElement;
+const load = () => { try { return JSON.parse(localStorage.getItem('nf-style') || '{}'); } catch (e) { return {}; } };
+const save = v => { try { localStorage.setItem('nf-style', JSON.stringify({ ...load(), ...v })); } catch (e) {} };
+function setAccent(a) { root.style.setProperty('--accent', a.c); root.style.setProperty('--link-l', a.l); root.style.setProperty('--link-d', a.d); }
+function loadFamily(fam) {
+  if (fam === 'Roboto' || fam === 'Roboto Mono') return;   // already loaded by the page head
+  const id = 'font-' + fam.replace(/\s+/g, '-');
+  if (document.getElementById(id)) return;
+  const l = document.createElement('link');
+  l.id = id; l.rel = 'stylesheet';
+  l.href = 'https://fonts.googleapis.com/css2?family=' + fam.replace(/\s+/g, '+') + ':wght@400;500;600;700&display=swap';
+  document.head.append(l);
+}
+function setFont(f) {
+  loadFamily(f.display);
+  root.style.setProperty('--display', `'${f.display}', 'Segoe UI', system-ui, sans-serif`);
+  // every pairing keeps a mono face for the secondary voice
+  const mono = f.secondary || 'Roboto Mono';
+  loadFamily(mono);
+  root.style.setProperty('--secondary', `'${mono}', ui-monospace, Menlo, Consolas, monospace`);
+}
+const saved = load();
+if (saved.fontsV !== 2) { saved.font = 0; save({ fontsV: 2, font: 0 }); }
+const accentBox = document.getElementById('accents'), fontBox = document.getElementById('fonts');
+ACCENTS.forEach((a, i) => {
+  const lab = document.createElement('label');
+  lab.className = 'swatch';
+  lab.innerHTML = `<input type="radio" name="accent" id="accent-${i}" value="${i}"><span style="--c:${a.c}"></span>`;
+  lab.title = a.name;
+  lab.querySelector('input').setAttribute('aria-label', a.name);
+  lab.querySelector('input').checked = (saved.accent ?? 0) === i;
+  lab.querySelector('input').addEventListener('change', () => { setAccent(a); save({ accent: i }); });
+  accentBox.append(lab);
+});
+FONTS.forEach((f, i) => {
+  const lab = document.createElement('label');
+  lab.className = 'font-opt';
+  lab.innerHTML = `<input type="radio" name="font" id="font-opt-${i}" value="${i}"><span></span>`;
+  lab.querySelector('span').textContent = f.name;
+  lab.querySelector('span').style.fontFamily = `'${f.display}', system-ui, sans-serif`;
+  lab.querySelector('input').checked = (saved.font ?? 0) === i;
+  lab.querySelector('input').addEventListener('change', () => { setFont(f); save({ font: i }); });
+  fontBox.append(lab);
+});
+
+const TAGS = ['[by trial and render]', '[self-taught, GPU-assisted]', '[unlicensed]', '[in beta]', '[no formal training, lots of renders]'];
+const tagBox = document.getElementById('tags'), tagEm = document.querySelector('#tagline em');
+TAGS.forEach((t, i) => {
+  const lab = document.createElement('label');
+  lab.className = 'font-opt';
+  lab.innerHTML = `<input type="radio" name="tag" id="tag-opt-${i}" value="${i}"><span></span>`;
+  lab.querySelector('span').textContent = t;
+  lab.querySelector('input').checked = (saved.tag ?? 0) === i;
+  lab.querySelector('input').addEventListener('change', () => { tagEm.textContent = t; save({ tag: i }); });
+  tagBox.append(lab);
+});
+tagEm.textContent = TAGS[saved.tag ?? 0];
+setAccent(ACCENTS[saved.accent ?? 0]);
+setFont(FONTS[saved.font ?? 0]);
+const styleBtn = document.getElementById('styleBtn'), panel = document.getElementById('stylePanel');
+styleBtn.addEventListener('click', () => {
+  FONTS.forEach(f => loadFamily(f.display));   // preview fonts load only when someone opens the panel
+  panel.hidden = !panel.hidden;
+  styleBtn.setAttribute('aria-expanded', String(!panel.hidden));
+  if (!panel.hidden) panel.querySelector('input:checked').focus();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.hidden) { panel.hidden = true; styleBtn.setAttribute('aria-expanded', 'false'); styleBtn.focus(); } });
+
+// ---- perf readout in the review bar: measured live in this browser ----
+const perfBtn = document.getElementById('perfBtn'), perfHud = document.getElementById('perfHud');
+let perfOn = false, perfLong = [], perfObs = null;
+function perfTick() {
+  if (!perfOn) return;
+  const now = performance.now(), gaps = [];
+  perfTick.times = (perfTick.times || []).filter(t => now - t < 2000);
+  perfTick.times.push(now);
+  const ts = perfTick.times;
+  for (let i = 1; i < ts.length; i++) gaps.push(ts[i] - ts[i - 1]);
+  if (now - (perfTick.shown || 0) > 500 && gaps.length > 5) {
+    perfTick.shown = now;
+    const sorted = [...gaps].sort((a, b) => a - b), p95 = sorted[Math.floor(sorted.length * 0.95)], med = sorted[sorted.length >> 1];
+    const fps = Math.round(1000 / med), dropped = gaps.filter(g => g > med * 1.6).length / ((ts[ts.length - 1] - ts[0]) / 1000 || 1);
+    const recent = (PERF || []).slice(-60), avg = k => recent.length ? recent.reduce((a, x) => a + x[k], 0) / recent.length : 0;
+    const longs = perfLong.filter(e => now - e.t < 10000);
+    const row = (label, val, bad) => `<span>${label} <b${bad ? ' class="bad"' : ''}>${val}</b></span>`;
+    perfHud.innerHTML = row('fps', fps, fps < 50) + row('frame p95', p95.toFixed(1) + ' ms', p95 > 25) + row('dropped', dropped.toFixed(1) + '/s', dropped > 2)
+      + row('script', avg('js').toFixed(2) + ' ms') + row('3d', avg('render').toFixed(2) + ' ms') + row('long tasks 10 s', longs.length, longs.length > 0);
+  }
+  requestAnimationFrame(perfTick);
+}
+perfBtn.addEventListener('click', () => {
+  perfOn = !perfOn;
+  perfBtn.setAttribute('aria-pressed', String(perfOn));
+  perfHud.hidden = !perfOn;
+  if (perfOn) {
+    PERF = window.__perf = PERF || [];
+    perfTick.times = [];
+    try { perfObs = new PerformanceObserver(l => l.getEntries().forEach(e => perfLong.push({ t: performance.now(), d: e.duration }))); perfObs.observe({ type: 'longtask' }); } catch (e) {}
+    requestAnimationFrame(perfTick);
+  } else { if (perfObs) perfObs.disconnect(); perfLong = []; }
+});
+
+// ---- day/night toggle: a tiny Jablonski diagram (sky.js) ----
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+let dark = saved.theme ? saved.theme === 'dark' : (root.dataset.theme ? root.dataset.theme === 'dark' : systemDark);
+function applyTheme(toDark, origin) {
+  dark = toDark;
+  save({ theme: dark ? 'dark' : 'light' });
+  const set = () => { root.dataset.theme = dark ? 'dark' : 'light'; };
+  if (reduceMotion || !document.startViewTransition) { set(); return; }
+  const vt = document.startViewTransition(set);
+  vt.ready.then(() => {
+    const r = Math.hypot(Math.max(origin.x, innerWidth - origin.x), Math.max(origin.y, innerHeight - origin.y));
+    root.animate({ clipPath: [`circle(0px at ${origin.x}px ${origin.y}px)`, `circle(${r}px at ${origin.x}px ${origin.y}px)`] },
+      { duration: 750, easing: 'cubic-bezier(.2,.8,.2,1)', pseudoElement: '::view-transition-new(root)' });
+  });
+}
+root.dataset.theme = dark ? 'dark' : 'light';
+mountSky(document.getElementById('skySlot'), { dark, onChange: (d, o) => applyTheme(d, o) });
+
+// ---- Byron: drag and fling the C60 anywhere (or click to toss it); he fetches it, pet him for the gallery ----
+const ballBtn = document.getElementById('ballBtn'), yard = document.querySelector('.yard');
+const gallery = document.getElementById('byronGallery');
+const BALL = '<img src="img/c60.webp" alt="" draggable="false">';
+// Byron, side view facing left, after a dog's profile photo: a long straight muzzle rising gently to the stop with the
+// dark nose at its tip, the eye at the stop, a tall upright ear, a compact body on short legs and a tail curled up to his
+// back. Every frame is the same 34 x 10 grid. t is the art, m is the cell [row, column] of his mouth, where the C60 sits;
+// x shifts a frame's body in columns (head-down pickup) so his legs stay put when it shows.
+const DOG = {
+  stand: {"t": "        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\_____________    _   \n  `-.__                   `-.( )  \n       `-.                   /    \n          \\  ____________   /     \n          | |            | |      \n          | |            | |      \n         _|_|           _|_|      ", "m": [4, 1]},
+  run1: {"t": "        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\_____________    _   \n  `-.__                   `-.( )  \n       `-.                   /    \n          \\  ____________   /     \n         / /              \\ \\     \n        / /                \\ \\    \n       /_/_                 \\_\\_  ", "m": [4, 1]},
+  run2: {"t": "        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\_____________    _   \n  `-.__                   `-.( )  \n       `-.                   /    \n          \\  ____________   /     \n           \\ \\          / /       \n            \\ \\        / /        \n            '-'-      /_/_        ", "m": [4, 1]},
+  run3: {"t": "        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\_____________    _   \n  `-.__                   `-.( )  \n       `-.                   /    \n          \\  ____________   /     \n          | |            | |      \n          / /            \\ \\      \n         /_/_             \\_\\_    ", "m": [4, 1]},
+  trot1: {"t": "        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\_____________    _   \n  `-.__                   `-.( )  \n       `-.                   /    \n          \\  ____________   /     \n         / ||            || \\     \n        / / |            | \\ \\    \n       /_/ _|_          _|_ \\_\\   ", "m": [4, 1]},
+  trot2: {"t": "        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\_____________    _   \n  `-.__                   `-.( )  \n       `-.                   /    \n          \\  ____________   /     \n          || \\          / ||      \n          | \\ \\        / / |      \n         _|_ \\_\\      /_/ _|_     ", "m": [4, 1]},
+  pickup: {"t": "                                  \n                                  \n                                  \n           .______________    _   \n     /\\    /               `-.( ) \n    / /\\  /                   /   \n   _.' o`'  _____________   /     \n @'        | |           | |      \n  `-.__.-' | |           | |      \n          _|_|          _|_|      ", "m": [8, 1]},
+  sit1: {"t": "                                  \n        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\                     \n  `-.__      \\                    \n       `-.    `.    _             \n          | |   \\  ( )            \n          | | .-.)  /             \n         _|_|(__'--'              ", "m": [5, 1]},
+  sit: {"t": "                                  \n        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\                     \n  `-.__      \\                    \n       `-.    `.    _             \n          | |   \\  ( )            \n          | | .-.)  /             \n         _|_|(__'--'              ", "m": [5, 1]},
+  sitwag: {"t": "                                  \n        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\                     \n  `-.__      \\                    \n       `-.    `.                  \n          | |   \\ _               \n          | | .-.)( )             \n         _|_|(__'-'/              ", "m": [5, 1]},
+  sitpant: {"t": "                                  \n        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\                     \n  `U.__      \\                    \n       `-.    `.    _             \n          | |   \\  ( )            \n          | | .-.)  /             \n         _|_|(__'--'              ", "m": [5, 1]},
+  sitblink: {"t": "                                  \n        /\\                        \n       / /\\                       \n   _.-' -  \\                      \n @'         \\                     \n  `-.__      \\                    \n       `-.    `.    _             \n          | |   \\  ( )            \n          | | .-.)  /             \n         _|_|(__'--'              ", "m": [5, 1]},
+  lie1: {"t": "                                  \n        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\_____________    _   \n  `-.__                   `-.( )  \n       `-.                   /    \n          \\  ____________   /     \n           \\ \\          / /       \n          __\\_\\________/_/__      ", "m": [5, 1]},
+  lie: {"t": "                                  \n                                  \n                                  \n                                  \n        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\_______________      \n  `-.__                    `-.  _ \n       `-.____________________)( )", "m": [8, 1]},
+  lieblink: {"t": "                                  \n                                  \n                                  \n                                  \n        /\\                        \n       / /\\                       \n   _.-' -  \\                      \n @'         \\_______________      \n  `-.__                    `-.  _ \n       `-.____________________)( )", "m": [8, 1]}
+};
+const DOG_W = DOG.stand.t.indexOf('\n');
+let busy = false, justDragged = false;
+const tween = (dur, step) => new Promise(res => {
+  const t0 = performance.now();
+  const f = now => { const t = Math.min(1, (now - t0) / dur); step(t); t < 1 ? requestAnimationFrame(f) : res(); };
+  requestAnimationFrame(f);
+});
+const wait = ms => new Promise(r => setTimeout(r, ms));
+function makeBall() {
+  const ball = document.createElement('div');
+  ball.className = 'flyball';
+  ball.innerHTML = BALL;
+  document.body.append(ball);
+  return ball;
+}
+const placeBall = (ball, x, y, r) => { ball.style.transform = `translate(${x - 11}px, ${y - 11}px) rotate(${r}deg)`; };
+
+// simple 2D physics in viewport coordinates: gravity, bouncy floor and walls, rolling friction
+function flight(ball, x, y, vx, vy) {
+  return new Promise(res => {
+    const G = 2400, floor = innerHeight - 22, left = 11, right = innerWidth - 11;
+    let r = 0, last = performance.now();
+    if (reduceMotion) { placeBall(ball, Math.max(left, Math.min(right, x + vx * 0.3)), floor, 0); res(Math.max(left, Math.min(right, x + vx * 0.3))); return; }
+    const step = now => {
+      const dt = Math.min(1 / 30, (now - last) / 1000); last = now;
+      vy += G * dt; x += vx * dt; y += vy * dt; r += vx * dt * 2.2;
+      if (x < left) { x = left; vx = -vx * 0.6; }
+      if (x > right) { x = right; vx = -vx * 0.6; }
+      if (y > floor) { y = floor; vy = -vy * 0.48; vx *= 0.82; if (Math.abs(vy) < 90) vy = 0; }
+      if (y >= floor && vy === 0) vx *= Math.pow(0.12, dt);
+      placeBall(ball, x, y, r);
+      if (y >= floor && vy === 0 && Math.abs(vx) < 12) { res(x); return; }
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+async function fetchGame(start) {
+  if (busy) return;
+  busy = true;
+  ballBtn.dataset.thrown = '';
+  let ball = start && start.ball, x0, y0, vx, vy;
+  if (start) ({ x: x0, y: y0, vx, vy } = start);
+  else {
+    const b = ballBtn.getBoundingClientRect();
+    x0 = b.left + b.width / 2; y0 = b.top + b.height / 2;
+    vx = (x0 < innerWidth / 2 ? 1 : -1) * 620; vy = -980;
+    ball = makeBall();
+  }
+  const ballX = await flight(ball, x0, y0, vx, vy);
+
+  // Byron runs in from the far side, picks the ball up and brings it back
+  const dog = document.createElement('div');
+  dog.className = 'byron';
+  dog.setAttribute('aria-hidden', 'true');
+  const art = document.createElement('pre');
+  art.className = 'byron-art';
+  const mouth = document.createElement('span');
+  mouth.className = 'byron-mouth';
+  mouth.innerHTML = BALL;
+  mouth.hidden = true;
+  dog.append(art, mouth);
+  yard.append(dog);
+  // x is where his legs stand (box left for an unshifted frame); a frame with x columns of shift moves the box so the legs stay put
+  let x = 0, cur = '', shift = 0, chW = 9, seq = 0;
+  const right = () => dog.classList.contains('right');
+  const put = () => { dog.style.left = (x + (right() ? 1 : -1) * shift * chW) + 'px'; };
+  const face = d => { if (d) { dog.classList.toggle('right', d > 0); put(); } };
+  function show(name) {
+    const f = DOG[name];
+    cur = name;
+    art.textContent = f.t;
+    mouth.style.setProperty('--r', f.m[0]);
+    mouth.style.setProperty('--c', f.m[1]);
+    shift = f.x || 0;
+    put();
+  }
+  // frame sequences: each play() cancels the one before it; with reduced motion only the last frame shows
+  async function play(names, ms, loop = false) {
+    const id = ++seq;
+    if (reduceMotion) { show(names[names.length - 1]); return; }
+    do {
+      for (const n of names) { if (id !== seq) return; show(n); await wait(ms); }
+    } while (loop && id === seq);
+  }
+  const hush = () => { seq++; };
+  show('run2');
+  const dogW = dog.getBoundingClientRect().width || 330;
+  chW = art.getBoundingClientRect().width / DOG_W || 9;
+  // box left that puts a frame's mouth at screen x
+  const mouthOff = name => 12 + (DOG[name].m[1] + 0.5) * chW;
+  const boxFor = (name, mx, r) => {
+    const s = (DOG[name].x || 0) * chW;
+    return r ? mx - s - dogW + mouthOff(name) : mx + s - mouthOff(name);
+  };
+  const GALLOP = ['run1', 'run2', 'run3', 'run2'], TROT = ['trot1', 'stand', 'trot2', 'stand'];
+  // gallop most of the way, then trot and ease to a stop
+  async function run(to, brake = true) {
+    face(to - x);
+    const from = x, dir = Math.sign(to - x) || 1, dist = Math.abs(to - x);
+    if (reduceMotion) { x = to; show('stand'); return; }
+    const slow = brake ? Math.min(120, dist * 0.4) : 0, mid = to - dir * slow;
+    play(GALLOP, 85, true);
+    await tween(Math.max(250, (dist - slow) / 0.7), t => { x = from + (mid - from) * t; put(); });
+    if (slow > 4) {
+      play(TROT, 130, true);
+      await tween(slow / 0.18, t => { x = mid + (to - mid) * (1 - (1 - t) * (1 - t)); put(); });
+    }
+    hush();
+    x = to;
+    show('stand');
+  }
+
+  const fromRight = ballX < innerWidth / 2;
+  x = fromRight ? innerWidth + 20 : -dogW - 20;
+  put();
+  await run(boxFor('pickup', ballX, !fromRight));
+  // head down, the C60 goes into his mouth
+  show('pickup');
+  mouth.style.visibility = 'hidden';
+  mouth.hidden = false;
+  if (!reduceMotion) {
+    const m = mouth.getBoundingClientRect(), mx = m.left + m.width / 2, my = m.top + m.height / 2, by = innerHeight - 22;
+    await tween(150, t => placeBall(ball, ballX + (mx - ballX) * t, by + (my - by) * t, 0));
+  }
+  ball.remove();
+  mouth.style.visibility = '';
+  await wait(reduceMotion ? 0 : 280);
+  show('stand');
+  await wait(reduceMotion ? 0 : 160);
+  const home = ballBtn.getBoundingClientRect();
+  const homeX = Math.max(16, Math.min(innerWidth - dogW - 16, home.left + home.width / 2 - dogW / 2));
+  await run(homeX);
+  face(innerWidth / 2 - (homeX + dogW / 2));
+  await play(['stand', 'sit1', 'sit'], 150);
+
+  // while he waits: wag, pant, blink; after a while he lies down, ball still in his mouth
+  async function idle() {
+    const id = ++seq;
+    if (reduceMotion) { show('sit'); return; }
+    const step = async (n, ms) => { if (id !== seq) throw 0; show(n); await wait(ms); if (id !== seq) throw 0; };
+    try {
+      for (let round = 0; round < 3; round++) {
+        await step('sit', 900);
+        for (let i = 0; i < 3; i++) { await step('sitwag', 150); await step('sit', 150); }
+        await step('sitpant', 260); await step('sit', 260); await step('sitpant', 260); await step('sit', 700);
+        await step('sitblink', 140);
+      }
+      await step('sit', 300); await step('lie1', 240);
+      for (;;) { await step('lie', 2200); await step('lieblink', 140); await step('lie', 1600); await step('lieblink', 140); }
+    } catch { /* cancelled */ }
+  }
+  // back up to sitting before the next thing
+  async function rise() {
+    if (cur.startsWith('lie')) await play(['lie1', 'sit'], 200);
+    else { hush(); show('sit'); }
+  }
+  idle();
+  const bar = document.createElement('div');
+  bar.className = 'pet-bar';
+  bar.style.bottom = `calc(${Math.round(dog.offsetHeight + 18)}px + env(safe-area-inset-bottom, 0px))`;
+  const pet = Object.assign(document.createElement('button'), { type: 'button', className: 'pet-btn go', innerHTML: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 14s-5.5-3.3-5.5-7A3 3 0 0 1 8 5a3 3 0 0 1 5.5 2c0 3.7-5.5 7-5.5 7z"/></svg>Pet' });
+  const shoo = Object.assign(document.createElement('button'), { type: 'button', className: 'pet-btn', innerHTML: 'Send off<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M3 8h9M9 4.5 12.5 8 9 11.5"/></svg>' });
+  pet.setAttribute('aria-label', 'Pet Byron'); shoo.setAttribute('aria-label', 'Send Byron off');
+  bar.append(pet, shoo);
+  yard.append(bar);
+  bar.style.left = Math.max(16, Math.min(innerWidth - bar.offsetWidth - 16, homeX + dogW / 2 - bar.offsetWidth / 2)) + 'px';
+  pet.focus({ preventScroll: true });
+  if (!reduceMotion) animate(bar, { opacity: [0, 1], translateY: [8, 0], duration: 400, ease: 'outExpo' });
+  // he tosses the ball back to its spot in the text, then trots off
+  async function returnBall() {
+    const from = mouth.getBoundingClientRect(), to = ballBtn.getBoundingClientRect();
+    mouth.hidden = true;
+    const tx = to.left + to.width / 2, ty = to.top + to.height / 2;
+    if (!reduceMotion && ty > -40 && ty < innerHeight + 40) {
+      const b = makeBall(), x0 = from.left + from.width / 2, y0 = from.top + from.height / 2;
+      const peak = Math.min(y0, ty) - 90 - Math.abs(tx - x0) * 0.15;
+      show('sitwag');
+      await tween(560, t => {
+        const x = x0 + (tx - x0) * t, y = (1 - t) * (1 - t) * y0 + 2 * t * (1 - t) * peak + t * t * ty;
+        placeBall(b, x, y, t * 540);
+      });
+      b.remove();
+    }
+    delete ballBtn.dataset.thrown;
+    if (!reduceMotion) animate(ballBtn, { scale: [1.35, 1], duration: 420, ease: 'outBack(3)' });
+  }
+  let left = false;
+  async function leave() {
+    if (left) return;
+    left = true;
+    await returnBall();
+    await play(['sit', 'sit1', 'stand'], 160);
+    await run(homeX + dogW / 2 < innerWidth / 2 ? -dogW - 40 : innerWidth + 40, false);
+    hush();
+    dog.remove();
+    busy = false;
+    ballBtn.focus({ preventScroll: true });
+  }
+  shoo.addEventListener('click', async () => {
+    bar.remove();
+    await rise();
+    const woof = Object.assign(document.createElement('span'), { className: 'woof', textContent: 'Woof!' });
+    dog.append(woof);
+    if (!reduceMotion) animate(woof, { scale: [0.4, 1.1, 1], opacity: [0, 1], duration: 380, ease: 'outBack(2)' });
+    show('sitpant');
+    await wait(reduceMotion ? 300 : 700);
+    woof.remove();
+    leave();
+  }, { once: true });
+  pet.addEventListener('click', async () => {
+    bar.remove();
+    await rise();
+    const d = dog.getBoundingClientRect();
+    for (let i = 0; i < 6; i++) {
+      const h = document.createElement('span');
+      h.className = 'heart';
+      h.textContent = '♥';
+      const f = 0.08 + Math.random() * 0.35;
+      h.style.left = (d.left + d.width * (right() ? 1 - f : f)) + 'px';
+      h.style.top = (d.top - 6) + 'px';
+      document.body.append(h);
+      if (reduceMotion) setTimeout(() => h.remove(), 600);
+      else animate(h, { translateY: [0, -70 - Math.random() * 40], translateX: [0, (Math.random() - 0.5) * 40], opacity: [1, 0], scale: [0.6, 1.2], duration: 1100, delay: i * 90, ease: 'outQuad', onComplete: () => h.remove() });
+    }
+    play(['sitwag', 'sit'], 160, true);
+    await wait(reduceMotion ? 200 : 1100);
+    hush();
+    show('sit');
+    // listen only for this round's gallery, so a send-off round leaves no stale listener behind
+    gallery.addEventListener('close', leave, { once: true });
+    gallery.showModal();
+  }, { once: true });
+}
+
+// slingshot: press the ball and pull back; the dotted arc shows direction and strength, release to launch
+const aimLayer = document.createElement('div');
+aimLayer.className = 'aim';
+aimLayer.setAttribute('aria-hidden', 'true');
+const aimDots = Array.from({ length: 18 }, () => aimLayer.appendChild(Object.assign(document.createElement('i'), {})));
+const aimPow = aimLayer.appendChild(Object.assign(document.createElement('span'), { className: 'aim-pow' }));
+document.body.append(aimLayer);
+const PULL_MAX = 170, SPEED_MIN = 380, SPEED_MAX = 2500;
+function aimVelocity(dx, dy) {
+  const len = Math.hypot(dx, dy), k = Math.min(1, len / PULL_MAX), sp = SPEED_MIN + (SPEED_MAX - SPEED_MIN) * k;
+  return { vx: -dx / (len || 1) * sp, vy: -dy / (len || 1) * sp, k };
+}
+function paintAim(o, dx, dy) {
+  const { vx, vy, k } = aimVelocity(dx, dy), G = 2400, floor = innerHeight - 22;
+  const bx = o.x + dx * 0.22, by = o.y + dy * 0.22;
+  aimDots.forEach((d, i) => {
+    const t = (i + 1) * 0.045, x = bx + vx * t, y = by + vy * t + 0.5 * G * t * t;
+    const on = y < floor && x > 0 && x < innerWidth;
+    d.style.opacity = on ? (1 - i / aimDots.length) * 0.9 : 0;
+    d.style.transform = `translate(${x - 3}px, ${y - 3}px) scale(${1 - i / aimDots.length * 0.5})`;
+  });
+  aimPow.textContent = `${Math.round(k * 100)}%`;
+  aimPow.style.transform = `translate(${o.x + dx + 14}px, ${o.y + dy + 10}px)`;
+  return { bx, by, vx, vy };
+}
+let aim = null;
+ballBtn.addEventListener('pointerdown', e => {
+  if (busy) return;
+  const r = ballBtn.getBoundingClientRect();
+  aim = { id: e.pointerId, o: { x: r.left + r.width / 2, y: r.top + r.height / 2 }, sx: e.clientX, sy: e.clientY, on: false, ball: null, shot: null };
+  ballBtn.setPointerCapture(e.pointerId);
+});
+ballBtn.addEventListener('pointermove', e => {
+  if (!aim) return;
+  const dx = e.clientX - aim.sx, dy = e.clientY - aim.sy;
+  if (!aim.on && Math.hypot(dx, dy) > 8) {
+    aim.on = true;
+    aim.ball = makeBall();
+    ballBtn.dataset.thrown = '';
+    aimLayer.classList.add('on');
+  }
+  if (!aim.on) return;
+  aim.shot = paintAim(aim.o, dx, dy);
+  placeBall(aim.ball, aim.shot.bx, aim.shot.by, 0);
+});
+function endAim(launch) {
+  const a = aim; aim = null;
+  aimLayer.classList.remove('on');
+  if (!a || !a.on) return;
+  justDragged = true;
+  if (launch && a.shot) fetchGame({ x: a.shot.bx, y: a.shot.by, vx: a.shot.vx, vy: a.shot.vy, ball: a.ball });
+  else { a.ball.remove(); delete ballBtn.dataset.thrown; }
+}
+ballBtn.addEventListener('pointerup', () => endAim(true));
+ballBtn.addEventListener('pointercancel', () => endAim(false));
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && aim) endAim(false); });
+ballBtn.addEventListener('click', () => { if (justDragged) { justDragged = false; return; } fetchGame(); });
+document.getElementById('galleryClose').addEventListener('click', () => gallery.close());
+gallery.addEventListener('click', e => { if (e.target === gallery) gallery.close(); });
+</script>
+</body>
+</html>
