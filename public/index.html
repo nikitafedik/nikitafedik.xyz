@@ -701,8 +701,9 @@ function cacheIntro() {
   lay.limit = lay.wait - 36;
   lay.shift = Math.max(0, lay.top0 + textH - lay.limit);
   lay.mb = Math.min(lay.wait - 36, Math.max(h * 0.86, lay.top0 + textH + 12));
-  // each line takes about one and a half wheel notches, on any screen height
-  lay.reveal = (n - 2) * Math.min(170, Math.max(120, h * 0.16));
+  // each line takes about one and a half wheel notches; on a touch screen, where one flick covers a screen or more,
+  // a line takes about a third of the screen
+  lay.reveal = (n - 2) * (matchMedia('(pointer: coarse)').matches ? Math.min(320, Math.max(220, h * 0.36)) : Math.min(170, Math.max(120, h * 0.16)));
   lay.ramp = h * 0.15;
   lay.settle = introEl.getBoundingClientRect().top + scrollY - (parseFloat(getComputedStyle(introPin).top) || 0) > 40 ? h * 0.14 : 0;
   // where the newest line first reaches the bottom; the rise starts there (early enough that its speed stays below
@@ -1236,9 +1237,12 @@ function sizeIntro() {
   const want = Math.round((introPin.clientHeight || innerHeight) + lay.len);
   if (Math.abs(introEl.offsetHeight - want) > 1) introEl.style.height = want + 'px';
 }
+// the reel's scroll length in screen heights: longer on touch screens, where one flick travels much further than a
+// wheel notch, so a flick moves through one scene instead of several
+const REEL_VH = touch ? 1600 : 995;
 function overlapIntro() {
   sizeIntro();
-  const off = reelEl.getBoundingClientRect().top - introEl.getBoundingClientRect().top, want = 995 * innerHeight / 100 + Math.max(1, introEl.offsetHeight - (introPin.clientHeight || innerHeight));
+  const off = reelEl.getBoundingClientRect().top - introEl.getBoundingClientRect().top, want = REEL_VH * innerHeight / 100 + Math.max(1, introEl.offsetHeight - (introPin.clientHeight || innerHeight));
   if (Math.abs(off) > 1) reelEl.style.marginTop = (parseFloat(getComputedStyle(reelEl).marginTop) - off) + 'px';
   if (Math.abs(reelEl.offsetHeight - want) > 1) reelEl.style.height = want + 'px';
   cacheTops(); measureGeo(); paintIntro();
@@ -1426,6 +1430,8 @@ function paintLabels() {
     n.style.transform = `translate(${x.toFixed(1)}px, ${(l.side === 'b' ? l.y + 4 : l.y - 8).toFixed(1)}px)`;
   });
 }
+// how quickly the scenes catch up with the scroll: a little softer on touch screens, so a flick glides through
+const SPRING = touch ? 22 : 38;
 function reelLoop(now) {
   if (!reelVisible) { reelRaf = 0; return; }
   reelRaf = requestAnimationFrame(reelLoop);
@@ -1440,7 +1446,7 @@ function reelLoop(now) {
   if (rm) { stopF = target; stopV = 0; }
   else {
     const steps = Math.min(8, Math.ceil(frameDt / (1 / 60))), dt = frameDt / steps;
-    for (let i = 0; i < steps; i++) { stopV += ((target - stopF) * 38 - stopV * 2 * Math.sqrt(38) * 0.95) * dt; stopF += stopV * dt; }
+    for (let i = 0; i < steps; i++) { stopV += ((target - stopF) * SPRING - stopV * 2 * Math.sqrt(SPRING) * 0.95) * dt; stopF += stopV * dt; }
   }
   const tA = PERF && performance.now();
   paintPicker();
