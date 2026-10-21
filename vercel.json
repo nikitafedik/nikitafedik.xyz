@@ -5,13 +5,45 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "redirects": [
-    { "source": "/publications/", "destination": "/publications.html", "permanent": true },
-    { "source": "/projects/", "destination": "/projects.html", "permanent": true },
-    { "source": "/about-me/", "destination": "/", "permanent": true },
-    { "source": "/cv/", "destination": "/", "permanent": false },
-    { "source": "/posts/:path*", "destination": "/", "permanent": false },
-    { "source": "/categories/:path*", "destination": "/", "permanent": true },
-    { "source": "/tags/:path*", "destination": "/", "permanent": true },
-    { "source": "/archives/", "destination": "/", "permanent": true }
+    {
+      "source": "/publications/",
+      "destination": "/publications.html",
+      "permanent": true
+    },
+    {
+      "source": "/projects/",
+      "destination": "/projects.html",
+      "permanent": true
+    },
+    {
+      "source": "/about-me/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/cv/",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/posts(/.*)?",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/categories(/.*)?",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/tags(/.*)?",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/archives(/.*)?",
+      "destination": "/",
+      "permanent": true
+    }
   ]
 }
