@@ -541,10 +541,13 @@ function paintIntro() {
   }
   const ly = top0 - travel;
   introList.style.setProperty('--ly', ly.toFixed(1) + 'px');
-  // each line sharpens as it rises past four fifths of the screen; lower ones wait blurred and faint
+  // the focus line sits just below the first two lines at the start: as the text rises, each line sharpens out of the
+  // blur when it crosses it, one after another, and the lines below wait blurred and faint. Values are rounded to
+  // small steps, so a line is restyled only when its look visibly changes
+  const yF = top0 + introMetrics[1] + h * 0.02, band = h * 0.12;
   introItems.forEach((el, i) => {
-    const ad = Math.max(0, (ly + introMetrics[i] - h * 0.8) / (h * 0.14));
-    lensStyle(el, +ad.toFixed(3), ad > 1 ? Math.max(0, 0.68 - (ad - 1) * 0.6).toFixed(3) : undefined);
+    const ad = Math.round(Math.max(0, (ly + introMetrics[i] - yF) / band) * 40) / 40;
+    lensStyle(el, ad, ad > 1 ? Math.max(0, 0.68 - (ad - 1) * 0.6).toFixed(3) : undefined);
   });
   // the skills heading glides to rest in its place: d is how far its spot in the list is from the heading's place,
   // and it is drawn at softplus(d), which equals d while far away and eases smoothly to 0 as the list moves past.
