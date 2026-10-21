@@ -54,8 +54,8 @@ const LATE_GROW = [[0.5], [0.5], [0.35, 0.7], [0.3, 0.55, 0.8]][Math.min(3, LATE
 const N = coarse ? 560 : 820;
 // colour slots
 // slots 10-13 are a height ramp from the accent toward slate, built from the current accent
-const SLOT = { G: 0, L: 1, A: 2, CU: 3, CU2: 4, OK: 5, CLAY: 6, O: 7, N: 8, H: 9, C: 0, R1: 10, R2: 11, R3: 12, R4: 13, BOND: 14, INK: 15, PT: 16, PT2: 17, AU: 18, AU2: 19 };
-const PALETTE = ['#5B6578', '#C9CFDA', null, '#B8703F', '#8E5530', '#3FA96B', '#BCC0C7', '#D9553F', '#3D7BFF', '#F2F4F8', 0.35, 0.62, 0.85, 1, '#9AA3B2', 'ink', '#B4BAC4', '#858C98', '#E1B54A', '#B08A2E'];   // the last is a bond grey that reads on light and dark
+const SLOT = { G: 0, L: 1, A: 2, CU: 3, CU2: 4, OK: 5, CLAY: 6, O: 7, N: 8, H: 9, C: 0, R1: 10, R2: 11, R3: 12, R4: 13, BOND: 14, INK: 15, PT: 16, PT2: 17, AU: 18, AU2: 19, Na: 20, B: 21, Al: 22, Sn: 23 };
+const PALETTE = ['#5B6578', '#C9CFDA', null, '#B8703F', '#8E5530', '#3FA96B', '#BCC0C7', '#D9553F', '#3D7BFF', '#F2F4F8', 0.35, 0.62, 0.85, 1, '#9AA3B2', 'ink', '#B4BAC4', '#858C98', '#E1B54A', '#B08A2E', '#8A5CE0', '#E8877F', '#C4A98F', '#5E8F8F'];   // the last is a bond grey that reads on light and dark
 
 const LensShader = {
   uniforms: { tDiffuse: { value: null }, uAmount: { value: 0.007 }, uBlur: { value: 0 }, uTexel: { value: new THREE.Vector2(1 / 800, 1 / 600) }, toneMappingExposure: { value: 0.9 }, uGrain: { value: 0 }, uSeed: { value: 0 }, uGrade: { value: 0 } },
@@ -125,7 +125,7 @@ const hidden = (P, n) => { const idx = []; for (let k = 0; k < n; k++) { idx.pus
 // one ball-and-stick convention for every molecule on the page: coordinates in angstrom, 1 A = ANG scene units,
 // fixed radii per element and one bond radius; apparent size then comes only from how far the camera is
 // metals are the one exception: surface atoms get a near-touching radius (Cu-Cu is 2.55 A) so slabs read as solid
-const ANG = 0.36, RADIUS = { H: 0.3, C: 0.45, N: 0.45, O: 0.45, Cu: 1.2 }, BOND_R = 0.12;
+const ANG = 0.36, RADIUS = { H: 0.3, C: 0.45, N: 0.45, O: 0.45, Cu: 1.2, Na: 0.62, B: 0.42, Al: 0.6, Sn: 0.6 }, BOND_R = 0.12;
 const rAt = el => (RADIUS[el] || 0.3) * ANG;
 // the small molecules that float behind the intro and then take their places in the first skills scene,
 // in one order, so the same particles carry over (real geometries, angstrom)
@@ -326,16 +326,19 @@ const SHAPES = {
     V.forEach(v => { const h = { x: v.x * 1.5, y: v.y * 1.5, z: 0 }; lineOf(P, v, h, 7, 0.05, 1, true); P.push({ ...h, s: 0.17, c: 1 }); });
     return finish(P, -0.5, 0.35, 0.1);
   },
-  // AI, beat 1: chemistry first, and diverse: small molecules, benzene, a C60 and a Cu(100) slab with CO on a top site.
-  // Everything shares one scale (1 A = 0.36 units) and one ball-and-stick convention, so sizes are in proportion.
-  // The slab sits in its periodic cell, with a faint ring of image atoms beyond the cell walls.
+  // AI, beat 1: chemistry first, with systems from my own papers in front: the NaBH3- cluster with its Lewis basic
+  // sodium anion, B2Al3- with its B-B triple bond, a catenane of two interlocked cyclo[18]carbon rings and the nested
+  // [Sn@Cu12@Sn20] cluster, next to a Cu(100) slab with CO on a top site. The small molecules from behind the intro land
+  // around them. Everything shares one scale (1 A = 0.36 units) and one ball-and-stick convention.
   aiMols() {
     const P = [], K = ANG;
     P.bonds = [];
-    const atom = (el, x, y, z) => { P.push({ x, y, z, s: rAt(el), c: el === 'Cu' ? SLOT.CU : SLOT[el] }); return P.length - 1; };
+    const atom = (el, x, y, z, r) => { P.push({ x, y, z, s: (r ?? RADIUS[el] ?? 0.3) * K, c: el === 'Cu' ? SLOT.CU : SLOT[el] }); return P.length - 1; };
     const mol = (atoms, bonds, at) => molecule(P, atoms, bonds, at);
+    const bondAll = (ids, maxA) => { for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) { const a = P[ids[i]], b = P[ids[j]]; if (Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z) < maxA * K) P.bonds.push([ids[i], ids[j], BOND_R * K, SLOT.BOND]); } };
+    const turn = (pts, rx, ry, rz) => { const e = new THREE.Euler(rx, ry, rz), v = new THREE.Vector3(); return pts.map(([el, x, y, z]) => { v.set(x, y, z).applyEuler(e); return [el, v.x, v.y, v.z]; }); };
     // first the molecules that floated behind the intro, in the same order, so those very particles land here
-    const SPOTS = [{ x: -3.6, y: 2.0, z: 0.3 }, { x: -1.6, y: 2.4, z: 0 }, { x: 4.0, y: -1.85, z: 0.4 }, { x: -3.95, y: 0.55, z: 0 }, { x: 0.35, y: 2.25, z: -0.4 }];
+    const SPOTS = [{ x: -5.3, y: 2.3, z: -0.5 }, { x: 0.95, y: 2.7, z: -0.6 }, { x: 5.6, y: -2.15, z: -0.2 }, { x: -6.1, y: -2.3, z: -0.5 }, { x: 6.3, y: 2.55, z: -0.8 }];
     BG_MOLS.forEach(([atoms, bonds], k) => mol(atoms, bonds, SPOTS[k]));
     // Cu(100): 4 x 4 top layer, 3 x 3 second layer in the hollows, nearest neighbours 2.55 A apart, layers 1.8 A apart
     const a0 = 2.55, sx = 0.1, sy = -1.75, half = 2 * a0, top = [];
@@ -349,15 +352,32 @@ const SHAPES = {
     const site = top[5];
     mol([['C', 0, 0, 0], ['O', 0, 1.13, 0]], [[0, 1]], { x: P[site].x, y: sy + 1.85 * K, z: P[site].z });
     P.bonds.push([site, P.length - 2, BOND_R * K, SLOT.BOND]);
-    // C60, top right: the generator's edge is 2, real bonds are about 1.42 A
-    const V = c60Vertices(), at = { x: 4.4, y: 1.3, z: -0.3 }, c0 = P.length;
-    V.forEach(v => atom('C', at.x + v[0] * 0.71 * K, at.y + v[1] * 0.71 * K, at.z + v[2] * 0.71 * K));
-    for (let i = 0; i < 60; i++) for (let j = i + 1; j < 60; j++) if (Math.hypot(P[c0 + i].x - P[c0 + j].x, P[c0 + i].y - P[c0 + j].y, P[c0 + i].z - P[c0 + j].z) < 1.6 * K) P.bonds.push([c0 + i, c0 + j, BOND_R * K, SLOT.BOND]);
-    const ring = [], rb = [];
-    for (let q = 0; q < 6; q++) { const t = q * Math.PI / 3 + Math.PI / 6; ring.push(['C', 1.39 * Math.cos(t), 1.39 * Math.sin(t), 0]); }
-    for (let q = 0; q < 6; q++) { const t = q * Math.PI / 3 + Math.PI / 6; ring.push(['H', 2.48 * Math.cos(t), 2.48 * Math.sin(t), 0]); rb.push([q, (q + 1) % 6], [q, q + 6]); }
-    mol(ring, rb, { x: -3.95, y: -1.25, z: 0 });
-    return finish(P, 0.25, -0.3, 0, { mol: 'systems' });
+    // NaBH3-: Na-B 2.6 A, B-H 1.22 A, the hydrogens bent away from the sodium (Na-B-H 105 degrees)
+    const hb = 105 * Math.PI / 180, nab = [['B', 0, 0, 0], ['Na', 0, 2.6, 0]];
+    for (let q = 0; q < 3; q++) { const t = q * 2 * Math.PI / 3; nab.push(['H', 1.22 * Math.sin(hb) * Math.cos(t), 1.22 * Math.cos(hb), 1.22 * Math.sin(hb) * Math.sin(t)]); }
+    mol(turn(nab, 0.15, 0.4, -0.35), [[0, 1], [0, 2], [0, 3], [0, 4]], { x: -1.95, y: 2.05, z: 2.1 });
+    // B2Al3-: the B-B triple bond (1.49 A) on the axis of a trigonal bipyramid, three Al around it at 2.1 A from each B
+    const bal = [['B', 0, 0.745, 0], ['B', 0, -0.745, 0]];
+    for (let q = 0; q < 3; q++) { const t = q * 2 * Math.PI / 3; bal.push(['Al', 1.96 * Math.cos(t), 0, 1.96 * Math.sin(t)]); }
+    mol(turn(bal, 0.5, 0.3, 1.1), [[0, 1], [0, 2], [0, 3], [0, 4], [1, 2], [1, 3], [1, 4]], { x: 3.35, y: -2.5, z: 1.2 });
+    // two cyclo[18]carbon rings (radius 3.68 A) linked like a chain: each passes through the middle of the other
+    const R18 = 3.68, cat = [];
+    for (let q = 0; q < 18; q++) { const t = q * Math.PI / 9; cat.push(['C', R18 * Math.cos(t) - R18 / 2, R18 * Math.sin(t), 0]); }
+    for (let q = 0; q < 18; q++) { const t = q * Math.PI / 9 + Math.PI / 18; cat.push(['C', R18 / 2 + R18 * Math.cos(t), 0, R18 * Math.sin(t)]); }
+    const cb = []; for (let q = 0; q < 18; q++) cb.push([q, (q + 1) % 18], [18 + q, 18 + (q + 1) % 18]);
+    mol(turn(cat, 0.6, 0.35, 0.2), cb, { x: -4.0, y: -0.85, z: -0.3 });
+    // [Sn@Cu12@Sn20]: a tin atom inside a Cu12 icosahedron (Sn-Cu 2.65 A) inside a Sn20 dodecahedron (4.4 A out),
+    // each copper under the middle of a pentagon of tin; the shells are drawn by their own edges
+    const f = (1 + Math.sqrt(5)) / 2, ico = [], dod = [];
+    for (const a of [-1, 1]) for (const b of [-1, 1]) { ico.push([0, a * f, b], [a * f, b, 0], [a, 0, b * f]); dod.push([0, a / f, b * f], [a / f, b * f, 0], [a * f, 0, b / f]); }
+    for (const a of [-1, 1]) for (const b of [-1, 1]) for (const d of [-1, 1]) dod.push([a, b, d]);
+    const mAt = { x: 4.45, y: 0.95, z: -0.55 }, mE = new THREE.Euler(0.35, 0.5, 0.1), mv = new THREE.Vector3();
+    const put = (el, v, r, rad) => { mv.set(v[0], v[1], v[2]).normalize().multiplyScalar(r).applyEuler(mE); return atom(el, mAt.x + mv.x * K, mAt.y + mv.y * K, mAt.z + mv.z * K, rad); };
+    atom('Sn', mAt.x, mAt.y, mAt.z, 0.6);
+    const cu = ico.map(v => put('Cu', v, 2.65, 0.5)), sn = dod.map(v => put('Sn', v, 4.4, 0.6));
+    bondAll(cu, 2.9); bondAll(sn, 3.3);
+    // the busy middle is framed as before; the molecules around it may run past the frame
+    return finish(P, 0.25, -0.3, 0, { mol: 'systems', frame: { x: 7.1, y: 3.67 } });
   },
   // AI, beat 3: the energy surface becomes text, the way a tokenizer splits it (words and parts of words), with a
   // machine-learned interatomic potential (MLIP) below. The page draws the real token text over the particle blocks.
@@ -452,7 +472,7 @@ const SHAPES = {
     });
     const atoms = [0, 1, 2, 3].map(() => hidden(P, 4)), beads = hidden(P, 6);
     const cell = { min: [0, 1, 2].map(k => Math.min(...cells.map(c => c.min[k]))), max: [0, 1, 2].map(k => Math.max(...cells.map(c => c.max[k]))) };
-    return finish(P, 0.42, -0.62, 0, { slabs, atoms, beads, cell, cells, mol: 'systems' });
+    return finish(P, 0.42, -0.62, 0, { slabs, atoms, beads, cell, cells, mol: 'systems', still: true });
   },
   // illustration, step 1: a messy cloud organises into a matrix, nodes joined by thin cylinders
   illMatrix() {
@@ -521,7 +541,8 @@ const SHAPES = {
     const P = [];
     P.bonds = [];
     CAF_ATOMS.forEach(a => P.push({ x: a.bonded ? a.sx : a.x, y: a.bonded ? a.sy : a.y, z: 0, s: 0, c: SLOT.INK }));
-    CAF_SKETCH.concat(CUP_SKETCH).forEach(line => { let prev = -1; line.forEach(([x, y]) => { const i = P.length; P.push({ x, y, z: 0, s: 0, c: SLOT.INK }); if (prev >= 0) P.bonds.push([prev, i, 0.013, SLOT.INK]); prev = i; }); });
+    // each stroke point is a dot as wide as the line, so the segments meet in round joins like a pencil line
+    CAF_SKETCH.concat(CUP_SKETCH).forEach(line => { let prev = -1; line.forEach(([x, y]) => { const i = P.length; P.push({ x, y, z: 0, s: 0.013, c: SLOT.INK }); if (prev >= 0) P.bonds.push([prev, i, 0.013, SLOT.INK]); prev = i; }); });
     return finish(P, 0, 0, 0, { still: true, mol: 'caffeine' });
   },
   // the same molecule as a ball-and-stick model, grown in place from the sketch: plain clay first, then colour,
@@ -678,8 +699,9 @@ export function initReel(canvas, readAccent) {
   })();
   const clayMat = (opts = {}) => { const { roughness, metalness, envMapIntensity, ...o } = opts; return new THREE.MeshMatcapMaterial({ matcap: MATCAP, ...o }); };
   // the particles keep their lit material for every other scene and blend to the matcap in the illustration
-  const clayU = { uMatcap: { value: MATCAP }, uClay: { value: 0 } };
-  const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 200);
+  const clayU = { uMatcap: { value: MATCAP }, uClay: { value: 0 }, uSketch: { value: 0 }, uPaper: { value: new THREE.Color() } };
+  // far enough for the demo's long lens, which backs the camera off three times its usual distance
+  const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 700);
   scene.add(camera);
   // the illustration photo dissolving: the rendered image as soft points on the plane of the camera's view (the same
   // 16:10 frame the photo covers), each with the colour of its patch; as the scroll moves on they drift apart, rise,
@@ -776,10 +798,30 @@ export function initReel(canvas, readAccent) {
   const PR_STEPS = [1.5, 1.25, 1], gpuSamples = [], tqPending = [];
   let prCap = coarse ? 1.25 : 1.5, gpuCb = null, governFrom = Infinity;
 
-  const geo = new THREE.SphereGeometry(1, coarse ? 10 : 14, coarse ? 7 : 10);
-  const mat = new THREE.MeshStandardMaterial({ roughness: 0.3, metalness: 0.15 });
+  const geo = new THREE.SphereGeometry(1, coarse ? 10 : 14, coarse ? 7 : 10), FADE = new Float32Array(N).fill(1), aFade = new THREE.InstancedBufferAttribute(new Float32Array(N).fill(1), 1);
+  aFade.setUsage(THREE.DynamicDrawUsage); geo.setAttribute('aFade', aFade);
+  const mat = new THREE.MeshStandardMaterial({ roughness: 0.3, metalness: 0.15, alphaToCoverage: true });
   mat.onBeforeCompile = sh => {
     Object.assign(sh.uniforms, clayU);
+    sh.vertexShader = sh.vertexShader.replace('void main() {', 'attribute float aFade;\nvarying float vFade;\nvoid main() {\n\tvFade = aFade;');
+    // the sketch is drawn flat, like pencil on paper: the ink colour with no light, broken by the paper's tooth (a fine
+    // grain plus a softer variation in pressure, in screen space so it stays put) where the page colour shows through
+    sh.fragmentShader = sh.fragmentShader.replace('void main() {', `varying float vFade;
+uniform float uSketch;
+uniform vec3 uPaper;
+float grain = 1.0;
+float vn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  float a = fract(sin(dot(i, vec2(12.9898, 78.233))) * 43758.5453), b = fract(sin(dot(i + vec2(1.0, 0.0), vec2(12.9898, 78.233))) * 43758.5453);
+  float c = fract(sin(dot(i + vec2(0.0, 1.0), vec2(12.9898, 78.233))) * 43758.5453), d = fract(sin(dot(i + vec2(1.0, 1.0), vec2(12.9898, 78.233))) * 43758.5453);
+  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y); }
+void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
+\tdiffuseColor.a *= vFade;
+\tif (uSketch > 0.0) {
+\t\tvec2 fc = gl_FragCoord.xy;
+\t\tfloat tooth = vn(fc * 0.55) * 0.6 + vn(vec2(fc.x * 0.9 + fc.y * 0.5, fc.y * 0.25) * 0.7) * 0.4, press = vn(fc * 0.02);
+\t\tgrain = clamp(0.2 + 1.2 * tooth * (0.7 + 0.5 * press), 0.0, 1.0);
+\t}`);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <opaque_fragment>', '#include <opaque_fragment>\n\tgl_FragColor.rgb = mix(gl_FragColor.rgb, mix(uPaper, diffuseColor.rgb, grain), uSketch);');
     sh.fragmentShader = sh.fragmentShader.replace('void main() {', 'uniform sampler2D uMatcap;\nuniform float uClay;\nvoid main() {')
       .replace('#include <opaque_fragment>', '#include <opaque_fragment>\n\tgl_FragColor.rgb = mix(gl_FragColor.rgb, diffuseColor.rgb * texture2D(uMatcap, normal.xy * 0.495 + 0.5).rgb * 1.25, uClay);');
   };
@@ -1116,7 +1158,9 @@ export function initReel(canvas, readAccent) {
   }
   // bonds as real cylinders between particles, drawn for whichever formations are on screen
   const BMAX = coarse ? 420 : 700;
-  const bondMesh = new THREE.InstancedMesh(new THREE.CylinderGeometry(1, 1, 1, coarse ? 6 : 10, 1, true), mesh.material, BMAX);
+  const stickGeo = new THREE.CylinderGeometry(1, 1, 1, coarse ? 6 : 10, 1, true), bFade = new THREE.InstancedBufferAttribute(new Float32Array(BMAX).fill(1), 1);
+  bFade.setUsage(THREE.DynamicDrawUsage); stickGeo.setAttribute('aFade', bFade);
+  const bondMesh = new THREE.InstancedMesh(stickGeo, mesh.material, BMAX);
   bondMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   bondMesh.frustumCulled = false;
   bondMesh.count = 0;
@@ -1154,7 +1198,7 @@ export function initReel(canvas, readAccent) {
       ex = (hi[0] - lo[0]) / 2; ey = (hi[1] - lo[1]) / 2; ez = (hi[2] - lo[2]) / 2;
     }
     // nearer points look bigger, so pad by depth; the holder also sways a little
-    const ext = { x: Math.max(1, ex * 1.06 + ez * 0.18), y: Math.max(0.6, ey * 1.04 + ez * 0.12) };
+    const ext = P.meta && P.meta.frame ? { ...P.meta.frame } : { x: Math.max(1, ex * 1.06 + ez * 0.18), y: Math.max(0.6, ey * 1.04 + ez * 0.12) };
     forms[name] = { pos, size, col, rgb: null, meta: P.meta || { labels: [], euler: new THREE.Euler() }, center: new THREE.Vector3(cx, cy, cz), ext };
   }
   Object.entries(SHAPES).forEach(([k, fn]) => addFormation(k, fn));
@@ -1334,36 +1378,56 @@ export function initReel(canvas, readAccent) {
     // and vibrates there; physisorbed settles about 3 A up and wanders; desorbing touches down, then drifts out of the
     // cell. Thermal noise comes from a fixed seed per run, so a system always plays the same way
     demo: (() => {
-      const F = forms.demo, { slabs, atoms, beads } = F.meta, H0 = 7.5, STEP_S = 0.09;
-      let runs = [], pause = 0, cellsNow = [], laidOut = false;
-      function buildCell(k, surf, ox, oz) {
+      // the molecules' atoms are drawn smaller than the page's usual radii, so their bonds read next to the big metal atoms
+      const F = forms.demo, { slabs, atoms, beads } = F.meta, H0 = 7.5, STEP_S = 0.09, MOL_S = 0.68;
+      let runs = [], pause = 0, cellsNow = [], laidOut = false, aspect = 1.6;
+      function buildCell(k, surf, ox, oy, oz) {
         // a periodic cell of 5 x 5 atoms per layer; every atom is wrapped back into the cell, as in a periodic
         // simulation, so the slab fills its box exactly
         const S = SURFS[surf], a = S.a * ANG, d = S.d * ANG, ids = slabs[k], r = rAt('Cu') * Math.min(1.12, S.a / 2.55);
-        const hex = S.lat === '111', dz = hex ? Math.sqrt(3) / 2 : 1, Lx = 5 * a, Lz = 5 * a * dz;
+        // (111) takes four rows, since a hexagonal layer only repeats across the wall after an even number of rows
+        const hex = S.lat === '111', dz = hex ? Math.sqrt(3) / 2 : 1, rows = hex ? 4 : 5, Lx = 5 * a, Lz = rows * a * dz;
         const sh = hex ? [[0, 0], [0.5, Math.sqrt(3) / 6], [1, Math.sqrt(3) / 3]] : [[0, 0], [0.5, 0.5], [0, 0]];
         const wrap = (v, L) => { v = ((v + L / 2) % L + L) % L - L / 2; return v; };
         let top = -1, n = 0;
-        for (let L = 0; L < 3; L++) for (let j = 0; j < 5; j++) for (let i = 0; i < 5; i++) {
+        for (let L = 0; L < 3; L++) for (let j = 0; j < rows; j++) for (let i = 0; i < 5; i++) {
           const idx = ids[n++];
           // (111): rows sit half a spacing apart, every second row shifted; layers stack A, B, C
-          const x = wrap((i - 2 + (hex ? (j % 2) * 0.5 : 0) + sh[L][0]) * a, Lx), z = wrap((j - 2) * a * dz + sh[L][1] * a, Lz);
-          setLocal(F, idx, ox + x, -L * d, oz + z, r, SLOT[S.c[L ? 1 : 0]]);
+          const x = wrap((i - 2 + (hex ? (j % 2) * 0.5 : 0) + sh[L][0]) * a, Lx), z = wrap((j - (rows - 1) / 2) * a * dz + sh[L][1] * a, Lz);
+          setLocal(F, idx, ox + x, oy - L * d, oz + z, r, SLOT[S.c[L ? 1 : 0]]);
           if (L === 0 && i === 2 && j === 2) top = idx;
         }
-        return { surf, top, topCol: SLOT[S.c[0]], off: [ox, oz], min: [ox - Lx / 2, -2 * d - 0.9 * ANG, oz - Lz / 2], max: [ox + Lx / 2, 13 * ANG, oz + Lz / 2] };
+        while (n < ids.length) F.size[ids[n++]] = 0;
+        return { surf, top, topCol: SLOT[S.c[0]], off: [ox, oy, oz], min: [ox - Lx / 2, oy - 2 * d - 0.9 * ANG, oz - Lz / 2], max: [ox + Lx / 2, oy + CELL_H, oz + Lz / 2] };
       }
-      // build one cell per entry, laid out by how many there are (side by side, or 2 x 2), and frame them
+      // the cells sit on a grid as seen on screen: rows and columns in the view plane, every cell centred on its slot and
+      // the whole grid centred on the origin, so orbiting turns it about its middle. The number of columns is the one
+      // that shows the cells largest in the viewport's shape; a short last row is centred
+      const CELL_H = 13 * ANG, CELL_W = 5 * 2.88 * ANG, view = new THREE.Vector3(), inv = new THREE.Quaternion();
+      function grid(n) {
+        const e = F.meta.euler, lo = [Infinity, Infinity], hi = [-Infinity, -Infinity], y0 = -2 * 2.35 * ANG - 0.9 * ANG;
+        for (let k = 0; k < 8; k++) { view.set(k & 1 ? CELL_W / 2 : -CELL_W / 2, k & 2 ? CELL_H : y0, k & 4 ? CELL_W / 2 : -CELL_W / 2).applyEuler(e); lo[0] = Math.min(lo[0], view.x); hi[0] = Math.max(hi[0], view.x); lo[1] = Math.min(lo[1], view.y); hi[1] = Math.max(hi[1], view.y); }
+        const cw = (hi[0] - lo[0]) * 1.1, ch = (hi[1] - lo[1]) * 1.06;
+        // one row for up to three when the viewport is wide enough for it; four always as 2 x 2
+        const cols = n === 4 ? 2 : n < 3 || Math.min(aspect / (3 * cw), 1 / ch) >= Math.min(aspect / (2 * cw), 1 / (2 * ch)) ? n : 2;
+        const rows = Math.ceil(n / cols), mid = new THREE.Vector3(0, (y0 + CELL_H) / 2, 0);
+        inv.setFromEuler(e).invert();
+        return Array.from({ length: n }, (_, k) => {
+          const j = Math.floor(k / cols), inRow = Math.min(cols, n - j * cols), i = k - j * cols;
+          view.set((i - (inRow - 1) / 2) * cw, ((rows - 1) / 2 - j) * ch, 0).applyQuaternion(inv).sub(mid);
+          return [view.x, view.y, view.z];
+        });
+      }
+      // build one cell per entry on the grid and frame them; no entries hides the cells
       function layout(surfs) {
-        const nC = Math.max(1, Math.min(4, surfs.length)), G = 5 * 2.88 * ANG + 1.4;
-        const pos = { 1: [[0, 0]], 2: [[-G / 2, 0], [G / 2, 0]], 3: [[-G / 2, -G / 2], [G / 2, -G / 2], [0, G / 2]], 4: [[-G / 2, -G / 2], [G / 2, -G / 2], [-G / 2, G / 2], [G / 2, G / 2]] }[nC];
+        const nC = Math.min(4, surfs.length), pos = grid(Math.max(1, nC));
         cellsNow = [];
         for (let k = 0; k < 4; k++) {
-          if (k < nC) cellsNow.push(buildCell(k, surfs[k] || surfs[0] || 'Cu100', pos[k][0], pos[k][1]));
+          if (k < nC) cellsNow.push(buildCell(k, surfs[k], ...pos[k]));
           else slabs[k].forEach(i => { F.size[i] = 0; });
         }
-        setCellBoxes(cellsNow);
-        frameDemo(cellsNow);
+        setCellBoxes(cellsNow); tintKey = '';
+        if (nC) frameDemo(cellsNow);
         laidOut = true; anim = true;
       }
       function pose(r, i) {
@@ -1372,7 +1436,7 @@ export function initReel(canvas, readAccent) {
         let h, ox, oz, tilt, spin = r.spin0 + i * 0.03, vib = sm(5, 0.035, 1.9) + n(6, 0.01), gone = 1;
         if (m.binds) {
           // drawn in close contact with its metal atom: the spheres just touch at the end
-          const hc = RADIUS.Cu + RADIUS[m.atoms[0][0]] - 0.08;
+          const hc = RADIUS.Cu + RADIUS[m.atoms[0][0]] * MOL_S - 0.08;
           h = hc + (H0 - hc) * fall * Math.abs(Math.cos(i * 0.32)) + n(1, 0.03) * (1 - fall);
           ox = r.drift[0] * fall + n(2, 0.04); oz = r.drift[1] * fall + n(3, 0.04);
           tilt = 0.9 * fall + sm(4, 0.1, 0.9);
@@ -1390,26 +1454,59 @@ export function initReel(canvas, readAccent) {
         return { h, ox, oz, tilt, spin, vib, gone };
       }
       function place(r, q) {
-        const m = r.m, ct = Math.cos(q.tilt), st = Math.sin(q.tilt), cs = Math.cos(q.spin), ss = Math.sin(q.spin), sc = 1 + q.vib, [cx, cz] = cellsNow[r.k].off;
+        tintKey = '';
+        const m = r.m, ct = Math.cos(q.tilt), st = Math.sin(q.tilt), cs = Math.cos(q.spin), ss = Math.sin(q.spin), sc = 1 + q.vib, [cx, cy, cz] = cellsNow[r.k].off;
         r.slots.forEach((i, k) => {
           const at = m.atoms[k];
           if (!at) { F.size[i] = 0; return; }
           let x = at[1] * sc, y = at[2] * sc, z = at[3] * sc;
           const x1 = x * ct - y * st, y1 = x * st + y * ct;
           const x2 = x1 * cs + z * ss, z2 = -x1 * ss + z * cs;
-          setLocal(F, i, cx + (x2 + q.ox) * ANG, (q.h + y1) * ANG, cz + (z2 + q.oz) * ANG, rAt(at[0]) * q.gone, SLOT[at[0]]);
+          setLocal(F, i, cx + (x2 + q.ox) * ANG, cy + (q.h + y1) * ANG, cz + (z2 + q.oz) * ANG, rAt(at[0]) * MOL_S, SLOT[at[0]]);
+          FADE[i] = q.gone;
         });
       }
-      function bonds() { F.meta.bonds = runs.flatMap(r => r.gone > 0.05 ? r.m.bonds.map(([p, k]) => [r.slots[p], r.slots[k], BOND_R * ANG, SLOT.BOND]) : []); }
+      function bonds() { F.meta.bonds = runs.flatMap(r => r.gone > 0.01 ? r.m.bonds.map(([p, k]) => [r.slots[p], r.slots[k], BOND_R * ANG, SLOT.BOND]) : []); }
+      // where a molecule binds, the metal atom it touches turns green and the atoms around it take a fainter green
+      // that fades with distance, as the bond forms; colours go through F.rgb so the fade can be continuous
+      let tintKey = '';
+      function tint() {
+        const key = glows.map(g => g.v.toFixed(3) + g.at).join() + (pal === tint.pal) + cellsNow.length;
+        if (key === tintKey && F.rgb) return;
+        tintKey = key; tint.pal = pal;
+        if (!F.rgb) F.rgb = new Float32Array(N * 3);
+        for (let i = 0; i < N; i++) pal[F.col[i]].toArray(F.rgb, i * 3);
+        const ok = pal[SLOT.OK], sig = 2.55 * ANG * 1.05;
+        glows.forEach((g, k) => {
+          if (g.v < 0.005 || !cellsNow[k]) return;
+          const t3 = g.at * 3;
+          slabs[k].forEach(i => {
+            if (!F.size[i]) return;
+            const i3 = i * 3, dd = (F.pos[i3] - F.pos[t3]) ** 2 + (F.pos[i3 + 1] - F.pos[t3 + 1]) ** 2 + (F.pos[i3 + 2] - F.pos[t3 + 2]) ** 2, wv = g.v * Math.exp(-dd / (sig * sig));
+            if (wv < 0.01) return;
+            for (let c = 0; c < 3; c++) F.rgb[i3 + c] += ([ok.r, ok.g, ok.b][c] - F.rgb[i3 + c]) * wv * 0.9;
+          });
+        });
+        anim = true;
+      }
+      // clearing fades the molecules out over a quarter second (the next run waits that long), then hides them
+      let outT = 0;
       function clearMols() {
-        atoms.flat().concat(beads).forEach(i => { F.size[i] = 0; });
-        cellsNow.forEach(c => { if (c.top >= 0) F.col[c.top] = c.topCol; });
-        F.meta.bonds = []; glows.forEach(g => { g.want = 0; });
+        outT = 0.25; beads.forEach(i => { F.size[i] = 0; });
+        glows.forEach(g => { g.want = 0; });
+      }
+      function fadeOut(dt) {
+        if (outT <= 0) return;
+        outT = Math.max(0, outT - dt); anim = true;
+        const a = outT / 0.25, live = new Set(runs.flatMap(r => r.slots));
+        atoms.flat().forEach(i => { if (live.has(i)) return; FADE[i] = Math.min(FADE[i], a); if (!outT) { F.size[i] = 0; FADE[i] = 1; } });
+        if (!outT) F.meta.bonds = F.meta.bonds.filter(([i]) => live.has(i));
       }
       return {
         act(act, v) {
-          // v: [{ surf, mol }] with up to four entries
-          if (act === 'layout') { runs = []; clearMols(); layout((v || []).map(c => c.surf)); }
+          // v: [{ surf, mol }] with up to four entries; v.aspect is the viewport's width over height
+          if (v && v.aspect) aspect = v.aspect;
+          if (act === 'layout') { runs = []; clearMols(); layout((v || []).map(c => c.surf)); orbit0(); }
           if (act === 'run') {
             const list = (v || []).filter(c => MOLS[c.mol] && SURFS[c.surf]).slice(0, 4);
             runs = []; layout(list.map(c => c.surf)); clearMols();
@@ -1430,13 +1527,15 @@ export function initReel(canvas, readAccent) {
             const gT = g.want * wf;
             if (Math.abs(g.v - gT) > 0.003) { g.v += (gT - g.v) * Math.min(1, dt * 4); anim = true; } else g.v = gT;
           });
-          setGlows();
+          setGlows(); tint(); fadeOut(dt);
           if (!runs.some(r => !r.done)) return;
           anim = true;
           if (pause > 0) { pause -= dt; return; }
           runs.forEach(r => {
             if (r.done) return;
-            if (!r.started) { r.started = true; place(r, pose(r, 0)); info('demo', { type: 'start', name: r.key }); return; }
+            // a molecule enters from above its cell at full size: it is placed just over the box top at once, then
+            // eases down to its first pose
+            if (!r.started) { r.started = true; const q0 = pose(r, 0); place(r, { ...q0, h: 15.5 }); r.slots.forEach(i => { if (F.size[i]) enter(i, F); }); place(r, q0); info('demo', { type: 'start', name: r.key }); return; }
             r.acc += dt;
             if (r.acc < STEP_S) return;
             r.acc = 0;
@@ -1444,9 +1543,9 @@ export function initReel(canvas, readAccent) {
             const m = r.m, q = pose(r, r.step), done = r.step >= r.steps, k = 1 - Math.exp(-0.26 * r.step);
             r.gone = q.gone;
             place(r, q);
-            if (m.binds && r.step > 8) { const c = cellsNow[r.k]; F.col[c.top] = SLOT.OK; Object.assign(glows[r.k], { want: 1, at: c.top }); }
+            if (m.binds && r.step > 8) Object.assign(glows[r.k], { want: 1, at: cellsNow[r.k].top });
             const e = m.desorbs ? m.e * k * (1 - Math.max(0, (r.step - 13) / (r.steps - 13))) : m.e * k + (rand(r.seed * 31 + r.step, 213) - 0.5) * 0.03;
-            const hRep = m.desorbs ? (done || q.h > 6 ? null : q.h) : done ? m.h : m.binds ? q.h - (RADIUS.Cu + RADIUS[m.atoms[0][0]] - 0.08) + m.h : q.h;
+            const hRep = m.desorbs ? (done || q.h > 6 ? null : q.h) : done ? m.h : m.binds ? q.h - (RADIUS.Cu + RADIUS[m.atoms[0][0]] * MOL_S - 0.08) + m.h : q.h;
             r.done = done;
             info('demo', { type: 'step', name: r.key, step: r.step, steps: r.steps, e: done ? (m.desorbs ? 0 : m.e) : e, h: hRep, done, binds: m.binds, desorbed: !!m.desorbs });
           });
@@ -1490,6 +1589,8 @@ export function initReel(canvas, readAccent) {
 
   // a controller can jump a particle straight to its target, for loops that wrap around
   function snapTo(i, F, j) { if (shownA !== F && shownB !== F) return; for (let a = 0; a < 3; a++) { P[i * 3 + a] = P[j * 3 + a]; } S[i] = 0; }
+  // a particle that appears where its formation puts it, already at full size and colour
+  function enter(i, F) { if (shownA !== F && shownB !== F) return; for (let a = 0; a < 3; a++) P[i * 3 + a] = F.pos[i * 3 + a]; S[i] = F.size[i]; pal[F.col[i]].toArray(C, i * 3); anim = true; }
   function snap(i, F) { if (shownA !== F && shownB !== F) return; for (let a = 0; a < 3; a++) { P[i * 3 + a] = F.pos[i * 3 + a]; } S[i] = 0; }
   // a soft green radial glow on a demo site atom when a molecule binds there, one per molecule
   const glows = (() => {
@@ -1499,6 +1600,50 @@ export function initReel(canvas, readAccent) {
     g.fillStyle = grd; g.fillRect(0, 0, 128, 128);
     const mat = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false });
     return [0, 1, 2, 3].map(() => { const sp = new THREE.Sprite(mat.clone()); sp.scale.setScalar(5.5 * ANG); sp.visible = false; holder.add(sp); return { sp, v: 0, want: 0, at: 0 }; });
+  })();
+  // around the first skills scene, more small molecules out of focus, behind it and a few in front. They are soft
+  // round points in one draw call (no spheres, no blur pass); the farther from the scene's plane, the larger and
+  // softer the spot. They hold still, so the engine can still stop drawing when the scene settles.
+  const haze = (() => {
+    const TPL = BG_MOLS.concat([
+      [[['C', 0.67, 0, 0], ['C', -0.67, 0, 0], ['H', 1.23, 0.92, 0], ['H', 1.23, -0.92, 0], ['H', -1.23, 0.92, 0], ['H', -1.23, -0.92, 0]], [[0, 1], [0, 2], [0, 3], [1, 4], [1, 5]]],
+      [[['N', 0.55, 0, 0], ['N', -0.55, 0, 0]], [[0, 1]]],
+      [[['C', 0, 0, 0], ['O', 1.13, 0, 0]], [[0, 1]]]
+    ]);
+    const pos = [], col = [], size = [], soft = [], e = new THREE.Euler(), v = new THREE.Vector3(), spots = [], M = coarse ? 9 : 14, c0 = forms.aiMols.center;
+    for (let m = 0, tries = 0; m < M && tries < 4000; tries++) {
+      const front = rand(tries, 314) < 0.15, at = { x: -7 + rand(tries, 311) * (front ? 17 : 20), y: (rand(tries, 312) - 0.5) * (front ? 9 : 12), z: front ? 3 + rand(tries, 313) * 2 : -4 - rand(tries, 313) * 7 };
+      // the middle stays clear for the systems in focus, and the spots keep right of the text on the left
+      // (tested where the spot lands on screen: farther spots drift toward the middle with perspective)
+      const pk = 17 / (17 - at.z);
+      if (Math.abs(at.x - 1.5) * pk < (front ? 7.5 : 5.8) && Math.abs(at.y) * pk < (front ? 4 : 3)) continue;
+      if (spots.some(p => Math.hypot(p.x - at.x, p.y - at.y, (p.z - at.z) * 0.5) < 3)) continue;
+      spots.push(at);
+      const [atoms, bonds] = TPL[m % TPL.length], blur = Math.min(1, 0.45 + Math.abs(at.z) / 9), k = ANG * 1.25;
+      e.set(rand(m, 315) * 6.3, rand(m, 316) * 6.3, rand(m, 317) * 6.3);
+      const xyz = atoms.map(([el, x, y, z]) => v.set(x, y, z).applyEuler(e).clone());
+      const add = (p, r, c, sf) => { pos.push(c0.x + at.x + p.x * k, c0.y + at.y + p.y * k, c0.z + at.z + p.z * k); col.push(c); size.push(r); soft.push(sf); };
+      atoms.forEach(([el], i) => add(xyz[i], (RADIUS[el] || 0.3) * k * (1.4 + blur * 2.4), SLOT[el], 0.8 + 0.2 * blur));
+      bonds.forEach(([a, b]) => add(xyz[a].clone().add(xyz[b]).multiplyScalar(0.5), BOND_R * k * (2 + blur * 5), SLOT.BOND, 1));
+      m++;
+    }
+    const n = size.length, geo = new THREE.BufferGeometry(), rgb = new Float32Array(n * 3);
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(rgb, 3));
+    geo.setAttribute('aSize', new THREE.BufferAttribute(new Float32Array(size), 1));
+    geo.setAttribute('aSoft', new THREE.BufferAttribute(new Float32Array(soft), 1));
+    const mat = new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, toneMapped: false, vertexColors: true,
+      uniforms: { uScale: { value: 1 }, uAlpha: { value: 0 } },
+      vertexShader: `attribute float aSize; attribute float aSoft; uniform float uScale; varying vec3 vCol; varying float vSoft;
+        void main() { vCol = color; vSoft = aSoft; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = min(2.0 * aSize * uScale / -mv.z, 320.0); gl_Position = projectionMatrix * mv; }`,
+      fragmentShader: `uniform float uAlpha; varying vec3 vCol; varying float vSoft;
+        void main() { float d = length(gl_PointCoord * 2.0 - 1.0), a = 1.0 - smoothstep(1.0 - vSoft, 1.0, d); a *= a; if (a < 0.01) discard; gl_FragColor = vec4(vCol, a * uAlpha); }`
+    });
+    const pts = new THREE.Points(geo, mat);
+    pts.frustumCulled = false; pts.visible = false; pts.renderOrder = -1;
+    holder.add(pts);
+    return { pts, mat, rgb, geo, col, paint(pal) { col.forEach((c, i) => pal[c].toArray(rgb, i * 3)); geo.attributes.color.needsUpdate = true; } };
   })();
   function setGlows() {
     const t = 0.85 + 0.15 * Math.sin(performance.now() / 500);
@@ -1680,6 +1825,12 @@ export function initReel(canvas, readAccent) {
   }
   const tg = [0, 0, 0], tcA = new THREE.Color(), tcB = new THREE.Color();
   // aclock runs only while the engine draws, so ambient sway resumes where it stopped; anim marks running animations
+  // the demo's cells can be orbited by dragging in its viewport: a turn about the vertical and a tilt, held until
+  // the next layout, which eases them back to the set view
+  let orbY = 0, orbX = 0, orbYTo = 0, orbXTo = 0;
+  let demoZoom = 1;
+  const TELE = 3;
+  function orbit0() { orbYTo = orbXTo = 0; demoZoom = 1; }
   let swayY = 0, aclock = 0, anim = false, animating = false, settled = false, dirty = true;
   const bA = new THREE.Vector3(), bB = new THREE.Vector3(), bD = new THREE.Vector3(), bQ = new THREE.Quaternion(), bS = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0), bM = new THREE.Matrix4();
   function paintBondMesh(A, B, t) {
@@ -1698,12 +1849,13 @@ export function initReel(canvas, readAccent) {
         bM.compose(bA.add(bB).multiplyScalar(0.5), bQ, bS);
         bondMesh.setMatrixAt(n, bM);
         bondMesh.setColorAt(n, pal[c]);
+        bFade.array[n] = Math.min(aFade.array[i], aFade.array[j]);
         n++;
       }
     };
     if (A === B) pass(A, 1); else { pass(A, 1 - t); pass(B, t); }
     bondMesh.count = n;
-    bondMesh.instanceMatrix.needsUpdate = true;
+    bondMesh.instanceMatrix.needsUpdate = true; bFade.needsUpdate = true;
     if (bondMesh.instanceColor) bondMesh.instanceColor.needsUpdate = true;
   }
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), sc = new THREE.Vector3(), col = new THREE.Color();
@@ -1761,8 +1913,10 @@ export function initReel(canvas, readAccent) {
     // is fixed (a reference frame of 0.55 x 0.6 at 16:10) and the fit to this screen is done with zoom, which only scales
     const wIll = weight(forms.illModel), tvI = Math.tan(THREE.MathUtils.degToRad(15)), ext = forms.illModel.ext;
     const dIll = Math.max(ext.y / (tvI * 0.6), ext.x / (tvI * 1.6 * 0.55)), fitIll = fitDist(ext.x, ext.y);
-    const wantD = wantDist + (dIll - wantDist) * wIll;
-    clayU.uClay.value = wIll;
+    const tele = 1 + (TELE - 1) * weight(forms.demo);
+    const wantD = (wantDist + (dIll - wantDist) * wIll) * (1 + (1 / demoZoom - 1) * weight(forms.demo)) * tele;
+    clayU.uClay.value = wIll; clayU.uSketch.value = weight(forms.illSketch);
+    if (clayU.uSketch.value > 0 && clayU.pal !== pal) { clayU.pal = pal; clayU.uPaper.value.set(getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#F3F5F9'); }
     // while the rendered photo is up, the particles under it stay hidden; they grow back in as the photo dissolves
     // and the next scene forms
     // both ease over about the time the photo takes to sweep in, so the clay leaves as the render arrives and nothing
@@ -1771,7 +1925,7 @@ export function initReel(canvas, readAccent) {
     if (Math.abs(keepK - keepT) > 0.002 || Math.abs(partK - partT) > 0.002) { keepK += (keepT - keepK) * ek; partK += (partT - partK) * ek; anim = true; }
     else { keepK = keepT; partK = partT; }
     if (dis.pts.visible) { dis.mat.uniforms.uD.value = camDist; dis.mat.uniforms.uCell.value = H * renderer.getPixelRatio() * camera.zoom / dis.rows; }
-    camera.zoom = 1 + (dIll / fitIll - 1) * wIll;
+    camera.zoom = (1 + (dIll / fitIll - 1) * wIll) * tele;
     if (forms.illModel.meta.frozen && wIll > 0.5) { camCenter.copy(camTarget); camDist = wantD; }
     else { camCenter.lerp(camTarget, kk); camDist += (wantD - camDist) * kk; }
     camera.position.set(camCenter.x, camCenter.y + camDist * 0.04, camCenter.z + camDist);
@@ -1820,6 +1974,8 @@ export function initReel(canvas, readAccent) {
     paintEdges(weight);
     paintGlyphs(clamp(stop, 0, ORDER.length - 1));
     cellMat.opacity = 0.55 * smooth(0.4, 1, weight(forms.demo)); cellLines.visible = cellMat.opacity > 0.01;
+    haze.mat.uniforms.uAlpha.value = 0.5 * smooth(0.35, 1, weight(forms.aiMols)); haze.pts.visible = haze.mat.uniforms.uAlpha.value > 0.01;
+    if (haze.pts.visible) { if (haze.pal !== pal) { haze.paint(pal); haze.pal = pal; } haze.mat.uniforms.uScale.value = H * renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(15))); }
     paintBonds();
     motion = clamp(speed / Math.max(frameDt, 1e-3) / N / 4);
     settled = err < 0.002 && !anim;
@@ -1827,12 +1983,19 @@ export function initReel(canvas, readAccent) {
     anim = false;
     mesh.instanceMatrix.needsUpdate = true;
     mesh.instanceColor.needsUpdate = true;
+    const wFade = weight(forms.demo), fa = aFade.array;
+    let fd = false;
+    for (let i = 0; i < N; i++) { const f = wFade > 0 ? 1 - (1 - FADE[i]) * wFade : 1; if (fa[i] !== f) { fa[i] = f; fd = true; } }
+    if (fd) aFade.needsUpdate = true;
     // the particles after the last visible one are all at the 0.0001 floor, too small to cover a pixel: leave them undrawn
     mesh.count = live;
     paintBondMesh(A, B, t);
     // the held photo does not sway
     if (!(forms.illModel.meta.frozen && weight(forms.illModel) > 0.5)) swayY = reduce ? 0 : Math.sin(aclock * 0.22) * 0.12 * (1 - weight(forms.illModel));
-    holder.rotation.y = swayY + (forms.illModel.meta.orbit || 0) * weight(forms.illModel);
+    const wDemo = weight(forms.demo), ko = reduce ? 1 : Math.min(1, frameDt * 10);
+    if (Math.abs(orbYTo - orbY) + Math.abs(orbXTo - orbX) > 1e-4) { orbY += (orbYTo - orbY) * ko; orbX += (orbXTo - orbX) * ko; anim = true; } else { orbY = orbYTo; orbX = orbXTo; }
+    holder.rotation.y = swayY * (1 - wDemo) + (forms.illModel.meta.orbit || 0) * weight(forms.illModel) + orbY * wDemo;
+    holder.rotation.x = orbX * wDemo;
     camera.setViewOffset(W, H, -offX * W, -offY * H, W, H);
     // the colour fringe shows only while things move; at rest edges stay clean
     // the illustration's preview is raw: no colour fringe or motion blur there
@@ -1936,6 +2099,10 @@ export function initReel(canvas, readAccent) {
     // times the zoom
     photoRect() { const v = camCenter.clone().project(camera), h = H * camera.zoom; return { cx: (v.x + 1) / 2 * W, cy: (1 - v.y) / 2 * H, w: h * 1.6, h }; },
     setFit(w, h) { fitW = w; fitH = h; },
+    // drag in the demo viewport, in radians; reset eases back to the set view
+    // the batch viewport's zoom buttons: a step in or out, held until the next layout
+    zoom(step) { demoZoom = step ? clamp(demoZoom * (step > 0 ? 1.25 : 0.8), 0.8, 2.5) : 1; anim = true; return demoZoom; },
+    orbit(dy, dx, reset) { if (reset) { orbYTo = orbXTo = 0; } else { orbYTo = clamp(orbYTo + dy, -1.3, 1.3); orbXTo = Math.min(0.55, Math.max(-0.35, orbXTo + dx)); } anim = true; },
     setDefocus(px) { defocus = px; },
     // colours for the image mosaics: one array of sRGB triples (0-1) per tile, row by row from the top left
     tileGrid() { const m = forms.vizGrid.meta; return { cols: m.mc, rows: m.mr, aspect: 3 / 2.1 }; },

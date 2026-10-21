@@ -37,7 +37,12 @@
 }
 * { box-sizing: border-box; }
 html { scrollbar-color: var(--line) var(--bg); }
-body { background: var(--bg); color: var(--ink); font-family: var(--display); font-size: 17px; line-height: 1.6; caret-color: var(--accent); }
+/* the smooth wheel scrolling (Lenis) needs the page at its natural height */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-stopped { overflow: clip; }
+.lenis.lenis-smooth iframe { pointer-events: none; }
+/* no default margin: the intro is pinned from the first pixel, so the first scroll reveals a line */
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--display); font-size: 17px; line-height: 1.6; caret-color: var(--accent); }
 ::selection { background: var(--accent); color: var(--on-accent); }
 a { color: var(--link); text-underline-offset: 3px; text-decoration-thickness: 1px; }
 a:hover { text-decoration-thickness: 2px; }
@@ -101,15 +106,14 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 .content { width: 100%; max-width: 1080px; padding: 48px 40px 0; display: flex; flex-direction: column; gap: 72px; }
 @media (max-width: 560px) { .content { padding-inline: 16px; } .topbar { padding-inline: 16px; } }
 
-/* the intro starts at the very top, already pinned, so the first scroll reveals a line instead of moving the page */
+/* the intro starts at the very top, already pinned: the text holds still while each line sharpens in turn,
+   then it scrolls up and fades out at the top while the skills heading appears in its place in the reel */
 .intro { position: relative; z-index: 2; max-width: 40em; height: calc(100vh + 5 * 28vh); margin-top: -48px; }
-.intro-pin { position: sticky; top: env(safe-area-inset-top, 0px); height: 100vh; margin: 0 -24px; padding: 0 24px; overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 var(--mt, 14%), #000 86%, transparent); mask-image: linear-gradient(transparent, #000 var(--mt, 14%), #000 86%, transparent); }
+.intro-pin { position: sticky; top: env(safe-area-inset-top, 0px); height: 100vh; margin: 0 -24px; padding: 0 24px; overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 var(--mt, 0px), #000 var(--mb, 86%), transparent calc(var(--mb, 86%) + 30px)); mask-image: linear-gradient(transparent, #000 var(--mt, 0px), #000 var(--mb, 86%), transparent calc(var(--mb, 86%) + 30px)); }
 .intro-list { position: absolute; left: 24px; right: 24px; top: 0; display: flex; flex-direction: column; gap: 30px; transform: translateY(var(--ly, 0px)); will-change: transform; }
 .intro-list > * { margin: 0; transform: scale(var(--s, 1)); transform-origin: left center; filter: blur(var(--bl, 0px)); opacity: var(--op, 1); text-shadow: var(--ab, none); will-change: transform, filter; }
 .sent-last { display: flex; flex-direction: column; gap: 10px; }
-/* the skills heading waits under the intro, blurred, and rises into its place in the reel */
-.intro .intro-next { margin: 0; max-width: none; font-family: var(--display); font-weight: 700; font-size: var(--t-head); line-height: 1.05; letter-spacing: -0.02em; color: var(--ink); }
-@media (prefers-reduced-motion: reduce) { .intro { height: auto; } .intro-pin { position: static; height: auto; overflow: visible; -webkit-mask-image: none; mask-image: none; } .intro-list { position: static; transform: none; } .intro-next { display: none; } }
+@media (prefers-reduced-motion: reduce) { .intro { height: auto; } .intro-pin { position: static; height: auto; overflow: visible; -webkit-mask-image: none; mask-image: none; } .intro-list { position: static; transform: none; } }
 .intro h1 { margin: 0; font-weight: 700; font-size: var(--t-head); line-height: 1.05; letter-spacing: -0.02em; }
 .intro h1 mark { color: inherit; background: linear-gradient(transparent 60%, color-mix(in srgb, var(--accent) 55%, transparent) 60%); padding-inline: 2px; }
 .about p { margin: 0; font-size: var(--t-line); line-height: 1.5; letter-spacing: -0.005em; color: var(--muted); max-width: 34em; }
@@ -191,8 +195,15 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 .app.has-view { background: none; box-shadow: 0 18px 40px -28px var(--shadow); }
 .app.has-view .app-bar { background: var(--paper); border: 1px solid var(--line); border-bottom: 0; border-radius: 14px 14px 0 0; }
 .app.has-view .app-body { background: var(--paper); border: 1px solid var(--line); border-top: 0; border-radius: 0 0 14px 14px; }
-.app-view { height: clamp(190px, 30vh, 290px); border-left: 1px solid var(--line); border-right: 1px solid var(--line); background: linear-gradient(color-mix(in srgb, var(--paper) 35%, transparent), transparent 30%); box-shadow: inset 0 1px 0 var(--line), inset 0 -1px 0 var(--line); }
-.app[data-screen="select"] .app-view { height: clamp(120px, 17vh, 170px); }
+.app-view { position: relative; height: clamp(240px, 46vh, 460px); cursor: grab; touch-action: pan-y; border-left: 1px solid var(--line); border-right: 1px solid var(--line); background: linear-gradient(color-mix(in srgb, var(--paper) 35%, transparent), transparent 30%); box-shadow: inset 0 1px 0 var(--line), inset 0 -1px 0 var(--line); }
+.app-view:active { cursor: grabbing; }
+.app-zoom { position: absolute; top: 6px; right: 8px; display: flex; flex-direction: column; gap: 4px; }
+.zoom-btn { all: unset; box-sizing: border-box; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 7px; cursor: pointer; font-family: var(--secondary); font-size: 15px; line-height: 1; color: var(--muted); background: color-mix(in srgb, var(--paper) 80%, transparent); box-shadow: inset 0 0 0 1px var(--line); transition: color .2s, box-shadow .2s; }
+.zoom-btn:hover { color: var(--ink); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 35%, transparent); }
+.zoom-btn:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+/* picking has no 3D view; a batch still on the GPU keeps a short one */
+.app[data-screen="select"] .app-view { display: none; }
+.app[data-screen="select"][data-running="true"] .app-view { display: block; height: clamp(120px, 17vh, 170px); }
 .app-view-cap { display: block; padding: 6px 12px; font-family: var(--secondary); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
 .app-gpu { display: inline-flex; align-items: center; gap: 8px; }
 .app-gpu svg { width: 18px; height: 18px; color: var(--muted); flex: none; }
@@ -248,7 +259,7 @@ label.app-row { cursor: pointer; }
   .tt.mol { grid-template-columns: 30px minmax(0, 1fr); padding: 2px 4px 2px 2px; }
   .tt.mol canvas { width: 30px; }
   .pick-cell { min-height: 30px; }
-  .app[data-screen="select"] .app-view { height: 110px; }
+  .app[data-screen="select"][data-running="true"] .app-view { height: 110px; }
   .tt canvas { max-width: 48px; }
   .tt-cap { font-size: 11.5px; } .tt-sub { font-size: 9.5px; }
   .pick-corner { font-size: 9.5px; }
@@ -273,14 +284,16 @@ label.app-row { cursor: pointer; }
 .hm-c small { font-size: 10px; color: var(--muted); }
 .hm-c.chem { background: color-mix(in srgb, #3FA96B calc(25% + 55% * var(--k, .5)), transparent); }
 .hm-c.phys { background: color-mix(in srgb, var(--faint) 22%, transparent); }
-.hm-c.gone { box-shadow: inset 0 0 0 1px var(--line); background-image: repeating-linear-gradient(135deg, transparent 0 5px, color-mix(in srgb, var(--line) 70%, transparent) 5px 6px); color: var(--faint); font-size: 11px; }
+/* a molecule that left the surface: its own soft blue fill and an up arrow, so it never reads as an empty square */
+.hm-c.gone { background: color-mix(in srgb, #3D7BFF 16%, transparent); color: var(--muted); font-size: 11px; }
 .hm-c.none { background: transparent; }
 .hm-key { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-family: var(--secondary); font-size: 11px; color: var(--faint); }
-.hm-key span { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-left: 6px; }
+.hm-key i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -2px; }
+.hm-key > span { white-space: nowrap; margin-left: 6px; }
 .hm-key .chem { background: color-mix(in srgb, #3FA96B 60%, transparent); }
 .hm-key .phys { background: color-mix(in srgb, var(--faint) 22%, transparent); }
-.hm-key .gone { box-shadow: inset 0 0 0 1px var(--line); }
-.hm-key .hm-unit { width: auto; height: auto; margin-left: auto; border-radius: 0; }
+.hm-key .gone { background: color-mix(in srgb, #3D7BFF 28%, transparent); }
+.hm-key .hm-unit { margin-left: auto; }
 /* a finished run in the select table: a soft green row and a check */
 .app-row.done { background: color-mix(in srgb, #3FA96B 11%, transparent); border-radius: 6px; }
 .app-row.done b { color: #2F9E63; }
@@ -493,7 +506,6 @@ footer { margin-top: auto; padding: 14px 40px 16px; font-size: 15px; color: var(
             <div class="sent-last">
               <p class="sent">Let's stay in touch on <a href="https://www.linkedin.com/in/nfedik/">LinkedIn</a>!</p>
             </div>
-            <p class="intro-next" id="introNext" aria-hidden="true">What I do best</p>
           </div>
         </div>
       </section>
@@ -552,6 +564,10 @@ footer { margin-top: auto; padding: 14px 40px 16px; font-size: 15px; color: var(
 let animate = () => {}, stagger = () => 0;
 import('animejs').then(m => { animate = m.animate; stagger = m.stagger; }).catch(() => {});
 document.documentElement.lang = 'en';
+// wheel and trackpad scrolling glides (Lenis): each notch eases in over a few frames instead of jumping. Touch
+// scrolling stays native, and reduced motion keeps plain scrolling
+let lenis = null;
+if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) import('https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.mjs').then(({ default: Lenis }) => { lenis = new Lenis({ lerp: 0.085, autoRaf: true, allowNestedScroll: true }); }).catch(() => {});
 if (!document.querySelector('meta[name=description]')) document.head.append(Object.assign(document.createElement('meta'), { name: 'description', content: 'Nikita Fedik, computational chemist: chemistry and materials with AI, scientific illustration, demos and tutorials.' }));
 import { mountSky } from './sky.js';
 // the Kekule swap on the current or hovered tab: every 2.6 s the double bonds slide to the other structure (2.68 s
@@ -584,54 +600,97 @@ function lensStyle(el, ad, opOverride) {
   const ab = reduceIntro ? 0 : Math.min(4.5, ad * 2.8);
   el.style.setProperty('--ab', ab > 0.25 ? `${ab.toFixed(1)}px 0 rgba(255,40,90,.5), ${(-ab).toFixed(1)}px 0 rgba(0,180,255,.5)` : 'none');
 }
-const introEl = document.querySelector('.intro'), introList = document.getElementById('introList'), introItems = [...introList.children].filter(el => el.id !== 'introNext'), introNext = document.getElementById('introNext'), introPin = introEl.querySelector('.intro-pin');
-let introF = 1, introV = 0, introMetrics = [];
-let nextTop = 0;
-function cacheIntro() { introMetrics = introItems.map(el => el.offsetTop + el.offsetHeight); nextTop = introNext.offsetTop; }
-cacheIntro();
-document.fonts && document.fonts.ready.then(cacheIntro);
+const introEl = document.querySelector('.intro'), introList = document.getElementById('introList'), introItems = [...introList.children], introPin = introEl.querySelector('.intro-pin');
+// the intro in two steps: first the text holds still and each line sharpens out of the blur in turn; then the text
+// scrolls up and fades out at the top. The skills heading waits under the text from the start, blurred with a soft
+// orange glow, as a hint to keep scrolling; it rises with the text, slows to a stop in its place in the reel and
+// sharpens as it lands, then stays. lay holds the layout both steps are worked out from (cacheIntro, after the reel
+// exists); hand tells the picker where the heading is and how far the scroll is past the intro
+const lay = { tops: [], bots: [], top0: 0, limit: 0, shift: 0, s1: 0, settle: 0, mb: 0, head: 0, wait: 0, dec: 1, reveal: 1, ramp: 1, v0: 0, fade: 8, len: 1 };
+const hand = { off: 0, p: 1, s: 0, past: 0 };
+// how far the text has risen, s pixels into the intro. On a desktop the intro starts pinned and the text holds still
+// while the lines sharpen. On a phone the intro arrives from below the sidebar: the text glides to a stop instead of
+// halting. When the text is taller than the screen (phones, short windows) it holds still until the newest line
+// reaches the bottom, then rises just enough, eased in. Then it scrolls up one to one after a soft start from the
+// speed it already had
+function introRise(s) {
+  const n = introItems.length, u = Math.min(1, Math.max(0, s / lay.reveal)), F = 1 + u * (n - 2);
+  const R0 = lay.settle, settle = R0 ? (s < R0 ? s - s * s / (2 * R0) : R0 / 2) - R0 / 2 : 0;
+  const b = s - lay.reveal, R = lay.ramp, v0 = lay.v0;
+  const up = b <= 0 ? 0 : b < R ? v0 * b + (1 - v0) * b * b / (2 * R) : b - (1 - v0) * R / 2;
+  const k = s <= lay.s1 ? 0 : Math.min(1, (s - lay.s1) / (lay.reveal - lay.s1));
+  return { F, up, rise: settle + lay.shift * k * k + up };
+}
+// how far the heading has risen when the text has risen x in the second step: with the text at first, then slowing
+// evenly to a stop in its place, so it lands without a bump
+function headRise(x) {
+  const T = lay.wait - lay.head, D = lay.dec, x1 = T - D / 2;
+  if (T <= 0) return 0;
+  return x <= x1 ? x : x < x1 + D ? x - (x - x1) * (x - x1) / (2 * D) : T;
+}
+function cacheIntro() {
+  const h = introPin.clientHeight || innerHeight, n = introItems.length;
+  lay.tops = introItems.map(el => el.offsetTop); lay.bots = introItems.map(el => el.offsetTop + el.offsetHeight);
+  const textH = lay.bots[n - 1];
+  // the greeting starts level with the top of the sidebar on a desktop
+  lay.top0 = matchMedia('(min-width: 900px)').matches ? 48 : Math.max(24, h * 0.06);
+  // the heading's place on screen (the reel pins at the same top as the intro), read without its own offset, and where
+  // it waits: under the text, or at the bottom of the screen when the text is taller than that
+  const pin = reelEl.querySelector('.reel-pin').getBoundingClientRect().top;
+  lay.head = reelHead.parentElement.getBoundingClientRect().top - pin + reelHead.offsetTop;
+  lay.wait = Math.max(lay.head, Math.min(lay.top0 + textH + 40, h - reelHead.offsetHeight - Math.max(24, h * 0.04)));
+  lay.dec = Math.max(1, Math.min(h * 0.35, 2 * (lay.wait - lay.head)));
+  // the newest line stays above the waiting heading
+  lay.limit = lay.wait - 36;
+  lay.shift = Math.max(0, lay.top0 + textH - lay.limit);
+  lay.mb = Math.min(lay.wait - 36, Math.max(h * 0.86, lay.top0 + textH + 12));
+  // each line takes about one and a half wheel notches, on any screen height
+  lay.reveal = (n - 2) * Math.min(170, Math.max(120, h * 0.16));
+  lay.ramp = h * 0.15;
+  lay.settle = introEl.getBoundingClientRect().top + scrollY > 40 ? h * 0.14 : 0;
+  // where the newest line first reaches the bottom; the rise starts there (early enough that its speed stays below
+  // the scroll's)
+  let s1 = lay.reveal;
+  for (let s = 0; s <= lay.reveal; s += 2) {
+    const F = 1 + s / lay.reveal * (n - 2), i = Math.min(n - 2, Math.floor(F));
+    if (lay.top0 + lay.bots[i] + (lay.bots[i + 1] - lay.bots[i]) * (F - i) > lay.limit) { s1 = s; break; }
+  }
+  // the eased rise starts as far before that point as it lasts after it, so it is always ahead of the newest line
+  lay.s1 = Math.max(0, Math.min(2 * s1 - lay.reveal, lay.reveal - 2 * lay.shift));
+  lay.v0 = lay.shift ? Math.min(1, 2 * lay.shift / (lay.reveal - lay.s1)) : 0;
+  lay.fade = Math.max(8, lay.head - 12);
+  // the intro ends when the heading has landed and the last line has left the screen
+  const y0 = lay.top0 - lay.shift, T = lay.wait - lay.head;
+  const travel = Math.max(lay.ramp, T > 0 ? T + lay.dec / 2 : 0, y0 + lay.tops[n - 1]);
+  lay.len = lay.reveal + travel + (1 - lay.v0) * lay.ramp / 2;
+  introPin.style.setProperty('--mb', lay.mb.toFixed(0) + 'px');
+}
 // layout reads for one frame, taken before any style writes
-const geo = { reel: 0, intro: 0, last: 0, head: 0, next: 0 };
+const geo = { reel: 0, intro: 0, last: 0, head: 0 };
 function measureGeo() {
   geo.reel = document.getElementById('skills').getBoundingClientRect().top;
   geo.intro = introEl.getBoundingClientRect().top;
   geo.last = introItems[introItems.length - 1].getBoundingClientRect().bottom;
   geo.head = document.querySelector('.reel-head').getBoundingClientRect().top;
-  geo.next = introNext.getBoundingClientRect().top;
-  geo.pin = introPin.getBoundingClientRect().top;
 }
 const introLen = () => Math.max(1, introEl.offsetHeight - innerHeight);
-// the greeting and the first line show from the start; each further line reveals as you scroll
-const introTarget = () => 1 + Math.min(1, Math.max(0, -geo.intro / introLen())) * (introItems.length - 2);
 function paintIntro() {
   if (reduceIntro) return;
-  const h = introPin.clientHeight, top0 = h * 0.16, n = introItems.length;
-  // the text moves one to one with the scroll, like ordinary page text: the intro is sized (sizeIntro) so that the
-  // skills heading arrives at its place exactly when the intro lets go, so the speed never changes anywhere
-  const sR = introLen(), sNow = Math.min(sR, Math.max(0, -geo.intro));
-  const ly = top0 - sNow;
+  const n = introItems.length, raw = -geo.intro, s = Math.min(lay.len, Math.max(0, raw));
+  const { F, up, rise } = introRise(s), ly = lay.top0 - rise;
   introList.style.setProperty('--ly', ly.toFixed(1) + 'px');
-  // the focus line sits just below the first two lines at the start: as the text rises, each line sharpens out of the
-  // blur when it crosses it, one after another, and the lines below wait blurred and faint. Values are rounded to
-  // small steps, so a line is restyled only when its look visibly changes
-  const yF = top0 + introMetrics[1] + h * 0.02, band = h * 0.12;
+  // the lines below the newest one wait blurred and faint; values are rounded to small steps, so a line is restyled
+  // only when its look visibly changes
   introItems.forEach((el, i) => {
-    const ad = Math.round(Math.max(0, (ly + introMetrics[i] - yF) / band) * 40) / 40;
-    lensStyle(el, ad, ad > 1 ? Math.max(0, 0.68 - (ad - 1) * 0.6).toFixed(3) : undefined);
+    const ad = Math.round(Math.max(0, i - F) * 40) / 40;
+    lensStyle(el, ad, ad > 1 ? Math.max(0.3, 0.68 - (ad - 1) * 0.2).toFixed(3) : undefined);
   });
-  // the skills heading rides up with the text at its normal spacing and pins in its place the moment it gets there,
-  // like a sticky header: d is how far it still is from that place, measured and corrected for this frame's move
-  const d = geo.next + (ly - (introNext._ly ?? ly)) - geo.head;
-  introNext._ly = ly; introNext._g = Math.max(0, d); introNext._d = d;
+  // the top edge softens as the text rises, so the lines fade out above the heading
+  const mt = Math.min(lay.fade, Math.max(0, rise)).toFixed(0) + 'px';
+  if (introPin._mt !== mt) { introPin._mt = mt; introPin.style.setProperty('--mt', mt); }
+  const T = lay.wait - lay.head, g = headRise(up);
+  hand.off = T - g; hand.p = T > 0 ? g / T : 1; hand.s = s / lay.reveal; hand.past = raw - lay.len;
 }
-function stepIntro(dt) {
-  const target = introTarget();
-  if (reduceIntro) { introF = target; return; }
-  const steps = Math.min(8, Math.ceil(dt / (1 / 60))), h = dt / steps;
-  for (let i = 0; i < steps; i++) { introV += ((target - introF) * 38 - introV * 2 * Math.sqrt(38) * 0.95) * h; introF += introV * h; }
-}
-paintIntro();
-addEventListener('resize', () => { cacheIntro(); paintIntro(); });
 
 // ---- skills reel ----
 const reelHead = document.getElementById('reelTitle');
@@ -664,7 +723,7 @@ const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.crea
 const fmt = (x, d = 2) => (x < 0 ? '&minus;' : '') + Math.abs(x).toFixed(d);
 // distance to the metal atom; a molecule that desorbed has none
 const fmtH = r => r.h == null ? '&ndash;' : r.h.toFixed(2);
-const kind = r => r.binds ? 'chemisorbed' : r.desorbed ? 'desorbed' : 'physisorbed';
+const kind = r => r.binds ? 'chemisorbed' : r.desorbed ? 'left the surface' : 'physisorbed';
 // results and progress are kept per cell (surface and molecule variant), so a finished pair is not run again
 // pairs: which (surface, molecule) cells to simulate, chosen in a grid; the molecule's orientation comes from its turntable
 const demoApp = { screen: 'select', pairs: new Set(['Cu100|CO', 'Cu100|NH3', 'Pt111|CO']), orient: {}, prog: {}, results: {}, running: false };
@@ -754,13 +813,31 @@ function buildDemo(box, act) {
   const steps = el('ol', { className: 'app-steps' }, ...STEP_NAMES.map((s, i) => el('li', {}, el('button', { type: 'button', textContent: `${i + 1} ${s}`, onclick: () => show(s) }))));
   const body = el('div', { className: 'app-body' });
   // the title: a GPU and a meter of its four batch slots, filled by the cells of the coming (or running) batch
+  // the GPU icon is Lucide's "gpu" (lucide.dev, ISC license)
   const meter = el('span', { className: 'gpu-meter', 'aria-hidden': 'true' }, el('i'), el('i'), el('i'), el('i'));
-  const title = el('span', { className: 'app-title app-gpu', innerHTML: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="7" y="9.5" width="6" height="5" rx="1" fill="currentColor"/><path d="M15.5 10h2.5M15.5 12h2.5M15.5 14h2.5M6 18v2M10 18v2M14 18v2M18 18v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>' });
+  const title = el('span', { className: 'app-title app-gpu', innerHTML: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 17h18a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H2"/><path d="M2 21V3"/><path d="M7 17v3a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1v-3"/><circle cx="16" cy="11" r="2"/><circle cx="8" cy="11" r="2"/></svg>' });
   const titleText = el('span', { className: 'app-gpu-text', textContent: 'fill the GPU batch' });
   title.append(titleText, meter);
   const viewCap = el('span', { className: 'app-view-cap' });
-  const view = el('div', { className: 'app-view', id: 'demoView' }, viewCap);
+  // zoom in and out with buttons (the wheel keeps scrolling the page)
+  const zoomBtn = (step, label, sym) => el('button', { type: 'button', className: 'zoom-btn', title: label, ariaLabel: label, innerHTML: sym, onclick: () => { if (reel3d) { demoApp.zoom = reel3d.zoom(step); measureFrame(); wakeReel(); } } });
+  const zoomBar = el('div', { className: 'app-zoom' }, zoomBtn(1, 'Zoom in', '+'), zoomBtn(-1, 'Zoom out', '&minus;'));
+  zoomBar.addEventListener('pointerdown', e => e.stopPropagation());
+  zoomBar.addEventListener('dblclick', e => e.stopPropagation());
+  const view = el('div', { className: 'app-view', id: 'demoView' }, viewCap, zoomBar);
   const app = el('div', { className: 'app has-view', id: 'demoApp' }, el('div', { className: 'app-bar' }, title, steps), view, body);
+  // the cells are laid out on a grid for the viewport's shape, so each layout and run carries its aspect
+  const withAspect = list => { const r = view.getBoundingClientRect(), h = r.height - viewCap.offsetHeight; list.aspect = r.width > 0 && h > 0 ? r.width / h : 1.6; return list; };
+  // drag to orbit the cells; a double click returns to the set view
+  let drag = null;
+  view.addEventListener('pointerdown', e => { if (!reel3d || e.button) return; drag = { x: e.clientX, y: e.clientY }; view.setPointerCapture(e.pointerId); });
+  view.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag = { x: e.clientX, y: e.clientY };
+    reel3d.orbit(dx * 0.008, e.pointerType === 'mouse' ? dy * 0.006 : 0); wakeReel();
+  });
+  ['pointerup', 'pointercancel'].forEach(t => view.addEventListener(t, () => { drag = null; }));
+  view.addEventListener('dblclick', () => { if (reel3d) { reel3d.orbit(0, 0, true); wakeReel(); } });
   demoApp.meter = (n, cap) => { [...meter.children].forEach((i, k) => i.classList.toggle('on', k < n)); if (cap !== undefined) viewCap.textContent = cap; };
   box.append(app);
   const anyResult = () => Object.keys(demoApp.results).length > 0;
@@ -770,10 +847,21 @@ function buildDemo(box, act) {
     [...steps.children].forEach((li, i) => { li.classList.toggle('on', STEP_NAMES[i] === demoApp.screen); li.firstChild.disabled = !ok[STEP_NAMES[i]]; });
   }
   const status = k => { const r = demoApp.results[k], p = demoApp.prog[k]; return r ? (p && p.saved ? 'saved' : 'converged') : p ? (p.step ? `step ${p.step}/${p.steps}` : p.st || 'queued') : 'ready'; };
-  let tt = null;
+  let tt = null, layoutNext = null;
+  // the viewport takes the room the screen leaves: as tall as the CSS allows, shorter when the app would run past the
+  // stage's top (desktop, where it grows upward) or the window's bottom (phones)
+  const fitView = () => {
+    view.style.height = '';
+    if (!view.offsetHeight || app.dataset.screen === 'select') return;
+    const a = app.getBoundingClientRect(), st = reelEl.querySelector('.reel-stage').getBoundingClientRect();
+    const over = innerWidth >= 900 ? st.top + 8 - a.top : a.bottom - (innerHeight - 8);
+    if (over > 0) view.style.height = Math.max(180, view.offsetHeight - over) + 'px';
+  };
+  demoApp.fit = () => { if (app.isConnected) { fitView(); requestAnimationFrame(() => { measureFrame(); wakeReel(); }); } };
   function show(screen) {
-    demoApp.screen = screen;
+    demoApp.screen = screen; layoutNext = null;
     app.dataset.screen = screen;
+    app.dataset.running = !!demoApp.running;
     if (tt) { tt.stop(); tt = null; }
     tabs();
     body.replaceChildren();
@@ -837,9 +925,8 @@ function buildDemo(box, act) {
       }
       paintCells();
       body.append(grid, el('div', { className: 'app-actions' }, note, go));
-      const preview = () => { const p = cellList().filter(c => !demoApp.results[c.key]).slice(0, MAX_CELLS); if (p.length && !demoApp.running) act('layout', p.map(c => ({ surf: c.surf, mol: c.mol }))); };
-      grid.addEventListener('click', e => { if (e.target.closest('.pick-cell')) preview(); });
-      preview();
+      // the cells are built when the batch opens in simulate; while picking, the 3D view is empty
+      if (!demoApp.running) act('layout', []);
       // one loop for all turntables, only while this screen is up; about 30 frames a second
       let raf = 0, last = performance.now();
       const dark = () => document.documentElement.dataset.theme === 'dark';
@@ -866,7 +953,7 @@ function buildDemo(box, act) {
       if (!all.length) { show('select'); return; }
       // the batch on the GPU now (or next): the cells it holds are built in the viewport as this screen opens
       const batch = demoApp.running ? demoApp.batch : pending.slice(0, MAX_CELLS);
-      if (!demoApp.running) act('layout', (batch.length ? batch : all.slice(0, MAX_CELLS)).map(c => ({ surf: c.surf, mol: c.mol })));
+      if (!demoApp.running) layoutNext = (batch.length ? batch : all.slice(0, MAX_CELLS)).map(c => ({ surf: c.surf, mol: c.mol }));
       const nb = demoApp.running ? demoApp.queue.length : Math.max(0, Math.ceil(pending.length / MAX_CELLS) - 1);
       demoApp.meter(batch.length, batch.length ? (demoApp.running ? `batch ${demoApp.batchNo} on the GPU` : 'ready to run') : '');
       demoApp.rows = {};
@@ -895,16 +982,19 @@ function buildDemo(box, act) {
         surfs.forEach(([s]) => {
           const r = demoApp.results[s + '|' + m];
           if (!r) { grid.append(el('span', { className: 'hm-c none' })); return; }
-          const c = el('span', { className: 'hm-c ' + (r.binds ? 'chem' : r.desorbed ? 'gone' : 'phys'), innerHTML: r.desorbed ? 'left' : `${fmt(r.e)}<small>${fmtH(r)} &Aring;</small>` });
+          const c = el('span', { className: 'hm-c ' + (r.binds ? 'chem' : r.desorbed ? 'gone' : 'phys'), innerHTML: r.desorbed ? '&uarr; left' : `${fmt(r.e)}<small>${fmtH(r)} &Aring;</small>` });
           if (r.binds) c.style.setProperty('--k', Math.min(1, Math.abs(r.e) / 1.5).toFixed(2));
           c.title = `${SURF_HTML[s].replace(/<[^>]+>/g, '')}, ${kind(r)}`;
           grid.append(c);
         });
       });
-      const key = el('div', { className: 'hm-key', innerHTML: '<span class="chem"></span>chemisorbed <span class="phys"></span>physisorbed <span class="gone"></span>desorbed<span class="hm-unit">E<sub>ads</sub> in eV</span>' });
+      const key = el('div', { className: 'hm-key', innerHTML: '<span><i class="chem"></i>chemisorbed</span> <span><i class="phys"></i>physisorbed</span> <span><i class="gone"></i>left the surface</span><span class="hm-unit">E<sub>ads</sub> in eV</span>' });
       body.append(el('div', { className: 'app-main' }, grid, key, el('div', { className: 'app-actions' },
         el('button', { type: 'button', className: 'ctl', textContent: 'New run', disabled: demoApp.running, onclick: () => { act('reset'); demoApp.pairs.clear(); show('select'); } }))));
     }
+    // sized first, so the cells are laid out for the viewport's final shape
+    fitView();
+    if (layoutNext) { act('layout', withAspect(layoutNext)); demoApp.zoom = 1; }
   }
   // the viewport moves when the screen below changes height, so the 3D frame follows it
   const reframe = () => requestAnimationFrame(() => { measureFrame(); wakeReel(); });
@@ -932,7 +1022,7 @@ function buildDemo(box, act) {
   }
   function nextBatch() {
     demoApp.batch = demoApp.queue.shift(); demoApp.batchNo++;
-    act('run', demoApp.batch.map(c => ({ surf: c.surf, mol: c.mol })));
+    act('run', withAspect(demoApp.batch.map(c => ({ surf: c.surf, mol: c.mol }))));
     show('simulate');
   }
   demoApp.nextBatch = nextBatch;
@@ -1000,26 +1090,23 @@ function pickerPos(f) {
 function paintPicker() {
   const pf = pickerPos(stopF);
   // the picker stays out of the way while the intro sits over the atoms
-  // the blurred heading under the intro sharpens as it rises, then hands over to the reel heading in the same spot
-  let headOp;
-  if (rm) headOp = Math.min(1, Math.max(0, (geo.head - geo.last) / 120));
+  // the heading waits under the text, blurred with a soft orange glow that fades once the reading starts, rises with
+  // the text and sharpens as it lands in its place (paintIntro works out where)
+  if (rm) reelHead.style.opacity = geo.head - geo.last > 0 ? '' : '0';
   else {
-    // the teaser arrives at the heading's exact place fully sharp and opaque, and the two swap there in one frame:
-    // the same text in the same spot, so the swap cannot be seen in either scroll direction. Near the top the intro's
-    // soft top edge eases off, so it does not fade the teaser just before it lands
-    // decided from where the heading is drawn this frame (not from the layout read before it moved), so the two
-    // layers never flicker between frames
-    const dist = introNext._g ?? (geo.next - geo.head), t = Math.min(1, Math.max(0, dist / (innerHeight * 0.55)));
-    headOp = dist <= 0.5 ? 1 : 0;
-    const e = 1 - t, op = headOp ? '0' : (0.5 + 0.5 * e * e * (3 - 2 * e)).toFixed(3), bl = (8 * t * t).toFixed(2) + 'px';
-    if (introNext._k !== op + bl) { introNext._k = op + bl; introNext.style.setProperty('--op', op); introNext.style.setProperty('--bl', bl); }
-    const mt = (14 * Math.min(1, Math.max(0, dist / (innerHeight * 0.3)))).toFixed(1) + '%';
-    if (introPin._mt !== mt) { introPin._mt = mt; introPin.style.setProperty('--mt', mt); }
+    const p = hand.p, glow = (1 - Math.min(1, hand.s / 0.6)) * (1 - p), k = hand.off.toFixed(1) + p.toFixed(3) + glow.toFixed(2);
+    if (reelHead._k !== k) {
+      reelHead._k = k;
+      reelHead.style.transform = hand.off > 0.05 ? `translateY(${hand.off.toFixed(1)}px)` : '';
+      reelHead.style.opacity = p >= 1 ? '' : (0.62 + 0.38 * p).toFixed(3);
+      reelHead.style.filter = p >= 1 ? '' : `blur(${(5 * (1 - p) * (1 - p)).toFixed(2)}px)`;
+      reelHead.style.textShadow = glow > 0.01 ? `0 0 10px color-mix(in srgb, var(--accent) ${(90 * glow).toFixed(0)}%, transparent), 0 0 30px color-mix(in srgb, var(--accent) ${(60 * glow).toFixed(0)}%, transparent)` : '';
+      reelHead.style.color = glow > 0.01 ? `color-mix(in srgb, var(--accent) ${(45 * glow).toFixed(0)}%, var(--ink))` : '';
+    }
   }
-  reelHead.style.opacity = headOp ? '' : '0';
-  // the skill's text and the list fade in over the first stretch of scroll after the heading lands, and out the same
-  // way on the way back: tied to the scroll position, so both directions look the same
-  const after = rm ? 1 : Math.min(1, Math.max(0, -(introNext._d ?? (geo.next - geo.head)) / (innerHeight * 0.16)));
+  // the skill's text and the list fade in over the first stretch of scroll after the intro, and out the same way on
+  // the way back: tied to the scroll position, so both directions look the same
+  const after = rm ? 1 : Math.min(1, Math.max(0, hand.past / (innerHeight * 0.16)));
   reelDetail.style.opacity = rm ? '' : (after * after * (3 - 2 * after)).toFixed(3);
   reelList.style.opacity = Math.min(after, Math.max(0, (stopF - 0.35) / 0.55)).toFixed(3);
   reelItems.forEach((el, i) => {
@@ -1068,15 +1155,11 @@ function paintPicker() {
 // between the picker and the detail block on phones; values are fractions of the canvas
 let frameWant = { x: 0, y: 0, w: 0.55, h: 0.6 }, frameNow = null;
 // CSS already lays the overlap out; this only corrects it if the real viewport differs (phone toolbars, reduced motion)
-// the intro's scroll length is the distance its last element (the skills heading) travels from the start to the reel
-// heading's place, so text that moves one to one with the scroll lands it there exactly at the release
+// the intro's scroll length: the reveal, then the rise until the heading is in and the last line has left
 function sizeIntro() {
   if (reduceIntro) return;
   cacheIntro();
-  const h = introPin.clientHeight || innerHeight, top0 = h * 0.16;
-  const pin = reelEl.querySelector('.reel-pin').getBoundingClientRect().top, headInPin = document.querySelector('.reel-head').getBoundingClientRect().top - pin;
-  const T = Math.max(innerHeight * 0.5, top0 + nextTop - headInPin);
-  const want = Math.round(innerHeight + T);
+  const want = Math.round(innerHeight + lay.len);
   if (Math.abs(introEl.offsetHeight - want) > 1) introEl.style.height = want + 'px';
 }
 function overlapIntro() {
@@ -1084,6 +1167,7 @@ function overlapIntro() {
   const off = reelEl.getBoundingClientRect().top - introEl.getBoundingClientRect().top, want = 995 * innerHeight / 100 + introLen();
   if (Math.abs(off) > 1) reelEl.style.marginTop = (parseFloat(getComputedStyle(reelEl).marginTop) - off) + 'px';
   if (Math.abs(reelEl.offsetHeight - want) > 1) reelEl.style.height = want + 'px';
+  measureGeo(); paintIntro();
 }
 overlapIntro();
 addEventListener('resize', overlapIntro);
@@ -1095,10 +1179,13 @@ function measureFrame() {
   const p = pickerEl.getBoundingClientRect(), st = stageEl.getBoundingClientRect(), d = reelDetail.getBoundingClientRect();
   const demo = CAP_ORDER[shown] === 'demo', view = demo && document.getElementById('demoView');
   // the demo renders its cells inside the app's own viewport
+  // zoomed in, the cells are cut at the viewport's edges, so they never spill over the app around it
+  const clip = view && demoApp.zoom > 1 ? view.getBoundingClientRect() : null;
+  reelCanvas.style.clipPath = clip && clip.width ? `inset(${clip.top - c.top}px ${c.right - clip.right}px ${c.bottom - clip.bottom}px ${clip.left - c.left}px)` : '';
   if (view) {
-    const v = view.getBoundingClientRect();
+    const v = view.getBoundingClientRect(), top = v.top + (view.firstChild.offsetHeight || 0);
     if (v.width > 0) {
-      frameWant = { x: ((v.left + v.right) / 2 - c.left) / c.width - 0.5, y: ((v.top + v.bottom) / 2 - c.top) / c.height - 0.5, w: v.width / c.width * 0.86, h: v.height / c.height * 0.86 };
+      frameWant = { x: ((v.left + v.right) / 2 - c.left) / c.width - 0.5, y: ((top + v.bottom) / 2 - c.top) / c.height - 0.5, w: v.width / c.width * 0.86, h: (v.bottom - top) / c.height * 0.86 };
       return;
     }
   }
@@ -1225,7 +1312,7 @@ function paintFrame(dt) {
   if (opG !== paintFrame.op) { reelCanvas.style.opacity = opG; paintFrame.op = opG; }
   reel3d.setFit(mix('w'), mix('h'));
 }
-addEventListener('resize', () => measureFrame());
+addEventListener('resize', () => { measureFrame(); if (demoApp.fit) demoApp.fit(); });
 // short annotations that follow particles in the cloud
 const labelPool = [];
 function paintLabels() {
@@ -1257,7 +1344,7 @@ function reelLoop(now) {
     for (let i = 0; i < steps; i++) { stopV += ((target - stopF) * 38 - stopV * 2 * Math.sqrt(38) * 0.95) * dt; stopF += stopV * dt; }
   }
   const tA = PERF && performance.now();
-  stepIntro(frameDt); paintIntro();
+  paintIntro();
   paintPicker();
   let tR = 0;
   if (reel3d) {
@@ -1271,7 +1358,7 @@ function reelLoop(now) {
     reelLoop.quiet = still ? (reelLoop.quiet || 0) + frameDt : 0;
     const resting = reel3d.motion < 0.004 && !reel3d.animating && Math.abs(stopV) < 0.003, gap = stopF <= 0.02 ? 48 : resting ? 32 : 0;
     const asleep = reelLoop.quiet > 1.2 && reel3d.idle;
-    reelLoop.asleep = asleep && Math.abs(introF - introTarget()) < 0.001 && !perfOn;
+    reelLoop.asleep = asleep && !perfOn;
     if (!asleep && now - (reelLoop.r || 0) >= gap) { const t = PERF && performance.now(); reel3d.render(now); reelLoop.r = now; if (PERF) tR = performance.now() - t; }
     paintLabels();
   }
@@ -1291,7 +1378,8 @@ new IntersectionObserver(es => {
 reelEl.querySelectorAll('button[data-stop]').forEach(btn => btn.addEventListener('click', () => {
   const top = reelEl.getBoundingClientRect().top + scrollY, total = reelEl.offsetHeight - innerHeight;
   const st = ITEM_STOP[+btn.dataset.stop], frac = stopFrac(st);
-  window.scrollTo({ top: top + introLen() + frac * (total - introLen()), behavior: rm ? 'auto' : 'smooth' });
+  const y = top + introLen() + frac * (total - introLen());
+  if (lenis) lenis.scrollTo(y); else window.scrollTo({ top: y, behavior: rm ? 'auto' : 'smooth' });
 }));
 // the scene follows the scroll only; skill names do not preview on hover, so pointing never breaks the flow
 paintPicker();
