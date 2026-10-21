@@ -9,7 +9,6 @@
 //   act(name, a, v)   drive a demo; results arrive through onInfo()
 //   labels()          visible annotations as [{ text, x, y, alpha }] in canvas pixels
 import * as THREE from 'three';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
@@ -55,8 +54,8 @@ const LATE_GROW = [[0.5], [0.5], [0.35, 0.7], [0.3, 0.55, 0.8]][Math.min(3, LATE
 const N = coarse ? 560 : 820;
 // colour slots
 // slots 10-13 are a height ramp from the accent toward slate, built from the current accent
-const SLOT = { G: 0, L: 1, A: 2, CU: 3, CU2: 4, OK: 5, CLAY: 6, O: 7, N: 8, H: 9, C: 0, R1: 10, R2: 11, R3: 12, R4: 13, BOND: 14, INK: 15 };
-const PALETTE = ['#5B6578', '#C9CFDA', null, '#B8703F', '#8E5530', '#3FA96B', '#BCC0C7', '#D9553F', '#4F74D6', '#F2F4F8', 0.35, 0.62, 0.85, 1, '#9AA3B2', 'ink'];   // the last is a bond grey that reads on light and dark
+const SLOT = { G: 0, L: 1, A: 2, CU: 3, CU2: 4, OK: 5, CLAY: 6, O: 7, N: 8, H: 9, C: 0, R1: 10, R2: 11, R3: 12, R4: 13, BOND: 14, INK: 15, PT: 16, PT2: 17, AU: 18, AU2: 19 };
+const PALETTE = ['#5B6578', '#C9CFDA', null, '#B8703F', '#8E5530', '#3FA96B', '#BCC0C7', '#D9553F', '#3D7BFF', '#F2F4F8', 0.35, 0.62, 0.85, 1, '#9AA3B2', 'ink', '#B4BAC4', '#858C98', '#E1B54A', '#B08A2E'];   // the last is a bond grey that reads on light and dark
 
 const LensShader = {
   uniforms: { tDiffuse: { value: null }, uAmount: { value: 0.007 }, uBlur: { value: 0 }, uTexel: { value: new THREE.Vector2(1 / 800, 1 / 600) }, toneMappingExposure: { value: 0.9 }, uGrain: { value: 0 }, uSeed: { value: 0 }, uGrade: { value: 0 } },
@@ -268,6 +267,26 @@ export const MOLS = {
   'N2@N':  { atoms: [['N', 0, 0, 0], ['N', 0, 1.1, 0]], bonds: [[0, 1]], binds: false, desorbs: true, h: 3.3, e: -0.03 }
 };
 
+// the demo's surfaces: lattice, nearest-neighbour distance and layer spacing in A, top and lower layer colours
+export const SURFS = {
+  Cu100: { lat: '100', a: 2.55, d: 1.80, c: ['CU', 'CU2'] },
+  Cu111: { lat: '111', a: 2.55, d: 2.08, c: ['CU', 'CU2'] },
+  Pt111: { lat: '111', a: 2.77, d: 2.26, c: ['PT', 'PT2'] },
+  Au111: { lat: '111', a: 2.88, d: 2.35, c: ['AU', 'AU2'] }
+};
+// adsorption on the top site, per molecule variant and surface: [E_ads in eV, distance to the metal atom in A, kind]
+// kind: c chemisorbed, p physisorbed, d desorbs. Illustrative values in the right ranges, not computed here
+export const ADS = {
+  CO:      { Cu100: [-0.62, 1.85, 'c'], Cu111: [-0.55, 1.87, 'c'], Pt111: [-1.45, 1.85, 'c'], Au111: [-0.22, 2.95, 'p'] },
+  'CO@O':  { Cu100: [-0.11, 2.90, 'p'], Cu111: [-0.10, 2.95, 'p'], Pt111: [-0.15, 2.80, 'p'], Au111: [0, null, 'd'] },
+  NH3:     { Cu100: [-0.55, 2.10, 'c'], Cu111: [-0.50, 2.12, 'c'], Pt111: [-0.85, 2.12, 'c'], Au111: [-0.32, 2.45, 'c'] },
+  'NH3@H': { Cu100: [-0.08, 2.60, 'p'], Cu111: [-0.08, 2.62, 'p'], Pt111: [-0.10, 2.55, 'p'], Au111: [-0.05, 2.70, 'p'] },
+  CO2:     { Cu100: [-0.09, 3.10, 'p'], Cu111: [-0.08, 3.15, 'p'], Pt111: [-0.12, 3.00, 'p'], Au111: [-0.07, 3.20, 'p'] },
+  'CO2@O': { Cu100: [0, null, 'd'], Cu111: [0, null, 'd'], Pt111: [-0.04, 3.30, 'p'], Au111: [0, null, 'd'] },
+  N2:      { Cu100: [0, null, 'd'], Cu111: [0, null, 'd'], Pt111: [-0.18, 3.05, 'p'], Au111: [0, null, 'd'] },
+  'N2@N':  { Cu100: [0, null, 'd'], Cu111: [0, null, 'd'], Pt111: [-0.35, 1.95, 'c'], Au111: [0, null, 'd'] }
+};
+
 // shapes already built, for shapes that derive from another one (the parity plot reads the molecule table)
 const forms0 = {};
 const SHAPES = {
@@ -417,25 +436,23 @@ const SHAPES = {
     });
     return finish(P, 0.35, -0.5, 0.1);
   },
-  // a three-layer Cu(100) slab in its periodic simulation cell, with slots for one adsorbate above the centre atom.
-  // Lengths: Cu-Cu 2.55 A is 0.6 units, so 1 A = 0.235 units; the (100) layers sit 1.8 A apart.
+  // up to four small metal slabs, each in its own periodic cell, laid out as systems batched on one GPU. The slab atoms
+  // are slots here; the demo controller builds the cells (surface, lattice, position) for each batch at run time.
+  // This starting layout (one Cu(100) cell per slot, 2 x 2) only seeds the slots
   demo() {
-    const P = [], a = 2.55 * ANG, d = 1.8 * ANG, slab = [];
-    let site = 0;
-    const top = {};
-    const layer = (n, y, col) => {
-      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
-        if (n === 5 && y === 0) top[`${i - 2},${j - 2}`] = P.length;
-        if (n === 5 && y === 0 && i === 2 && j === 2) site = P.length;
-        slab.push(P.length);
-        P.push({ x: (i - (n - 1) / 2) * a, y, z: (j - (n - 1) / 2) * a, s: rAt('Cu'), c: col });
+    const P = [], a = 2.55 * ANG, d = 1.8 * ANG, slabs = [], half = 2.5 * a, G = 5 * a + 1.4, cells = [];
+    [[-G / 2, -G / 2], [G / 2, -G / 2], [-G / 2, G / 2], [G / 2, G / 2]].forEach(([ox, oz]) => {
+      const ids = [];
+      for (let L = 0; L < 3; L++) for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) {
+        ids.push(P.length);
+        P.push({ x: ox + (i - 2) * a, y: -L * d, z: oz + (j - 2) * a, s: rAt('Cu'), c: L ? SLOT.CU2 : SLOT.CU });
       }
-    };
-    // a small 5 x 5 patch, so the molecule and its landing read large on screen
-    layer(5, 0, SLOT.CU); layer(4, -d, SLOT.CU2); layer(5, -2 * d, SLOT.CU2);
+      slabs.push(ids);
+      cells.push({ min: [ox - half, -2 * d - 0.9 * ANG, oz - half], max: [ox + half, 9.5 * ANG, oz + half] });
+    });
     const atoms = [0, 1, 2, 3].map(() => hidden(P, 4)), beads = hidden(P, 6);
-    const half = 2.5 * a, cell = { min: [-half, -2 * d - 0.9 * ANG, -half], max: [half, 9.5 * ANG, half] };
-    return finish(P, 0.42, -0.62, 0, { site, top, slab, atoms, beads, cell, mol: 'systems' });
+    const cell = { min: [0, 1, 2].map(k => Math.min(...cells.map(c => c.min[k]))), max: [0, 1, 2].map(k => Math.max(...cells.map(c => c.max[k]))) };
+    return finish(P, 0.42, -0.62, 0, { slabs, atoms, beads, cell, cells, mol: 'systems' });
   },
   // illustration, step 1: a messy cloud organises into a matrix, nodes joined by thin cylinders
   illMatrix() {
@@ -639,8 +656,8 @@ export function initReel(canvas, readAccent) {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.9;
   const scene = new THREE.Scene();
-  // filtering the room here is the fallback if the baked file cannot load
-  const envReady = loadRoomEnv().then(t => { scene.environment = t; }, () => { scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture; });
+  // filtering the room here is the fallback if the baked file cannot load; only then is the room's module fetched
+  const envReady = loadRoomEnv().then(t => { scene.environment = t; }, () => import('three/addons/environments/RoomEnvironment.js').then(({ RoomEnvironment }) => { scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture; }));
   const hemi = new THREE.HemisphereLight(0xffffff, 0x7a8396, 0.6); scene.add(hemi);
   const key = new THREE.DirectionalLight(0xffffff, 2.0); key.position.set(5, 10, 8); scene.add(key);
   const rim = new THREE.DirectionalLight(0xffe2cc, 0.6); rim.position.set(-8, 3, -6); scene.add(rim);
@@ -742,6 +759,9 @@ export function initReel(canvas, readAccent) {
   composer.addPass(blurX); composer.addPass(blurY);
   let defocus = 0;
   const lens = new ShaderPass(LensShader);
+  // the lens always draws to the screen, so nothing reads a buffer after it: with no swap the sharp pipeline keeps to one
+  // render target (and one set of MSAA buffers) instead of alternating between two
+  lens.needsSwap = false;
   composer.addPass(lens);
   // out of focus, MSAA adds nothing and the blur passes would write multisampled buffers: blurred frames go through
   // pipelines without it, at full resolution for a slight blur and at half resolution once the blur spans many pixels,
@@ -998,19 +1018,22 @@ export function initReel(canvas, readAccent) {
         g.fillStyle = m; g.fillRect(-400, -400, 800, 800); g.restore();
         const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
       };
-      const covers = { dark: makeCover(true), light: makeCover(false) };
+      // the cover is held at zero opacity for now (coverR in the timeline), so each is painted and uploaded only when
+      // something asks for it: the shot export, or a cover that is shown
+      const covers = {}, coverOf = dark => covers[dark ? 'dark' : 'light'] ||= makeCover(dark);
       // a soft ramp as alpha map, slid across so the backdrop is wiped in from left to right with the render
       const rc = document.createElement('canvas'); rc.width = 256; rc.height = 1;
       const rg = rc.getContext('2d'), ramp = rg.createLinearGradient(0, 0, 256, 0);
       ramp.addColorStop(0, '#fff'); ramp.addColorStop(0.44, '#fff'); ramp.addColorStop(0.56, '#000'); ramp.addColorStop(1, '#000');
       rg.fillStyle = ramp; rg.fillRect(0, 0, 256, 1);
       const wipe = new THREE.CanvasTexture(rc);
-      const coverMat = new THREE.MeshBasicMaterial({ map: covers.dark, alphaMap: wipe, transparent: true, opacity: 0, depthWrite: false, toneMapped: false });
+      const coverMat = new THREE.MeshBasicMaterial({ alphaMap: wipe, transparent: true, opacity: 0, depthWrite: false, toneMapped: false });
       studioFade.push([coverMat, 1, 'cover']);
       const cover = new THREE.Mesh(new THREE.PlaneGeometry(15, 11.25), coverMat);
       cover.position.set(0.2, 2.6, zB + 0.06);
       studio.add(cover);
-      studio.userData.cover = { mat: coverMat, covers, wipe };
+      coverMat.visible = false;
+      studio.userData.cover = { mat: coverMat, covers, coverOf, wipe };
     }
     // two softboxes on stands, aimed at the subject: a rounded diffuser that glows brightest in the middle and
     // falls off toward its edge, a thin dark frame, and a smooth pole; edges stay soft so nothing stair-steps
@@ -1087,7 +1110,8 @@ export function initReel(canvas, readAccent) {
       // the clay set always writes depth, so the grid and the steam drawn after it never show through it
       if (kind === 'cup') m.depthWrite = m.opacity > 0.02;
     });
-    if (studio.userData.cover) { const cv2 = studio.userData.cover, want = dark ? cv2.covers.dark : cv2.covers.light; if (cv2.mat.map !== want) { cv2.mat.map = want; cv2.mat.needsUpdate = true; } }
+    // at zero opacity the cover adds nothing to the frame, so it is not drawn at all
+    if (studio.userData.cover) { const cv2 = studio.userData.cover; cv2.mat.visible = lvl.cover > 0; if (cv2.mat.visible) { const want = cv2.coverOf(dark); if (cv2.mat.map !== want) { cv2.mat.map = want; cv2.mat.needsUpdate = true; } } }
     if (studio.userData.steam) { studio.userData.steam.uniforms.uOpacity.value = cupR * (dark ? 1 : 1.9); studio.userData.steam.uniforms.uColor.value.set(dark ? '#ffffff' : '#5d6575'); if (cupR > 0.01 && !reduce && !(studio.userData.condense && studio.userData.condense.frozen)) { studio.userData.steamStep(); anim = true; } }
   }
   // bonds as real cylinders between particles, drawn for whichever formations are on screen
@@ -1304,35 +1328,61 @@ export function initReel(canvas, readAccent) {
         update(dt) { if (!play) return; w = Math.min(1, w + dt / 2.4); apply(); info('viz-wipe', w); if (w >= 1) play = 0; }
       };
     })(),
-    // each selected system is its own MLIP molecular-dynamics run on a clean surface, one after another. A molecule
-    // comes in from above, off to one side and tilted; what it does next depends on the system:
-    //   binds (CO, NH3): lands on the centre atom with a damped bounce, then vibrates and wobbles there
-    //   physisorbed (CO2): settles about 3 A up and wanders sideways over the surface
-    //   desorbs (N2): touches down, then drifts up and out of the cell
-    // Thermal noise comes from a fixed seed per run, so the same system always plays the same way
+    // the batch: one cell per (surface, molecule) pair, up to four, all relaxing at once as an MLIP batches systems on
+    // one GPU. layout builds the cells; run starts the molecules. A molecule comes in from above, off to one side and
+    // tilted; then, by its kind on that surface: chemisorbed lands on the top atom in close contact with a damped bounce
+    // and vibrates there; physisorbed settles about 3 A up and wanders; desorbing touches down, then drifts out of the
+    // cell. Thermal noise comes from a fixed seed per run, so a system always plays the same way
     demo: (() => {
-      const F = forms.demo, { top, atoms, beads } = F.meta, H0 = 7.5, STEP_S = 0.09, STEPS = 40;
-      const siteIdx = top['0,0'], siteCol = F.col[siteIdx], slots = atoms[0];
-      let queue = [], cur = null, pause = 0;
-      // the molecule's pose at an MD step: height, lateral offset, tilt, spin and a small bond stretch, all in A / rad
+      const F = forms.demo, { slabs, atoms, beads } = F.meta, H0 = 7.5, STEP_S = 0.09;
+      let runs = [], pause = 0, cellsNow = [], laidOut = false;
+      function buildCell(k, surf, ox, oz) {
+        // a periodic cell of 5 x 5 atoms per layer; every atom is wrapped back into the cell, as in a periodic
+        // simulation, so the slab fills its box exactly
+        const S = SURFS[surf], a = S.a * ANG, d = S.d * ANG, ids = slabs[k], r = rAt('Cu') * Math.min(1.12, S.a / 2.55);
+        const hex = S.lat === '111', dz = hex ? Math.sqrt(3) / 2 : 1, Lx = 5 * a, Lz = 5 * a * dz;
+        const sh = hex ? [[0, 0], [0.5, Math.sqrt(3) / 6], [1, Math.sqrt(3) / 3]] : [[0, 0], [0.5, 0.5], [0, 0]];
+        const wrap = (v, L) => { v = ((v + L / 2) % L + L) % L - L / 2; return v; };
+        let top = -1, n = 0;
+        for (let L = 0; L < 3; L++) for (let j = 0; j < 5; j++) for (let i = 0; i < 5; i++) {
+          const idx = ids[n++];
+          // (111): rows sit half a spacing apart, every second row shifted; layers stack A, B, C
+          const x = wrap((i - 2 + (hex ? (j % 2) * 0.5 : 0) + sh[L][0]) * a, Lx), z = wrap((j - 2) * a * dz + sh[L][1] * a, Lz);
+          setLocal(F, idx, ox + x, -L * d, oz + z, r, SLOT[S.c[L ? 1 : 0]]);
+          if (L === 0 && i === 2 && j === 2) top = idx;
+        }
+        return { surf, top, topCol: SLOT[S.c[0]], off: [ox, oz], min: [ox - Lx / 2, -2 * d - 0.9 * ANG, oz - Lz / 2], max: [ox + Lx / 2, 13 * ANG, oz + Lz / 2] };
+      }
+      // build one cell per entry, laid out by how many there are (side by side, or 2 x 2), and frame them
+      function layout(surfs) {
+        const nC = Math.max(1, Math.min(4, surfs.length)), G = 5 * 2.88 * ANG + 1.4;
+        const pos = { 1: [[0, 0]], 2: [[-G / 2, 0], [G / 2, 0]], 3: [[-G / 2, -G / 2], [G / 2, -G / 2], [0, G / 2]], 4: [[-G / 2, -G / 2], [G / 2, -G / 2], [-G / 2, G / 2], [G / 2, G / 2]] }[nC];
+        cellsNow = [];
+        for (let k = 0; k < 4; k++) {
+          if (k < nC) cellsNow.push(buildCell(k, surfs[k] || surfs[0] || 'Cu100', pos[k][0], pos[k][1]));
+          else slabs[k].forEach(i => { F.size[i] = 0; });
+        }
+        setCellBoxes(cellsNow);
+        frameDemo(cellsNow);
+        laidOut = true; anim = true;
+      }
       function pose(r, i) {
         const m = r.m, n = (k, a) => (rand(r.seed * 97 + i * 13 + k, 211) - 0.5) * 2 * a, sm = (k, a, w) => Math.sin(i * w + r.seed * 1.7 + k) * a;
         const fall = Math.exp(-0.26 * i);
         let h, ox, oz, tilt, spin = r.spin0 + i * 0.03, vib = sm(5, 0.035, 1.9) + n(6, 0.01), gone = 1;
         if (m.binds) {
-          // a damped bounce onto the site, then a thermal jiggle
-          h = m.h + (H0 - m.h) * fall * Math.abs(Math.cos(i * 0.32)) + n(1, 0.05);
-          ox = r.drift[0] * fall + n(2, 0.06); oz = r.drift[1] * fall + n(3, 0.06);
-          tilt = 0.9 * fall + sm(4, 0.12, 0.9);
+          // drawn in close contact with its metal atom: the spheres just touch at the end
+          const hc = RADIUS.Cu + RADIUS[m.atoms[0][0]] - 0.08;
+          h = hc + (H0 - hc) * fall * Math.abs(Math.cos(i * 0.32)) + n(1, 0.03) * (1 - fall);
+          ox = r.drift[0] * fall + n(2, 0.04); oz = r.drift[1] * fall + n(3, 0.04);
+          tilt = 0.9 * fall + sm(4, 0.1, 0.9);
         } else if (m.desorbs) {
-          // in, a glance off the surface around 3.4 A, then away along its drift and up out of the cell
-          const out = Math.max(0, (i - 13) / (STEPS - 13));
-          h = m.h + 0.2 + (H0 - m.h) * Math.exp(-0.3 * Math.min(i, 13)) + out * out * 9 + n(1, 0.08);
-          ox = r.drift[0] * (Math.exp(-0.3 * Math.min(i, 13)) - out * 2.2) + n(2, 0.1); oz = r.drift[1] * (Math.exp(-0.3 * Math.min(i, 13)) - out * 2.2) + n(3, 0.1);
+          const t13 = Math.min(i, 13), out = Math.max(0, (i - 13) / (r.steps - 13));
+          h = 3.2 + (H0 - 3.2) * Math.exp(-0.3 * t13) + out * out * 9 + n(1, 0.08);
+          ox = r.drift[0] * (Math.exp(-0.3 * t13) - out * 2.2) + n(2, 0.1); oz = r.drift[1] * (Math.exp(-0.3 * t13) - out * 2.2) + n(3, 0.1);
           tilt = 0.6 + out * 1.4 + sm(4, 0.25, 0.6); spin = r.spin0 + i * 0.12;
           gone = 1 - Math.max(0, (out - 0.85) / 0.15);
         } else {
-          // settles weakly and wanders: a slow random walk across the surface
           h = m.h + (H0 - m.h) * fall + sm(1, 0.22, 0.45) + n(1, 0.06);
           ox = r.drift[0] * fall + sm(2, 0.9, 0.17) * (1 - fall); oz = r.drift[1] * fall + sm(3, 0.7, 0.13) * (1 - fall);
           tilt = 0.5 * fall + sm(4, 0.2, 0.5);
@@ -1340,62 +1390,68 @@ export function initReel(canvas, readAccent) {
         return { h, ox, oz, tilt, spin, vib, gone };
       }
       function place(r, q) {
-        const m = r.m, ct = Math.cos(q.tilt), st = Math.sin(q.tilt), cs = Math.cos(q.spin), ss = Math.sin(q.spin), sc = 1 + q.vib;
-        slots.forEach((i, k) => {
+        const m = r.m, ct = Math.cos(q.tilt), st = Math.sin(q.tilt), cs = Math.cos(q.spin), ss = Math.sin(q.spin), sc = 1 + q.vib, [cx, cz] = cellsNow[r.k].off;
+        r.slots.forEach((i, k) => {
           const at = m.atoms[k];
           if (!at) { F.size[i] = 0; return; }
-          // stretch, tilt about z, spin about y
           let x = at[1] * sc, y = at[2] * sc, z = at[3] * sc;
           const x1 = x * ct - y * st, y1 = x * st + y * ct;
           const x2 = x1 * cs + z * ss, z2 = -x1 * ss + z * cs;
-          setLocal(F, i, (x2 + q.ox) * ANG, (q.h + y1) * ANG, (z2 + q.oz) * ANG, rAt(at[0]) * q.gone, SLOT[at[0]]);
+          setLocal(F, i, cx + (x2 + q.ox) * ANG, (q.h + y1) * ANG, cz + (z2 + q.oz) * ANG, rAt(at[0]) * q.gone, SLOT[at[0]]);
         });
-        F.meta.bonds = q.gone > 0.05 ? m.bonds.map(([p, k]) => [slots[p], slots[k], BOND_R * ANG, SLOT.BOND]) : [];
       }
-      function clear() {
+      function bonds() { F.meta.bonds = runs.flatMap(r => r.gone > 0.05 ? r.m.bonds.map(([p, k]) => [r.slots[p], r.slots[k], BOND_R * ANG, SLOT.BOND]) : []); }
+      function clearMols() {
         atoms.flat().concat(beads).forEach(i => { F.size[i] = 0; });
-        F.col[siteIdx] = siteCol; F.meta.bonds = []; glows.forEach(g => { g.want = 0; });
+        cellsNow.forEach(c => { if (c.top >= 0) F.col[c.top] = c.topCol; });
+        F.meta.bonds = []; glows.forEach(g => { g.want = 0; });
       }
       return {
         act(act, v) {
-          if (act === 'run') { clear(); queue = (v || []).filter(n => MOLS[n]); cur = null; pause = 0.25; }
-          if (act === 'reset') { queue = []; cur = null; clear(); }
+          // v: [{ surf, mol }] with up to four entries
+          if (act === 'layout') { runs = []; clearMols(); layout((v || []).map(c => c.surf)); }
+          if (act === 'run') {
+            const list = (v || []).filter(c => MOLS[c.mol] && SURFS[c.surf]).slice(0, 4);
+            runs = []; layout(list.map(c => c.surf)); clearMols();
+            runs = list.map((c, k) => {
+              const [e, h, kd] = (ADS[c.mol] || {})[c.surf] || [0, null, 'd'];
+              const m = { ...MOLS[c.mol], e, h, binds: kd === 'c', desorbs: kd === 'd' };
+              const seed = c.mol.length * 7 + c.mol.charCodeAt(0) + (c.mol.includes('@') ? 31 : 0) + c.surf.charCodeAt(0) * 3, r0 = rand(seed, 171) * 6.283;
+              return { key: c.surf + '|' + c.mol, m, k, slots: atoms[k], seed, spin0: rand(seed, 172) * 6.283, drift: [Math.cos(r0) * 1.6, Math.sin(r0) * 1.2], steps: 30 + 6 * k, step: 0, acc: 0, done: false, started: false, gone: 1 };
+            });
+            pause = 0.25;
+          }
+          if (act === 'reset') { runs = []; clearMols(); }
         },
         update(dt, w) {
-          // the green glow on a bound site eases in and out on its own
+          if (!laidOut && w(F) > 0.01) layout(['Cu100']);
           const wf = w ? smooth(0.5, 1, w(F)) : 1;
           glows.forEach(g => {
             const gT = g.want * wf;
             if (Math.abs(g.v - gT) > 0.003) { g.v += (gT - g.v) * Math.min(1, dt * 4); anim = true; } else g.v = gT;
           });
           setGlows();
-          if (!cur && !queue.length) return;
+          if (!runs.some(r => !r.done)) return;
           anim = true;
           if (pause > 0) { pause -= dt; return; }
-          if (!cur) {
-            // the next system starts on a clean surface
-            clear();
-            const name = queue.shift(), seed = name.length * 7 + name.charCodeAt(0), r0 = rand(seed, 171) * 6.283;
-            cur = { name, m: MOLS[name], seed, spin0: rand(seed, 172) * 6.283, drift: [Math.cos(r0) * 1.8, Math.sin(r0) * 1.3], step: 0, acc: 0 };
-            place(cur, pose(cur, 0));
-            info('demo', { type: 'start', name, site: [0, 0] });
-            return;
-          }
-          cur.acc += dt;
-          if (cur.acc < STEP_S) return;
-          cur.acc = 0;
-          cur.step = reduce ? STEPS : cur.step + 1;
-          const m = cur.m, q = pose(cur, cur.step), done = cur.step >= STEPS, k = 1 - Math.exp(-0.26 * cur.step);
-          place(cur, q);
-          if (m.binds && cur.step > 8) { F.col[siteIdx] = SLOT.OK; Object.assign(glows[0], { want: 1, at: siteIdx }); }
-          // the energy settles toward the adsorption energy with thermal noise; a desorbing molecule goes back to zero
-          const e = m.desorbs ? m.e * k * (1 - Math.max(0, (cur.step - 13) / (STEPS - 13))) : m.e * k + (rand(cur.seed * 31 + cur.step, 213) - 0.5) * 0.03;
-          info('demo', { type: 'step', name: cur.name, step: cur.step, steps: STEPS, e: done ? (m.desorbs ? 0 : m.e) : e, h: m.desorbs && (done || q.h > 6) ? null : done ? m.h : q.h, done, binds: m.binds, desorbed: !!m.desorbs });
-          if (done) {
-            // the result stays on screen a moment before the next run clears the surface
-            cur = null; pause = 1.1;
-            if (!queue.length) info('demo', { type: 'end' });
-          }
+          runs.forEach(r => {
+            if (r.done) return;
+            if (!r.started) { r.started = true; place(r, pose(r, 0)); info('demo', { type: 'start', name: r.key }); return; }
+            r.acc += dt;
+            if (r.acc < STEP_S) return;
+            r.acc = 0;
+            r.step = reduce ? r.steps : r.step + 1;
+            const m = r.m, q = pose(r, r.step), done = r.step >= r.steps, k = 1 - Math.exp(-0.26 * r.step);
+            r.gone = q.gone;
+            place(r, q);
+            if (m.binds && r.step > 8) { const c = cellsNow[r.k]; F.col[c.top] = SLOT.OK; Object.assign(glows[r.k], { want: 1, at: c.top }); }
+            const e = m.desorbs ? m.e * k * (1 - Math.max(0, (r.step - 13) / (r.steps - 13))) : m.e * k + (rand(r.seed * 31 + r.step, 213) - 0.5) * 0.03;
+            const hRep = m.desorbs ? (done || q.h > 6 ? null : q.h) : done ? m.h : m.binds ? q.h - (RADIUS.Cu + RADIUS[m.atoms[0][0]] - 0.08) + m.h : q.h;
+            r.done = done;
+            info('demo', { type: 'step', name: r.key, step: r.step, steps: r.steps, e: done ? (m.desorbs ? 0 : m.e) : e, h: hRep, done, binds: m.binds, desorbed: !!m.desorbs });
+          });
+          bonds();
+          if (runs.every(r => r.done)) info('demo', { type: 'end' });
         }
       };
     })(),
@@ -1455,12 +1511,25 @@ export function initReel(canvas, readAccent) {
     });
   }
   // the simulation cell of the demo, as thin lines that fade with the formation
-  const cellPos = new Float32Array(24 * 3), cellGeo = new THREE.BufferGeometry();
-  {
-    const { min, max } = forms.demo.meta.cell, e = forms.demo.meta.euler, c = [];
-    for (let k = 0; k < 8; k++) c.push(new THREE.Vector3(k & 1 ? max[0] : min[0], k & 2 ? max[1] : min[1], k & 4 ? max[2] : min[2]).applyEuler(e));
-    [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]].forEach(([a, b], k) => { cellPos.set([c[a].x, c[a].y, c[a].z, c[b].x, c[b].y, c[b].z], k * 6); });
+  const cellPos = new Float32Array(24 * 3 * 4), cellGeo = new THREE.BufferGeometry();
+  function setCellBoxes(list) {
+    cellPos.fill(0);
+    list.forEach(({ min, max }, ci) => {
+      const e = forms.demo.meta.euler, c = [];
+      for (let k = 0; k < 8; k++) c.push(new THREE.Vector3(k & 1 ? max[0] : min[0], k & 2 ? max[1] : min[1], k & 4 ? max[2] : min[2]).applyEuler(e));
+      [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]].forEach(([a, b], k) => { cellPos.set([c[a].x, c[a].y, c[a].z, c[b].x, c[b].y, c[b].z], (ci * 12 + k) * 6); });
+    });
+    if (cellGeo.attributes.position) cellGeo.attributes.position.needsUpdate = true;
   }
+  // the camera frames the cells of the current batch
+  function frameDemo(list) {
+    const e = forms.demo.meta.euler, v = new THREE.Vector3(), lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+    list.forEach(({ min, max }) => { for (let k = 0; k < 8; k++) { v.set(k & 1 ? max[0] : min[0], k & 2 ? max[1] : min[1], k & 4 ? max[2] : min[2]).applyEuler(e); [v.x, v.y, v.z].forEach((c, a) => { lo[a] = Math.min(lo[a], c); hi[a] = Math.max(hi[a], c); }); } });
+    const ex = (hi[0] - lo[0]) / 2, ey = (hi[1] - lo[1]) / 2, ez = (hi[2] - lo[2]) / 2;
+    forms.demo.center.set((lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2);
+    forms.demo.ext = { x: Math.max(1, ex * 1.06 + ez * 0.18) * 0.84, y: Math.max(0.6, ey * 1.04 + ez * 0.12) * 0.84 };
+  }
+  setCellBoxes(forms.demo.meta.cells);
   cellGeo.setAttribute('position', new THREE.BufferAttribute(cellPos, 3));
   const cellMat = new THREE.LineBasicMaterial({ color: '#7D8698', transparent: true, opacity: 0, depthWrite: false, toneMapped: false });
   const cellLines = new THREE.LineSegments(cellGeo, cellMat);
@@ -1722,7 +1791,7 @@ export function initReel(canvas, readAccent) {
     // each particle eases toward its target in one step per frame; the momentum comes from the one spring on the
     // scroll position, so no per-particle physics is needed. The slow bob is added only when drawing, so the
     // particles themselves come to rest and the engine can stop drawing
-    let speed = 0, err = 0;
+    let speed = 0, err = 0, live = 0;
     const IM = mesh.instanceMatrix.array, IC = mesh.instanceColor.array;
     const kp = reduce ? 1 : 1 - Math.exp(-frameDt * 9), ks = reduce ? 1 : 1 - Math.exp(-frameDt * 7), bobAmp = reduce ? 0 : 0.03 * (1 - stillW);
     for (let i = 0; i < N; i++) {
@@ -1742,7 +1811,8 @@ export function initReel(canvas, readAccent) {
       C[k3] += dr * f; C[k3 + 1] += dg * f; C[k3 + 2] += db * f;
       const dc = Math.max(Math.abs(dr), Math.abs(dg), Math.abs(db)); if (dc > err) err = dc;
       // each instance is a uniform scale plus a translation, so its matrix goes straight into the buffer
-      const o = i * 16, si = Math.max(0.0001, S[i] * partK);
+      const o = i * 16, sp = S[i] * partK, si = Math.max(0.0001, sp);
+      if (sp > 0.0001) live = i + 1;
       IM[o] = IM[o + 5] = IM[o + 10] = si;
       IM[o + 12] = P[k3]; IM[o + 13] = P[k3 + 1] + Math.sin(aclock * 1.2 + i * 0.37) * bobAmp; IM[o + 14] = P[k3 + 2];
       IC[k3] = C[k3]; IC[k3 + 1] = C[k3 + 1]; IC[k3 + 2] = C[k3 + 2];
@@ -1757,6 +1827,8 @@ export function initReel(canvas, readAccent) {
     anim = false;
     mesh.instanceMatrix.needsUpdate = true;
     mesh.instanceColor.needsUpdate = true;
+    // the particles after the last visible one are all at the 0.0001 floor, too small to cover a pixel: leave them undrawn
+    mesh.count = live;
     paintBondMesh(A, B, t);
     // the held photo does not sway
     if (!(forms.illModel.meta.frozen && weight(forms.illModel) > 0.5)) swayY = reduce ? 0 : Math.sin(aclock * 0.22) * 0.12 * (1 - weight(forms.illModel));
@@ -1893,7 +1965,9 @@ export function initReel(canvas, readAccent) {
     // the frozen illustration shot as data for the offline render: camera, the molecule in holder space, and the
     // studio group (exported separately as glTF); the cover backdrops as images
     shot() {
-      const F = forms.illModel;
+      const F = forms.illModel, cv = studio.userData.cover;
+      // the export takes the cover plane with its texture, as it always had it, even though the page does not draw it
+      if (cv) { cv.mat.map = cv.coverOf(document.documentElement.dataset.theme === 'dark'); cv.mat.needsUpdate = true; cv.mat.visible = true; }
       holder.updateMatrixWorld(); camera.updateMatrixWorld();
       return {
         camera: { position: camera.position.toArray(), quaternion: camera.quaternion.toArray(), fovY: 30, near: camera.near, far: camera.far, zoom: camera.zoom, lookAt: camCenter.toArray(), dist: camDist },
@@ -1910,7 +1984,7 @@ export function initReel(canvas, readAccent) {
           return out;
         })(),
         bonds: (F.meta.bonds || []).map(b => [b[0], b[1], +(b[2] || BOND_R * ANG).toFixed(4)]), ang: ANG,
-        covers: studio.userData.cover ? { dark: studio.userData.cover.covers.dark.image.toDataURL('image/png'), light: studio.userData.cover.covers.light.image.toDataURL('image/png') } : null,
+        covers: studio.userData.cover ? { dark: studio.userData.cover.coverOf(true).image.toDataURL('image/png'), light: studio.userData.cover.coverOf(false).image.toDataURL('image/png') } : null,
         studio, holderObj: holder
       };
     },

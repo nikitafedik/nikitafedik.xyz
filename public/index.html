@@ -129,6 +129,12 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 .reel-item button { all: unset; box-sizing: border-box; display: block; padding: 6px 0; cursor: pointer; font-family: var(--display); font-size: clamp(21px, 2.1vw, 28px); font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; color: var(--ink); text-wrap: balance; }
 .reel-item button:focus-visible { outline: 2px solid var(--link); outline-offset: 4px; border-radius: 6px; }
 .reel-item[aria-current="step"] button { color: var(--ink); }
+/* the other skills are clickable: on hover (or keyboard focus) one comes into focus and glows in the accent */
+@property --hv { syntax: '<number>'; inherits: true; initial-value: 0; }
+.reel-item { transition: --hv .9s cubic-bezier(.4, 0, .2, 1); filter: blur(calc(var(--b, 0px) * (1 - .65 * var(--hv)))); opacity: calc(var(--o, 1) + (1 - var(--o, 1)) * .6 * var(--hv)); }
+.reel-item:not([aria-current]) button { color: color-mix(in srgb, var(--accent) calc(55% * var(--hv)), var(--ink)); }
+@media (hover: hover) { .reel-item:not([aria-current]):hover { --hv: 1; transition-duration: .6s; } }
+.reel-item:not([aria-current]):has(button:focus-visible) { filter: none; opacity: 1; text-shadow: none; }
 .reel-stage { position: relative; z-index: 1; height: min(92vh, 820px); display: flex; flex-direction: column; justify-content: flex-end; pointer-events: none; }
 .reel-stage > * { pointer-events: auto; }
 .reel-canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; z-index: 0; pointer-events: none; }
@@ -181,6 +187,18 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 .reel-label { position: absolute; left: 0; top: 0; font-family: var(--secondary); font-size: 13px; color: var(--muted); white-space: nowrap; }
 /* mock app screens for the demo skill */
 .app { width: min(54em, 100%); border-radius: 14px; background: var(--paper); box-shadow: inset 0 0 0 1px var(--line), 0 18px 40px -28px var(--shadow); overflow: hidden; font-size: 14px; }
+/* the demo app is a window: a title bar, a viewport where the 3D cells render, then the screen below */
+.app.has-view { background: none; box-shadow: 0 18px 40px -28px var(--shadow); }
+.app.has-view .app-bar { background: var(--paper); border: 1px solid var(--line); border-bottom: 0; border-radius: 14px 14px 0 0; }
+.app.has-view .app-body { background: var(--paper); border: 1px solid var(--line); border-top: 0; border-radius: 0 0 14px 14px; }
+.app-view { height: clamp(190px, 30vh, 290px); border-left: 1px solid var(--line); border-right: 1px solid var(--line); background: linear-gradient(color-mix(in srgb, var(--paper) 35%, transparent), transparent 30%); box-shadow: inset 0 1px 0 var(--line), inset 0 -1px 0 var(--line); }
+.app[data-screen="select"] .app-view { height: clamp(120px, 17vh, 170px); }
+.app-view-cap { display: block; padding: 6px 12px; font-family: var(--secondary); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
+.app-gpu { display: inline-flex; align-items: center; gap: 8px; }
+.app-gpu svg { width: 18px; height: 18px; color: var(--muted); flex: none; }
+.gpu-meter { display: inline-flex; gap: 3px; margin-left: 2px; }
+.gpu-meter i { width: 7px; height: 12px; border-radius: 2px; box-shadow: inset 0 0 0 1px var(--line); }
+.gpu-meter i.on { background: var(--accent); box-shadow: none; }
 .app-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 14px; border-bottom: 1px solid var(--line); }
 .app-title { font-weight: 600; font-size: 13.5px; color: var(--ink); }
 .app-steps { list-style: none; margin: 0; padding: 0; display: flex; gap: 12px; font-family: var(--secondary); font-size: 11.5px; color: var(--faint); }
@@ -190,7 +208,7 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 .app-steps button:disabled { cursor: default; opacity: .55; }
 .app-steps button:not(:disabled):hover { color: var(--ink); }
 .app-steps button:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; border-radius: 3px; }
-.app-body { padding: 4px 14px 8px; display: grid; grid-template-columns: minmax(0, 1fr) 9.5em; gap: 18px; align-items: start; }
+.app-body { padding: 4px 14px 8px; }
 .app-list { display: flex; flex-direction: column; }
 .app-row { display: grid; grid-template-columns: 1.4em 4.2em minmax(3em, 1fr) 5.6em 4.6em 7.4em; align-items: center; gap: 10px; min-height: 28px; font-family: var(--secondary); font-size: 12.5px; color: var(--muted); border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
 .app-row:last-child { border-bottom: 0; }
@@ -203,6 +221,66 @@ label.app-row { cursor: pointer; }
 .reel-detail.wide .reel-desc { order: 3; max-width: 40em; }
 .reel-detail.wide .reel-readout { order: 4; }
 .app-main { min-width: 0; }
+/* the pairing grid: turntable headers, a square per pairing */
+.pick { display: grid; grid-template-columns: minmax(120px, 1.3fr) repeat(4, minmax(0, 1fr)); gap: 6px; margin: 8px 0 4px; align-items: stretch; }
+.pick-corner { align-self: end; padding: 0 0 6px 2px; font-family: var(--secondary); font-size: 10.5px; line-height: 1.3; color: var(--faint); }
+.pick-cell { all: unset; box-sizing: border-box; display: grid; place-items: center; min-height: 34px; border-radius: 9px; cursor: pointer; box-shadow: inset 0 0 0 1px var(--line); color: var(--on-accent); font-weight: 700; font-family: var(--secondary); transition: background .15s, box-shadow .15s; }
+.pick-cell:hover { box-shadow: inset 0 0 0 1.5px var(--ink); }
+.pick-cell.on { background: var(--accent); box-shadow: none; }
+.pick-cell.done { box-shadow: inset 0 0 0 1.5px #3FA96B; color: #2F9E63; }
+.pick-cell.done.on { background: color-mix(in srgb, #3FA96B 25%, transparent); }
+.pick-cell small { font-size: 11px; font-weight: 500; }
+.pick-cell:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.tt-note.warn { animation: notewarn .9s ease; }
+@keyframes notewarn { 0%, 60% { color: var(--accent); } }
+/* turntables for picking surfaces and molecules */
+.tt-group { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 4px; }
+.tt-h { font-family: var(--secondary); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+.tt-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.tt { all: unset; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 3px 3px 5px; border-radius: 12px; cursor: grab; background: var(--well); box-shadow: inset 0 0 0 1px var(--line); touch-action: none; user-select: none; transition: box-shadow .2s, background .2s; }
+.tt:active { cursor: grabbing; }
+.tt canvas { width: 100%; max-width: 62px; aspect-ratio: 1; display: block; }
+.tt.mol { display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: center; column-gap: 4px; padding-right: 6px; }
+.tt.mol canvas { width: 52px; grid-row: span 2; }
+.tt.mol .tt-cap { align-self: end; } .tt.mol .tt-sub { align-self: start; }
+@media (max-width: 560px) {
+  .pick { grid-template-columns: 84px repeat(4, minmax(0, 1fr)); gap: 4px; }
+  .tt.mol { grid-template-columns: 30px minmax(0, 1fr); padding: 2px 4px 2px 2px; }
+  .tt.mol canvas { width: 30px; }
+  .pick-cell { min-height: 30px; }
+  .app[data-screen="select"] .app-view { height: 110px; }
+  .tt canvas { max-width: 48px; }
+  .tt-cap { font-size: 11.5px; } .tt-sub { font-size: 9.5px; }
+  .pick-corner { font-size: 9.5px; }
+}
+.tt-cap { font-family: var(--display); font-weight: 600; font-size: 13px; color: var(--ink); }
+.tt-cap small, .app-row b small, .hm-r small { font-family: var(--secondary); font-weight: 400; font-size: 10.5px; color: var(--faint); margin-left: 4px; }
+.tt-sub { font-family: var(--secondary); font-size: 10.5px; color: var(--faint); }
+.tt.on { background: color-mix(in srgb, var(--accent) 12%, var(--paper)); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.tt:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.tt-note { margin-right: auto; align-self: center; font-family: var(--secondary); font-size: 11.5px; color: var(--faint); }
+.tt-note.warn { color: var(--accent); }
+@media (max-width: 480px) { .app-gpu-text { display: none; } }
+/* the simulate list: a wide label column, no checkbox */
+.app-row.cell-row { grid-template-columns: minmax(10.5em, 1.6fr) minmax(3em, 1fr) 4.6em 4.6em 6.6em; }
+.app-row.cell-row b { white-space: nowrap; }
+@media (max-width: 899px) { .app-row.cell-row { grid-template-columns: minmax(8.5em, 1.6fr) minmax(2em, 1fr) 4em 5.6em; } .app-row.cell-row > :nth-child(4) { display: none; } }
+/* results heatmap */
+.hm { display: grid; gap: 4px; margin: 8px 0 4px; font-family: var(--secondary); font-size: 12px; }
+.hm-h { text-align: center; color: var(--faint); font-size: 11px; }
+.hm-r { align-self: center; font-family: var(--display); font-weight: 600; font-size: 13px; color: var(--ink); }
+.hm-c { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 42px; border-radius: 8px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.hm-c small { font-size: 10px; color: var(--muted); }
+.hm-c.chem { background: color-mix(in srgb, #3FA96B calc(25% + 55% * var(--k, .5)), transparent); }
+.hm-c.phys { background: color-mix(in srgb, var(--faint) 22%, transparent); }
+.hm-c.gone { box-shadow: inset 0 0 0 1px var(--line); background-image: repeating-linear-gradient(135deg, transparent 0 5px, color-mix(in srgb, var(--line) 70%, transparent) 5px 6px); color: var(--faint); font-size: 11px; }
+.hm-c.none { background: transparent; }
+.hm-key { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-family: var(--secondary); font-size: 11px; color: var(--faint); }
+.hm-key span { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-left: 6px; }
+.hm-key .chem { background: color-mix(in srgb, #3FA96B 60%, transparent); }
+.hm-key .phys { background: color-mix(in srgb, var(--faint) 22%, transparent); }
+.hm-key .gone { box-shadow: inset 0 0 0 1px var(--line); }
+.hm-key .hm-unit { width: auto; height: auto; margin-left: auto; border-radius: 0; }
 /* a finished run in the select table: a soft green row and a check */
 .app-row.done { background: color-mix(in srgb, #3FA96B 11%, transparent); border-radius: 6px; }
 .app-row.done b { color: #2F9E63; }
@@ -528,18 +606,10 @@ const introTarget = () => 1 + Math.min(1, Math.max(0, -geo.intro / introLen())) 
 function paintIntro() {
   if (reduceIntro) return;
   const h = introPin.clientHeight, top0 = h * 0.16, n = introItems.length;
-  // the text moves at one steady speed with the scroll, then eases smoothly up to the page's own scroll speed by the
-  // time the intro lets go, so its motion never changes speed abruptly, from the first line to the hand-off below
-  const sR = introLen(), sNow = Math.min(sR, Math.max(0, -geo.intro)), yEnd = geo.head - nextTop;
-  const Lb = sR * 0.35, T = top0 - yEnd, k0 = (T - 0.5 * Lb) / (sR - 0.5 * Lb), s1 = sR - Lb;
-  let travel;
-  if (sNow <= s1) travel = k0 * sNow;
-  else {
-    // speed blends from k0 to 1 along a smoothstep; this is its integral
-    const u = (sNow - s1) / Lb, I = u * u * u - 0.5 * u * u * u * u;
-    travel = k0 * s1 + Lb * (k0 * u + (1 - k0) * I);
-  }
-  const ly = top0 - travel;
+  // the text moves one to one with the scroll, like ordinary page text: the intro is sized (sizeIntro) so that the
+  // skills heading arrives at its place exactly when the intro lets go, so the speed never changes anywhere
+  const sR = introLen(), sNow = Math.min(sR, Math.max(0, -geo.intro));
+  const ly = top0 - sNow;
   introList.style.setProperty('--ly', ly.toFixed(1) + 'px');
   // the focus line sits just below the first two lines at the start: as the text rises, each line sharpens out of the
   // blur when it crosses it, one after another, and the lines below wait blurred and faint. Values are rounded to
@@ -549,15 +619,10 @@ function paintIntro() {
     const ad = Math.round(Math.max(0, (ly + introMetrics[i] - yF) / band) * 40) / 40;
     lensStyle(el, ad, ad > 1 ? Math.max(0, 0.68 - (ad - 1) * 0.6).toFixed(3) : undefined);
   });
-  // the skills heading glides to rest in its place: d is how far its spot in the list is from the heading's place,
-  // and it is drawn at softplus(d), which equals d while far away and eases smoothly to 0 as the list moves past.
-  // It only ever trails the lines above it, and it is at rest, in place, when it hands over to the reel's heading
-  const D = 34, d = (geo.next - (introNext._offN || 0)) + (ly - (introNext._ly ?? ly)) - geo.head;
-  const g = d > 8 * D ? d : D * Math.log1p(Math.exp(d / D));
-  const offN = g - d;
-  introNext._offN = offN; introNext._ly = ly; introNext._g = g; introNext._d = d;
-  const offS = offN.toFixed(1) + 'px';
-  if (introNext._off !== offS) { introNext._off = offS; introNext.style.translate = `0 ${offS}`; }
+  // the skills heading rides up with the text at its normal spacing and pins in its place the moment it gets there,
+  // like a sticky header: d is how far it still is from that place, measured and corrected for this frame's move
+  const d = geo.next + (ly - (introNext._ly ?? ly)) - geo.head;
+  introNext._ly = ly; introNext._g = Math.max(0, d); introNext._d = d;
 }
 function stepIntro(dt) {
   const target = introTarget();
@@ -582,72 +647,269 @@ const SKILL = {
   demo: 'I build demos around one clear result, often from a select partner collaboration. Interactive, hand-curated and backed by real simulations, they tell a visual story about new technology and how it shapes chemical and materials discovery.',
   learn: 'I create tutorials and hands-on workshops for major conferences and events, from first install to a working GPU-accelerated simulation. I like to mix hands-on practice, since what we know still grows with the time we put in, and agentic approaches, where the audience builds a whole research pipeline in a couple of hours.'
 };
-// the demo's systems; energies and heights come from the engine's MOLS table
+// ---- the demo app: pick surfaces and molecules on turntables, run them as one GPU batch, read a heatmap ----
 const SYSTEMS = [['CO', 'CO'], ['NH3', 'NH<sub>3</sub>'], ['CO2', 'CO<sub>2</sub>'], ['N2', 'N<sub>2</sub>']];
 const SYS_HTML = Object.fromEntries(SYSTEMS);
-// how each molecule meets the surface (every site is a top site): the suffix names the engine's variant
-const ORIENT = { CO: [['', 'C down'], ['O', 'O down']], NH3: [['', 'N down'], ['H', 'H down']], CO2: [['', 'flat'], ['O', 'end-on']], N2: [['', 'flat'], ['N', 'end-on']] };
+const SURF_LIST = [['Cu100', 'Cu(100)'], ['Cu111', 'Cu(111)'], ['Pt111', 'Pt(111)'], ['Au111', 'Au(111)']];
+const SURF_HTML = Object.fromEntries(SURF_LIST);
+// how each molecule meets the surface (all on the top site): the suffix names the engine's variant; tip is the
+// turntable's tilt for that orientation
+const ORIENT = { CO: [['', 'C down', 0], ['O', 'O down', Math.PI]], NH3: [['', 'N down', 0], ['H', 'H down', Math.PI]], CO2: [['', 'flat', 0], ['O', 'end-on', Math.PI / 2]], N2: [['', 'flat', 0], ['N', 'end-on', Math.PI / 2]] };
 const vname = k => { const o = ORIENT[k][demoApp.orient[k] || 0][0]; return o ? `${k}@${o}` : k; };
-const ELEMENTS = [['Cu', '#B8703F'], ['C', '#5B6578'], ['O', '#D9553F'], ['N', '#4F74D6'], ['H', '#F2F4F8']];
+const vlabel = v => { const [k, o] = v.split('@'); return SYS_HTML[k] + ' <small>' + ORIENT[k].find(x => x[0] === (o || ''))[1] + '</small>'; };
+const ELEMENTS = [['Cu', '#B8703F'], ['Pt', '#B4BAC4'], ['Au', '#E1B54A'], ['C', '#5B6578'], ['O', '#D9553F'], ['N', '#3D7BFF'], ['H', '#F2F4F8']];
+const ECOL = Object.fromEntries(ELEMENTS);
 const autoPlayed = new Set();
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); kids.forEach(k => e.append(k)); return e; };
 const fmt = (x, d = 2) => (x < 0 ? '&minus;' : '') + Math.abs(x).toFixed(d);
-// height above the surface; a molecule that desorbed has none
+// distance to the metal atom; a molecule that desorbed has none
 const fmtH = r => r.h == null ? '&ndash;' : r.h.toFixed(2);
 const kind = r => r.binds ? 'chemisorbed' : r.desorbed ? 'desorbed' : 'physisorbed';
-// the demo as a small app window: select systems, relax them, read the results
-// results and progress are kept per variant (system and orientation), so each orientation keeps its own saved result
-const demoApp = { screen: 'select', picked: new Set(['CO', 'NH3', 'CO2']), orient: {}, prog: {}, results: {}, running: false, views: {} };
-const STEP_NAMES = ['select', 'relax', 'results'];
+// results and progress are kept per cell (surface and molecule variant), so a finished pair is not run again
+// pairs: which (surface, molecule) cells to simulate, chosen in a grid; the molecule's orientation comes from its turntable
+const demoApp = { screen: 'select', pairs: new Set(['Cu100|CO', 'Cu100|NH3', 'Pt111|CO']), orient: {}, prog: {}, results: {}, running: false };
+const STEP_NAMES = ['select', 'simulate', 'results'];
+const MAX_CELLS = 4;
+const cellList = () => SURF_LIST.flatMap(([s]) => SYSTEMS.map(x => x[0]).filter(k => demoApp.pairs.has(s + '|' + k)).map(k => ({ surf: s, mol: vname(k), key: s + '|' + vname(k) })));
+
+// turntable models, in A: molecules in their base orientation (first atom faces the surface), slabs as a small patch
+const TT_MOLS = {
+  CO: { atoms: [['C', 0, 0, 0], ['O', 0, 1.15, 0]], bonds: [[0, 1]] },
+  NH3: { atoms: [['N', 0, 0, 0], ['H', 0.94, 0.38, 0], ['H', -0.47, 0.38, 0.81], ['H', -0.47, 0.38, -0.81]], bonds: [[0, 1], [0, 2], [0, 3]] },
+  CO2: { atoms: [['C', 0, 0, 0], ['O', 1.16, 0, 0], ['O', -1.16, 0, 0]], bonds: [[0, 1], [0, 2]] },
+  N2: { atoms: [['N', 0.55, 0, 0], ['N', -0.55, 0, 0]], bonds: [[0, 1]] }
+};
+// the same proportions as the molecules in the 3D scenes (atom radii and bond radius in A), metals as packed spheres
+const TT_R = { H: 0.3, C: 0.45, N: 0.45, O: 0.45, Cu: 1.0, Pt: 1.0, Au: 1.0 }, TT_BOND = 0.12;
+// a slab as its periodic cell: 4 x 4 atoms per layer wrapped into the cell, two layers, and the cell's box
+function slabModel(surf) {
+  const metal = surf.slice(0, 2), hex = surf.endsWith('111'), a = 2.0, dz = hex ? 0.866 : 1, Lx = 4 * a, Lz = 4 * a * dz, atoms = [];
+  const wrap = (v, L) => ((v + L / 2) % L + L) % L - L / 2;
+  for (let L = 0; L < 2; L++) for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) {
+    const x = wrap((i - 1.5 + (hex ? (j % 2) * 0.5 : 0) + (L ? 0.5 : 0)) * a, Lx), z = wrap((j - 1.5) * a * dz + (L ? (hex ? 0.29 : 0.5) * a : 0), Lz);
+    atoms.push([metal, x, -L * 1.6, z]);
+  }
+  return { atoms, bonds: [], box: [Lx / 2, Lz / 2, -1.6 - 1.1, 6.4], cy: 1.85 };
+}
+// draws one turntable: atoms and bonds projected after a tip about the depth axis (which end faces down) and a spin
+// about the vertical, seen slightly from above, back to front; a slab also gets its cell's box
+let ttMolMax = 0;
+const ttShade = g => g._shade ||= (() => {
+  const hi = g.createRadialGradient(-0.35, -0.4, 0, -0.35, -0.4, 0.75), rim = g.createRadialGradient(0, 0, 0.55, 0, 0, 1);
+  hi.addColorStop(0, 'rgba(255,255,255,.7)'); hi.addColorStop(0.25, 'rgba(255,255,255,.3)'); hi.addColorStop(1, 'rgba(255,255,255,0)');
+  rim.addColorStop(0, 'rgba(0,0,0,0)'); rim.addColorStop(1, 'rgba(0,0,0,.28)');
+  return { hi, rim };
+})();
+const ttMolR = () => ttMolMax ||= Math.max(...Object.values(TT_MOLS).flatMap(m => m.atoms.map(([e, x, y, z]) => Math.hypot(x, y - (m.cy || 0), z) + TT_R[e])));
+function drawTT(cv, model, spin, tip, scale, dark) {
+  const dpr = Math.min(2, window.devicePixelRatio || 1), W = cv.clientWidth || 84, H = cv.clientHeight || 84;
+  if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+  // all molecules share one scale, set so the largest fits its tile at every angle
+  if (!model.box) scale = Math.min(scale, (Math.min(W, H) / 2 - 1.5) / ttMolR());
+  const cs = Math.cos(spin), ss = Math.sin(spin), ct = Math.cos(tip), st = Math.sin(tip), ce = Math.cos(0.45), se = Math.sin(0.45);
+  const P = (x, y, z) => {
+    const x1 = x * ct - y * st, y1 = x * st + y * ct;
+    const x2 = x1 * cs + z * ss, z2 = -x1 * ss + z * cs;
+    const yc = y1 - (model.cy || 0);
+    return { x: W / 2 + x2 * scale, y: H / 2 - (yc * ce - z2 * se) * scale, z: yc * se + z2 * ce };
+  };
+  // the projected point itself carries the element and radius: one object per atom per frame, not two
+  const pts = model.atoms.map(([e, x, y, z]) => { const p = P(x, y, z); p.e = e; p.r = TT_R[e] * scale; return p; });
+  // spheres shaded like the 3D scenes: the element colour, a soft highlight to the upper left, a gently darker rim.
+  // Both shading layers are made once per canvas for a unit sphere, and each atom draws through a transform that
+  // scales and moves that sphere into place, so no gradient is built per atom per frame
+  const sh = ttShade(g);
+  const items = pts.map(p => ({ z: p.z, draw: () => {
+    g.setTransform(dpr * p.r, 0, 0, dpr * p.r, dpr * p.x, dpr * p.y);
+    g.beginPath(); g.arc(0, 0, 1, 0, Math.PI * 2);
+    g.fillStyle = ECOL[p.e]; g.fill();
+    g.fillStyle = sh.hi; g.fill();
+    g.fillStyle = sh.rim; g.fill();
+  } }));
+  // bonds as the 3D scenes' thin grey cylinders, drawn behind the two atoms they join
+  model.bonds.forEach(([i, j]) => { const p = pts[i], q = pts[j]; items.push({ z: Math.min(p.z, q.z) - 0.02, draw: () => {
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const w = Math.max(2.2, 2 * TT_BOND * scale), dx = q.x - p.x, dy = q.y - p.y, l = Math.hypot(dx, dy) || 1, nx = -dy / l * w / 2, ny = dx / l * w / 2;
+    const cyl = g.createLinearGradient(p.x - nx, p.y - ny, p.x + nx, p.y + ny);
+    cyl.addColorStop(0, '#7E8796'); cyl.addColorStop(0.45, '#E4E7EC'); cyl.addColorStop(1, '#8D95A3');
+    g.lineCap = 'butt'; g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(q.x, q.y);
+    g.lineWidth = w; g.strokeStyle = cyl; g.stroke();
+  } }); });
+  items.sort((p, q) => p.z - q.z).forEach(it => it.draw());
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if (model.box) {
+    const [hx, hz, y0, y1] = model.box, c = [];
+    for (let k = 0; k < 8; k++) c.push(P(k & 1 ? hx : -hx, k & 2 ? y1 : y0, k & 4 ? hz : -hz));
+    g.lineWidth = 1; g.strokeStyle = dark ? 'rgba(200,208,222,.45)' : 'rgba(60,70,90,.4)';
+    g.beginPath();
+    [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]].forEach(([a, b]) => { g.moveTo(c[a].x, c[a].y); g.lineTo(c[b].x, c[b].y); });
+    g.stroke();
+  }
+}
+
 function buildDemo(box, act) {
-  // the step names double as tabs: results open as soon as one system is done
+  // the step names double as tabs: results open as soon as one cell is done
   const steps = el('ol', { className: 'app-steps' }, ...STEP_NAMES.map((s, i) => el('li', {}, el('button', { type: 'button', textContent: `${i + 1} ${s}`, onclick: () => show(s) }))));
   const body = el('div', { className: 'app-body' });
-  const legend = el('ul', { className: 'legend' }, ...ELEMENTS.map(([sym, c]) => { const li = el('li', {}, el('i'), sym); li.firstChild.style.setProperty('--c', c); return li; }));
-  const app = el('div', { className: 'app', id: 'demoApp' }, el('div', { className: 'app-bar' }, el('span', { className: 'app-title', innerHTML: 'adsorption on Cu(100)' }), steps), body, el('div', { className: 'app-foot' }, legend));
+  // the title: a GPU and a meter of its four batch slots, filled by the cells of the coming (or running) batch
+  const meter = el('span', { className: 'gpu-meter', 'aria-hidden': 'true' }, el('i'), el('i'), el('i'), el('i'));
+  const title = el('span', { className: 'app-title app-gpu', innerHTML: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="7" y="9.5" width="6" height="5" rx="1" fill="currentColor"/><path d="M15.5 10h2.5M15.5 12h2.5M15.5 14h2.5M6 18v2M10 18v2M14 18v2M18 18v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>' });
+  const titleText = el('span', { className: 'app-gpu-text', textContent: 'fill the GPU batch' });
+  title.append(titleText, meter);
+  const viewCap = el('span', { className: 'app-view-cap' });
+  const view = el('div', { className: 'app-view', id: 'demoView' }, viewCap);
+  const app = el('div', { className: 'app has-view', id: 'demoApp' }, el('div', { className: 'app-bar' }, title, steps), view, body);
+  demoApp.meter = (n, cap) => { [...meter.children].forEach((i, k) => i.classList.toggle('on', k < n)); if (cap !== undefined) viewCap.textContent = cap; };
   box.append(app);
-  const ready = () => [...demoApp.picked].some(k => demoApp.results[vname(k)]);
+  const anyResult = () => Object.keys(demoApp.results).length > 0;
   function tabs() {
-    const ok = { select: true, relax: demoApp.running || Object.keys(demoApp.prog).length > 0, results: ready() };
+    const n = cellList().length;
+    const ok = { select: true, simulate: demoApp.running || (n > 0 && n <= MAX_CELLS), results: anyResult() };
     [...steps.children].forEach((li, i) => { li.classList.toggle('on', STEP_NAMES[i] === demoApp.screen); li.firstChild.disabled = !ok[STEP_NAMES[i]]; });
   }
   const status = k => { const r = demoApp.results[k], p = demoApp.prog[k]; return r ? (p && p.saved ? 'saved' : 'converged') : p ? (p.step ? `step ${p.step}/${p.steps}` : p.st || 'queued') : 'ready'; };
+  let tt = null;
   function show(screen) {
     demoApp.screen = screen;
+    app.dataset.screen = screen;
+    if (tt) { tt.stop(); tt = null; }
     tabs();
     body.replaceChildren();
-    const head = third => el('div', { className: 'app-row app-head', innerHTML: `<span></span><b>system</b><span>${third}</span><span class="r">E<sub>ads</sub>, eV</span><span class="r">h, &Aring;</span><span class="r">status</span>` });
     if (screen === 'select') {
-      const list = el('div', { className: 'app-list' }, head('facing'), ...SYSTEMS.map(([k, label]) => {
-        const cb = el('input', { type: 'checkbox', checked: demoApp.picked.has(k), onchange: () => { cb.checked ? demoApp.picked.add(k) : demoApp.picked.delete(k); label_(); tabs(); } });
-        const r = demoApp.results[vname(k)];
-        // the orientation toggles between the molecule's two ways onto the surface
-        const or = el('button', { type: 'button', className: 'app-orient', textContent: ORIENT[k][demoApp.orient[k] || 0][1], title: 'Which way the molecule meets the surface', onclick: e => { e.preventDefault(); demoApp.orient[k] = ((demoApp.orient[k] || 0) + 1) % ORIENT[k].length; show('select'); } });
-        // a system already run in this orientation is marked done, so it is not run again by mistake; flipping the
-        // orientation gives a fresh row
-        return el('label', { className: 'app-row' + (r ? ' done' : '') }, cb, el('b', { innerHTML: label }), or, el('span', { className: 'r', innerHTML: r ? fmt(r.e) : '' }), el('span', { className: 'r', innerHTML: r ? fmtH(r) : '' }), el('span', { className: 'r' + (r ? ' ok' : ''), innerHTML: r ? '&#10003; done' : 'ready' }));
-      }));
-      const go = el('button', { type: 'button', className: 'ctl primary', onclick: () => run() });
-      // systems with saved results are not relaxed again
-      const label_ = () => { const n = [...demoApp.picked].filter(k => !demoApp.results[vname(k)]).length; go.disabled = !demoApp.picked.size || !reel3d; go.textContent = n ? `Relax ${n} system${n === 1 ? '' : 's'}` : 'Show results'; };
-      label_();
-      body.append(el('div', { className: 'app-main' }, list, el('div', { className: 'app-actions' }, go)), params());
+      // a grid: surfaces across the top, molecules down the side, one square per pairing; each picked square becomes one
+      // cell of the GPU batch. The headers are turntables: drag to spin, drag a molecule up or down to turn it over
+      const tiles = [], grid = el('div', { className: 'pick' });
+      const tile = (group, key, labelHTML, model, scale) => {
+        const cv = el('canvas'), sub = el('span', { className: 'tt-sub' });
+        const b = el('div', { className: 'tt ' + group, tabIndex: 0, role: 'img' }, cv, el('span', { className: 'tt-cap', innerHTML: labelHTML }), sub);
+        const t = { b, cv, sub, group, key, model, scale, spin: 0.6 + tiles.length * 0.9, tip: 0, tipTo: 0, drag: null };
+        t.refresh = () => {
+          if (group === 'mol') { const o = ORIENT[key][demoApp.orient[key] || 0]; sub.textContent = o[1]; t.tipTo = o[2]; b.setAttribute('aria-label', `${key}, ${o[1]}. Arrow keys turn it over`); }
+          else { sub.textContent = key.endsWith('111') ? '(111)' : '(100)'; b.setAttribute('aria-label', SURF_HTML[key]); }
+        };
+        t.refresh(); t.tip = t.tipTo;
+        const flip = dir => { if (group !== 'mol') return; demoApp.orient[key] = ((demoApp.orient[key] || 0) + (dir > 0 ? 1 : ORIENT[key].length - 1)) % ORIENT[key].length; t.refresh(); paintCells(); };
+        b.addEventListener('pointerdown', e => { t.drag = { x: e.clientX, y: e.clientY, spin: t.spin }; b.setPointerCapture(e.pointerId); });
+        b.addEventListener('pointermove', e => {
+          const d = t.drag; if (!d) return;
+          t.spin = d.spin + (e.clientX - d.x) * 0.03;
+          const dy = e.clientY - d.y;
+          if (group === 'mol' && Math.abs(dy) > 24 && !d.flipped) { d.flipped = true; flip(dy); }
+        });
+        b.addEventListener('pointerup', () => { t.drag = null; });
+        b.addEventListener('keydown', e => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); flip(e.key === 'ArrowDown' ? 1 : -1); } if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); t.spin += e.key === 'ArrowLeft' ? -0.4 : 0.4; } });
+        b.title = group === 'mol' ? 'Drag sideways to spin, up or down to turn it over' : 'Drag to spin';
+        tiles.push(t);
+        return b;
+      };
+      const cells = {};
+      grid.append(el('span', { className: 'pick-corner', innerHTML: 'pick<br>pairings' }));
+      SURF_LIST.forEach(([k, l]) => grid.append(tile('surf', k, l, slabModel(k), 3.9)));
+      SYSTEMS.forEach(([m, l]) => {
+        grid.append(tile('mol', m, l, TT_MOLS[m], 22));
+        SURF_LIST.forEach(([s]) => {
+          const pk = s + '|' + m, c = el('button', { type: 'button', className: 'pick-cell', onclick: () => {
+            if (demoApp.pairs.has(pk)) demoApp.pairs.delete(pk); else demoApp.pairs.add(pk);
+            paintCells();
+          } });
+          cells[pk] = { c, s, m };
+          grid.append(c);
+        });
+      });
+      const note = el('span', { className: 'tt-note' }), go = el('button', { type: 'button', className: 'ctl primary', onclick: () => show('simulate') });
+      function paintCells() {
+        Object.entries(cells).forEach(([pk, { c, s, m }]) => {
+          const on = demoApp.pairs.has(pk), r = demoApp.results[s + '|' + vname(m)];
+          c.classList.toggle('on', on); c.classList.toggle('done', !!r);
+          c.setAttribute('aria-pressed', String(on));
+          c.setAttribute('aria-label', `${SURF_HTML[s]} with ${m}${r ? ', done' : ''}`);
+          c.innerHTML = r ? `<small>${r.desorbed ? 'left' : fmt(r.e)}</small>` : on ? '&#10003;' : '';
+        });
+        const n = cellList().length, todo = cellList().filter(c => !demoApp.results[c.key]).length;
+        const nb = Math.ceil(todo / MAX_CELLS);
+        note.textContent = todo ? `${todo} cell${todo === 1 ? '' : 's'}, ${nb} GPU batch${nb === 1 ? '' : 'es'} of up to ${MAX_CELLS}` + (n > todo ? `, ${n - todo} done` : '') : n ? `${n} done` : 'pick pairings to simulate';
+        demoApp.meter(Math.min(MAX_CELLS, todo), todo ? 'preview' : '');
+        go.disabled = !n || !reel3d;
+        go.textContent = n && !todo ? 'Show results' : 'Simulate';
+        tabs();
+      }
+      paintCells();
+      body.append(grid, el('div', { className: 'app-actions' }, note, go));
+      const preview = () => { const p = cellList().filter(c => !demoApp.results[c.key]).slice(0, MAX_CELLS); if (p.length && !demoApp.running) act('layout', p.map(c => ({ surf: c.surf, mol: c.mol }))); };
+      grid.addEventListener('click', e => { if (e.target.closest('.pick-cell')) preview(); });
+      preview();
+      // one loop for all turntables, only while this screen is up; about 30 frames a second
+      let raf = 0, last = performance.now();
+      const dark = () => document.documentElement.dataset.theme === 'dark';
+      const frame = now => {
+        if (!app.isConnected) return;
+        raf = requestAnimationFrame(frame);
+        if (now - last < 30) return;
+        const dt = Math.min(0.05, (now - last) / 1000), dk = dark(); last = now;
+        tiles.forEach(t => {
+          if (!t.drag && !rm) t.spin += dt * 0.45;
+          t.tip += (t.tipTo - t.tip) * Math.min(1, dt * 8);
+          // a tile that has not moved since its last frame (reduced motion, once it settles) keeps that frame
+          const w = t.cv.clientWidth * (window.devicePixelRatio || 1);
+          if (t.spin === t.dS && t.tip === t.dT && dk === t.dK && w === t.dW) return;
+          t.dS = t.spin; t.dT = t.tip; t.dK = dk; t.dW = w;
+          drawTT(t.cv, t.model, t.spin, t.tip, t.scale, dk);
+        });
+      };
+      raf = requestAnimationFrame(frame);
+      tt = { stop: () => cancelAnimationFrame(raf) };
     }
-    if (screen === 'relax') {
+    if (screen === 'simulate') {
+      const all = cellList(), pending = all.filter(c => !demoApp.results[c.key]);
+      if (!all.length) { show('select'); return; }
+      // the batch on the GPU now (or next): the cells it holds are built in the viewport as this screen opens
+      const batch = demoApp.running ? demoApp.batch : pending.slice(0, MAX_CELLS);
+      if (!demoApp.running) act('layout', (batch.length ? batch : all.slice(0, MAX_CELLS)).map(c => ({ surf: c.surf, mol: c.mol })));
+      const nb = demoApp.running ? demoApp.queue.length : Math.max(0, Math.ceil(pending.length / MAX_CELLS) - 1);
+      demoApp.meter(batch.length, batch.length ? (demoApp.running ? `batch ${demoApp.batchNo} on the GPU` : 'ready to run') : '');
       demoApp.rows = {};
-      body.append(el('div', { className: 'app-main' }, el('div', { className: 'app-list' }, head('progress'), ...[...demoApp.picked].map(b => {
-        const k = vname(b);
+      const head = el('div', { className: 'app-row app-head cell-row', innerHTML: `<b>cell</b><span>progress</span><span class="r">E<sub>ads</sub>, eV</span><span class="r">M&ndash;X, &Aring;</span><span class="r">status</span>` });
+      const rows = batch.map(c => {
         const bar = el('i'), e = el('span', { className: 'r' }), h = el('span', { className: 'r' }), st = el('span', { className: 'r' });
-        demoApp.rows[k] = { bar, e, h, st };
-        paintRow(k);
-        return el('div', { className: 'app-row' }, el('span'), el('b', { innerHTML: SYS_HTML[b] }), el('span', { className: 'app-bar-track' }, bar), e, h, st);
-      }))), params());
+        demoApp.rows[c.key] = { bar, e, h, st };
+        paintRow(c.key);
+        return el('div', { className: 'app-row cell-row' + (demoApp.results[c.key] ? ' done' : '') }, el('b', { innerHTML: SURF_HTML[c.surf] + ' + ' + vlabel(c.mol) }), el('span', { className: 'app-bar-track' }, bar), e, h, st);
+      });
+      const more = nb ? el('p', { className: 'tt-note', textContent: `then ${nb} more batch${nb === 1 ? '' : 'es'}` }) : '';
+      const go = el('button', { type: 'button', className: 'ctl primary', disabled: demoApp.running || !pending.length || !reel3d,
+        textContent: demoApp.running ? 'Running\u2026' : pending.length ? (pending.length > MAX_CELLS ? `Run ${pending.length} cells in ${Math.ceil(pending.length / MAX_CELLS)} batches` : `Run ${pending.length} cell${pending.length === 1 ? '' : 's'} on the GPU`) : 'All done', onclick: () => run(pending) });
+      body.append(el('div', { className: 'app-main' }, el('div', { className: 'app-list' }, head, ...rows), el('div', { className: 'app-actions' }, more, go)));
     }
     if (screen === 'results') {
-      const rows = [...demoApp.picked].map(b => { const k = vname(b), r = demoApp.results[k]; return el('div', { className: 'app-row app-res', innerHTML: r ? `<span></span><b>${SYS_HTML[b]}</b><span class="app-bar-track"><i style="width:100%;background:${r.binds ? '#3FA96B' : 'var(--faint)'}"></i></span><span class="r">${fmt(r.e)}</span><span class="r">${fmtH(r)}</span><span class="r ${r.binds ? 'ok' : ''}">${kind(r)}</span>` : `<span></span><b>${SYS_HTML[b]}</b><span class="app-bar-track"></span><span class="r"></span><span class="r"></span><span class="r">${status(k)}</span>` }); });
-      body.append(el('div', { className: 'app-main' }, el('div', { className: 'app-list' }, head('converged'), ...rows), el('div', { className: 'app-actions' }, el('button', { type: 'button', className: 'ctl', textContent: 'New run', disabled: demoApp.running, onclick: () => { act('reset'); demoApp.results = {}; demoApp.prog = {}; demoApp.views = {}; show('select'); } }))), params());
+      demoApp.meter(0, 'last batch');
+      // a heatmap: molecules down, surfaces across; green for chemisorbed (deeper for stronger binding), grey for
+      // physisorbed, an empty dashed cell where the molecule left the surface
+      const keys = Object.keys(demoApp.results), surfs = SURF_LIST.filter(([s]) => keys.some(k => k.startsWith(s + '|')));
+      const mols = [...new Set(keys.map(k => k.split('|')[1]))].sort((a, b) => SYSTEMS.findIndex(x => x[0] === a.split('@')[0]) - SYSTEMS.findIndex(x => x[0] === b.split('@')[0]) || a.length - b.length);
+      const grid = el('div', { className: 'hm', style: `grid-template-columns: minmax(6.5em, auto) repeat(${surfs.length}, minmax(4.6em, 1fr))` });
+      grid.append(el('span'), ...surfs.map(([, l]) => el('span', { className: 'hm-h', textContent: l })));
+      mols.forEach(m => {
+        grid.append(el('span', { className: 'hm-r', innerHTML: vlabel(m) }));
+        surfs.forEach(([s]) => {
+          const r = demoApp.results[s + '|' + m];
+          if (!r) { grid.append(el('span', { className: 'hm-c none' })); return; }
+          const c = el('span', { className: 'hm-c ' + (r.binds ? 'chem' : r.desorbed ? 'gone' : 'phys'), innerHTML: r.desorbed ? 'left' : `${fmt(r.e)}<small>${fmtH(r)} &Aring;</small>` });
+          if (r.binds) c.style.setProperty('--k', Math.min(1, Math.abs(r.e) / 1.5).toFixed(2));
+          c.title = `${SURF_HTML[s].replace(/<[^>]+>/g, '')}, ${kind(r)}`;
+          grid.append(c);
+        });
+      });
+      const key = el('div', { className: 'hm-key', innerHTML: '<span class="chem"></span>chemisorbed <span class="phys"></span>physisorbed <span class="gone"></span>desorbed<span class="hm-unit">E<sub>ads</sub> in eV</span>' });
+      body.append(el('div', { className: 'app-main' }, grid, key, el('div', { className: 'app-actions' },
+        el('button', { type: 'button', className: 'ctl', textContent: 'New run', disabled: demoApp.running, onclick: () => { act('reset'); demoApp.pairs.clear(); show('select'); } }))));
     }
   }
+  // the viewport moves when the screen below changes height, so the 3D frame follows it
+  const reframe = () => requestAnimationFrame(() => { measureFrame(); wakeReel(); });
+  const showRaw = show;
+  show = screen => { showRaw(screen); reframe(); };
   function paintRow(k) {
     const row = demoApp.rows && demoApp.rows[k];
     if (!row) return;
@@ -659,90 +921,42 @@ function buildDemo(box, act) {
     row.st.classList.toggle('ok', !!(r && r.binds));
   }
   demoApp.paintRow = paintRow; demoApp.tabs = tabs;
-  // in the right corner, the surface seen from above: grey where nothing interacts; the molecules come down onto
-  // their sites, and where one binds the copper takes its colour and glows green
-  function params() {
-    const fig = el('figure', { className: 'app-top' });
-    fig.innerHTML = `<figcaption>top view</figcaption><svg id="topView" viewBox="0 0 100 100" aria-label="The adsorption site seen from above"></svg>`;
-    drawTop(fig.querySelector('svg'));
-    return fig;
+  // everything pending runs in GPU batches of up to four, one batch after another
+  function run(todo) {
+    if (!reel3d || !todo.length) return;
+    todo.forEach(c => { demoApp.prog[c.key] = { st: 'queued' }; });
+    demoApp.queue = [];
+    for (let i = 0; i < todo.length; i += MAX_CELLS) demoApp.queue.push(todo.slice(i, i + MAX_CELLS));
+    demoApp.running = true; demoApp.batchNo = 0;
+    nextBatch();
   }
-  function run() {
-    if (!reel3d || !demoApp.picked.size) return;
-    const todo = SYSTEMS.map(s => s[0]).filter(k => demoApp.picked.has(k) && !demoApp.results[vname(k)]).map(vname);
-    demoApp.prog = {}; demoApp.views = {};
-    demoApp.picked.forEach(b => { const k = vname(b); demoApp.prog[k] = demoApp.results[k] ? { saved: true } : { st: 'queued' }; });
-    if (!todo.length) { show('results'); return; }
-    demoApp.running = true;
-    show('relax');
-    act('run', todo);
+  function nextBatch() {
+    demoApp.batch = demoApp.queue.shift(); demoApp.batchNo++;
+    act('run', demoApp.batch.map(c => ({ surf: c.surf, mol: c.mol })));
+    show('simulate');
   }
-  demoApp.show = show; demoApp.run = run;
-  show(demoApp.screen === 'relax' && !demoApp.running ? 'select' : demoApp.screen);
-}
-// the Cu(100) surface from above, 7 x 7 top atoms with the layer below showing through the hollows (1 A is about
-// 5.6 units here). The surface stays grey; a bound molecule shows as a green glow around its site
-const TOP_MOLS = {
-  CO: [['C', 0, 0, 3.9], ['O', 1, -1, 4.3]],
-  NH3: [['N', 0, 0, 4.3], ['H', 0, -5.3, 2.6], ['H', 4.6, 2.6, 2.6], ['H', -4.6, 2.6, 2.6]],
-  CO2: [['C', 0, 0, 3.9], ['O', -6.5, 0, 4.3], ['O', 6.5, 0, 4.3]],
-  N2: [['N', -3.1, 0, 4.1], ['N', 3.1, 0, 4.1]],
-  'CO@O': [['O', 0, 0, 4.3], ['C', 1, -1, 3.9]],
-  'NH3@H': [['H', 0, -5.3, 2.6], ['H', 4.6, 2.6, 2.6], ['H', -4.6, 2.6, 2.6], ['N', 0, 0, 4.3]],
-  'CO2@O': [['O', 0, 0, 4.3], ['C', 0.6, -0.6, 3.9], ['O', 1.2, -1.2, 4.3]],
-  'N2@N': [['N', 0, 0, 4.1], ['N', 0.8, -0.8, 4.1]]
-};
-const ECOL = Object.fromEntries(ELEMENTS), TV = 100 / 7;
-const tvXY = site => [50 + site[0] * TV, 50 + site[1] * TV];
-const tvMol = (name, v) => {
-  const [x, y] = tvXY(v.site), near = v.st === 'near', s = near ? 1 + 0.35 * (1 - v.n) : v.st === 'phys' ? 1.1 : 1, op = near ? 0.45 + 0.4 * v.n : v.st === 'phys' ? 0.75 : 1;
-  return `<g id="tm-${name}" opacity="${op.toFixed(2)}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${s.toFixed(3)})">` + TOP_MOLS[name].map(([e, mx, my, r]) => `<circle cx="${mx}" cy="${my}" r="${r}" fill="${ECOL[e]}" stroke="rgba(0,0,0,.35)" stroke-width=".7"/>`).join('') + '</g>';
-};
-function drawTop(svg) {
-  if (!svg) return;
-  const views = Object.entries(demoApp.views), bound = views.filter(([, v]) => v.st === 'bound');
-  const atomsAt = (fill, below) => {
-    let h = '';
-    for (let i = 0; i <= 7; i++) for (let j = 0; j <= 7; j++) h += `<circle cx="${(i * TV).toFixed(1)}" cy="${(j * TV).toFixed(1)}" r="6.1" fill="${below}"/>`;
-    for (let i = 0; i < 7; i++) for (let j = 0; j < 7; j++) h += `<circle cx="${(TV / 2 + i * TV).toFixed(1)}" cy="${(TV / 2 + j * TV).toFixed(1)}" r="6.7" fill="${fill}"/>`;
-    return h;
-  };
-  let h = `<defs>
-    <radialGradient id="tvGrey" cx="38%" cy="34%" r="70%"><stop offset="0" stop-color="#9DA3AC"/><stop offset=".6" stop-color="#737983"/><stop offset="1" stop-color="#4D525A"/></radialGradient>
-    <radialGradient id="tvGlow"><stop offset="0" stop-color="#3FA96B" stop-opacity=".8"/><stop offset=".55" stop-color="#3FA96B" stop-opacity=".3"/><stop offset="1" stop-color="#3FA96B" stop-opacity="0"/></radialGradient>
-    </defs>
-    <rect width="100" height="100" fill="#2b2e33"/>${atomsAt('url(#tvGrey)', '#41454c')}`;
-  h += bound.map(([, v]) => { const [x, y] = tvXY(v.site); return `<circle cx="${x}" cy="${y}" r="17" fill="url(#tvGlow)"/>`; }).join('');
-  if (!views.length) h += `<circle cx="50" cy="50" r="9" fill="none" stroke="#F2F4F8" stroke-opacity=".6" stroke-width="1" stroke-dasharray="2.6 2"/>`;
-  h += views.map(([name, v]) => tvMol(name, v)).join('');
-  svg.innerHTML = h;
+  demoApp.nextBatch = nextBatch;
+  demoApp.show = show;
+  show(demoApp.screen === 'simulate' && !demoApp.running ? 'select' : demoApp.screen);
 }
 function demoInfo(d) {
   const p = d.name && (demoApp.prog[d.name] = demoApp.prog[d.name] || {});
-  // each system is its own calculation, so the top view shows the current one alone on the surface
-  if (d.type === 'start') { p.st = 'relaxing'; demoApp.views = { [d.name]: { site: [0, 0], st: 'near', n: 0 } }; drawTop(document.getElementById('topView')); }
+  if (d.type === 'start') p.st = 'relaxing';
   if (d.type === 'step') {
     Object.assign(p, { step: d.step, steps: d.steps, e: d.e, h: d.h });
-    // the molecule comes down as the optimiser steps
-    const tv = demoApp.views[d.name], g = !d.done && tv && document.getElementById('tm-' + d.name);
-    if (tv) tv.n = d.step / d.steps;
-    if (g) g.outerHTML = tvMol(d.name, tv);
     if (d.done) {
       demoApp.results[d.name] = { e: d.e, h: d.h, binds: d.binds, desorbed: d.desorbed };
-      if (tv) tv.st = d.binds ? 'bound' : 'phys';
-      // a molecule that drifted out of the cell is gone from the surface too
-      if (d.desorbed) delete demoApp.views[d.name];
-      drawTop(document.getElementById('topView'));
-      if (demoApp.screen === 'results' && demoApp.show) demoApp.show('results');
       if (demoApp.tabs) demoApp.tabs();
     }
   }
   if (d.name && demoApp.paintRow) demoApp.paintRow(d.name);
   if (d.type === 'end') {
+    // the next batch takes the GPU after a short pause; after the last one the results open
+    if (demoApp.queue && demoApp.queue.length) { setTimeout(() => demoApp.nextBatch && demoApp.nextBatch(), 900); return; }
     demoApp.running = false;
-    if (demoApp.screen === 'results' && demoApp.show) demoApp.show('results');
+    if (demoApp.meter) demoApp.meter(0, '');
     if (demoApp.tabs) demoApp.tabs();
-    setTimeout(() => { if (demoApp.screen === 'relax' && demoApp.show) demoApp.show('results'); }, 700);
+    setTimeout(() => { if (demoApp.screen === 'simulate' && demoApp.show) demoApp.show('results'); }, 900);
   }
 }
 function buildControls(name) {
@@ -796,7 +1010,7 @@ function paintPicker() {
     // decided from where the heading is drawn this frame (not from the layout read before it moved), so the two
     // layers never flicker between frames
     const dist = introNext._g ?? (geo.next - geo.head), t = Math.min(1, Math.max(0, dist / (innerHeight * 0.55)));
-    headOp = dist <= 1.5 ? 1 : 0;
+    headOp = dist <= 0.5 ? 1 : 0;
     const e = 1 - t, op = headOp ? '0' : (0.5 + 0.5 * e * e * (3 - 2 * e)).toFixed(3), bl = (8 * t * t).toFixed(2) + 'px';
     if (introNext._k !== op + bl) { introNext._k = op + bl; introNext.style.setProperty('--op', op); introNext.style.setProperty('--bl', bl); }
     const mt = (14 * Math.min(1, Math.max(0, dist / (innerHeight * 0.3)))).toFixed(1) + '%';
@@ -854,7 +1068,19 @@ function paintPicker() {
 // between the picker and the detail block on phones; values are fractions of the canvas
 let frameWant = { x: 0, y: 0, w: 0.55, h: 0.6 }, frameNow = null;
 // CSS already lays the overlap out; this only corrects it if the real viewport differs (phone toolbars, reduced motion)
+// the intro's scroll length is the distance its last element (the skills heading) travels from the start to the reel
+// heading's place, so text that moves one to one with the scroll lands it there exactly at the release
+function sizeIntro() {
+  if (reduceIntro) return;
+  cacheIntro();
+  const h = introPin.clientHeight || innerHeight, top0 = h * 0.16;
+  const pin = reelEl.querySelector('.reel-pin').getBoundingClientRect().top, headInPin = document.querySelector('.reel-head').getBoundingClientRect().top - pin;
+  const T = Math.max(innerHeight * 0.5, top0 + nextTop - headInPin);
+  const want = Math.round(innerHeight + T);
+  if (Math.abs(introEl.offsetHeight - want) > 1) introEl.style.height = want + 'px';
+}
 function overlapIntro() {
+  sizeIntro();
   const off = reelEl.getBoundingClientRect().top - introEl.getBoundingClientRect().top, want = 995 * innerHeight / 100 + introLen();
   if (Math.abs(off) > 1) reelEl.style.marginTop = (parseFloat(getComputedStyle(reelEl).marginTop) - off) + 'px';
   if (Math.abs(reelEl.offsetHeight - want) > 1) reelEl.style.height = want + 'px';
@@ -867,9 +1093,16 @@ function measureFrame() {
   const c = reelCanvas.getBoundingClientRect(), wide = innerWidth >= 900;
   if (!c.width || !c.height) return;
   const p = pickerEl.getBoundingClientRect(), st = stageEl.getBoundingClientRect(), d = reelDetail.getBoundingClientRect();
+  const demo = CAP_ORDER[shown] === 'demo', view = demo && document.getElementById('demoView');
+  // the demo renders its cells inside the app's own viewport
+  if (view) {
+    const v = view.getBoundingClientRect();
+    if (v.width > 0) {
+      frameWant = { x: ((v.left + v.right) / 2 - c.left) / c.width - 0.5, y: ((v.top + v.bottom) / 2 - c.top) / c.height - 0.5, w: v.width / c.width * 0.86, h: v.height / c.height * 0.86 };
+      return;
+    }
+  }
   const left = wide ? st.left : c.left, right = c.right - (wide ? 16 : 0);
-  // the demo's cell sits close above its app card and takes a little more of the space
-  const demo = CAP_ORDER[shown] === 'demo';
   const top = wide ? c.top + c.height * (demo ? 0.03 : 0.05) : p.bottom - 8;
   const bottom = shown >= 0 ? Math.min(c.bottom, d.top) - (demo ? 0 : 14) : c.bottom - c.height * 0.08;
   frameWant = { x: ((left + right) / 2 - c.left) / c.width - 0.5, y: ((top + bottom) / 2 - c.top) / c.height - 0.5,

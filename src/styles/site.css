@@ -92,6 +92,8 @@ footer { margin-top: auto; padding: 14px 40px 16px; font-size: 15px; color: var(
 
 .sky-slot { min-height: 71px; align-self: stretch; padding: 10px 6px 0; margin-top: 4px; border-top: 1px solid color-mix(in srgb, var(--ink) 8%, transparent); }
 ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+/* the mono face for small supporting lines, the same as the home page */
+.me span em, .elsewhere, .meta, footer, .topbar { font-family: var(--secondary); }
 .me span em, .meta, footer, .topbar { font-size: .88em; letter-spacing: -0.01em; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
 
