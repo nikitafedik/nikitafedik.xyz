@@ -7,7 +7,7 @@
   "authors": "V. Oas, S. Westra, P. J. Lohr, <b>N. Fedik</b>, D. Kilin, S. Kilina, S. Ivanov, S. Tretiak",
   "venue": "<i>Nano Letters</i>, 2026, 26(36), 12111-12119.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://pubs.acs.org/doi/10.1021/acs.nanolett.6c02896"
   },
   "note": null,
@@ -26,7 +26,7 @@
   "authors": "V. F. Grizzi, P. J. Lohr, <b>N. Fedik</b>, S. Anaya, J. Averitt, J. Gomes, Y. W. Li, K. Barros, N. Lubbers, R. A. Messerly, J. Janssen, M. Kulichenko, J. S. Smith, S. Tretiak, B. T. Nebgen",
   "venue": "<i>Journal of Chemical Theory and Computation</i>, 2026, 22(16), 8145-8155.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://pubs.acs.org/doi/10.1021/acs.jctc.6c01122"
   },
   "note": null,
@@ -41,7 +41,7 @@
   "authors": "V. Athavale, M. Kulichenko, <b>N. Fedik</b>, S. Fernandez-Alberti, A. M. N. Niklasson, S. Tretiak",
   "venue": "<i>The Journal of Chemical Physics</i>, 2026, 164(4), 044123.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://doi.org/10.1063/5.0310916"
   },
   "note": null,
@@ -56,7 +56,7 @@
   "authors": "R. B. K.C., D. Graupner, <b>N. Fedik</b>, S. Tretiak, D. P. Ryan, J. H. Werner",
   "venue": "<i>Quantum Communications and Quantum Imaging XXIII</i>, Proc. SPIE 13618, 2025.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://doi.org/10.1117/12.3071149"
   },
   "note": null,
@@ -71,7 +71,7 @@
   "authors": "V. Athavale, <b>N. Fedik</b>, W. Colglazier, A. M. N. Niklasson, M. Kulichenko, S. Tretiak",
   "venue": "<i>Journal of Chemical Theory and Computation</i>, 2025, 21(19), 9498-9510.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://pubs.acs.org/doi/10.1021/acs.jctc.5c00980"
   },
   "note": null,
@@ -154,7 +154,7 @@
   "authors": "V. M. Freixas, W. Malone, X. Li, H. Song, H. Negrin-Yuvero, R. Pérez-Castillo, A. White, T. R. Gibson, D. V. Makhov, D. V. Shalashilin, Y. Zhang, <b>N. Fedik</b>, M. Kulichenko, R, Messerly, L. N. Mohanam, S. Sharifzadeh, A. Bastida, S. Mukamel, S. Fernandez-Alberti, S. Tretiak",
   "venue": "<i>Journal of Chemical Theory and Computation</i>, 2023, 19, 5356-5368.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://pubs.acs.org/doi/full/10.1021/acs.jctc.3c00583"
   },
   "note": null,
@@ -169,7 +169,7 @@
   "authors": "M. Kulichenko, K. Barros, N. Lubbers, <b>N. Fedik</b>, G. Zhou, S. Tretiak, B. Nebgen, A, M. N. Niklasson",
   "venue": "<i>Journal of Chemical Theory and Computation</i>, 2023, 19, 3209-3222.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://pubs.acs.org/doi/full/10.1021/acs.jctc.3c00234"
   },
   "note": null,
@@ -184,7 +184,7 @@
   "authors": "<b>N. Fedik</b>, R. Zubatyuk, M. Kulichenko, N. Lubbers, J. S. Smith, B. Nebgen, R. Messerly, Y. W. Li, A. I Boldyrev, K. Barros, O. Isayev, S. Tretiak",
   "venue": "<i>Nature Reviews Chemistry</i>, 2022, 6, 653-672.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://www.nature.com/articles/s41570-022-00416-3"
   },
   "note": null,
@@ -199,7 +199,7 @@
   "authors": "O. Burov, M. Kletskii, S. Kurbatov, A. Lisovin, <b>N. Fedik</b>",
   "venue": "<i>Nitric Oxide</i>, 2021 , 118, 1-16.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://www.sciencedirect.com/science/article/abs/pii/S1089860321001075"
   },
   "note": null,
@@ -233,7 +233,7 @@
   "authors": "<b>N. Fedik</b>, D. Steglenko, A. Muñoz-Castro, R. M. Minyaev, V. I. Minkin",
   "venue": "<i>The Journal of Physical Chemistry C</i>, 2021, 125(31), 17280-17290.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://pubs.acs.org/doi/pdf/10.1021/acs.jpcc.1c02939"
   },
   "note": null,
@@ -248,7 +248,7 @@
   "authors": "M. Kulichenko, <b>N. Fedik</b>, N. V. Tkachenko, A. Muñoz-Castro, Z-M. Sun, A. I. Boldyrev",
   "venue": "Aromaticity, edited by Israel Fernandez, Elsevier, 2021, 447-489.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://www.sciencedirect.com/book/9780128227237/aromaticity"
   },
   "note": null,
@@ -263,7 +263,7 @@
   "authors": "N. V. Tkachenko, I. A. Popov, M. Kulichenko, <b>N. Fedik</b>, Z-M. Sun, A. Muñoz-Castro, A. I. Boldyrev",
   "venue": "European Journal of Inorganic Chemistry, 2021.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://chemistry-europe-onlinelibrary-wiley-com.dist.lib.usu.edu/doi/10.1002/ejic.202100519"
   },
   "note": null,
@@ -278,7 +278,7 @@
   "authors": "M. Kulichenko, <b>N. Fedik</b>, A. Monfredini, A. Muñoz-Castro, D. Balestri, A. I. Boldyrev, G. Maestri",
   "venue": "<i>Chemical Science</i>, 2020, 12(1), 477-486.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://chemistry-europe.onlinelibrary.wiley.com/doi/full/10.1002/chem.202001159"
   },
   "note": null,
@@ -293,7 +293,7 @@
   "authors": "<b>N. Fedik</b>, C. Mu, I. A. Popov, W. Wang, H. Wang, K. H. Bowen, A. I. Boldyrev, X. Zhang",
   "venue": "<i>Chemistry – A European Journal</i>, 2020, 26(36), 8017-8021.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://pubs.rsc.org/en/content/articlehtml/2021/sc/d0sc04469e"
   },
   "note": null,
@@ -308,7 +308,7 @@
   "authors": "G. Liu, <b>N. Fedik</b>, C. Martinez-Martinez, S. Ciborowski, X. Zhang, A. I. Boldyrev, K. Bowen",
   "venue": "<i>Angewandte Chemie International Edition</i>, 2020, 59(23), 8760-8764.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://onlinelibrary.wiley.com/doi/full/10.1002/anie.202005259"
   },
   "note": null,
@@ -323,7 +323,7 @@
   "authors": "<b>N. Fedik</b>, M. Kulichenko, D. Steglenko, A. I. Boldyrev",
   "venue": "<i>Chemical Communications</i>, 2020, 56(18), 2711-2714.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://pubs.rsc.org/en/content/articlelanding/cc/2020/c9cc09483k"
   },
   "note": null,
@@ -338,7 +338,7 @@
   "authors": "M. Kulichenko, <b>N. Fedik</b>, D. Steglenko, R. M. Minyaev, V. I. Minkin, A. I. Boldyrev",
   "venue": "<i>Chemical Physics</i>, 2020, 532, 110680.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://www.sciencedirect.com/science/article/pii/S0301010419314685"
   },
   "note": null,
@@ -353,7 +353,7 @@
   "authors": "M. Kulichenko, <b>N. Fedik</b>, A. Muñoz-Castro, A. I. Boldyrev",
   "venue": "<i>Chemistry – A European Journal</i>, 2019, 26(10), 2263-2268.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://chemistry-europe.onlinelibrary.wiley.com/doi/abs/10.1002/chem.201905088"
   },
   "note": null,
@@ -368,7 +368,7 @@
   "authors": "G. Liu, <b>N. Fedik</b>, C. Martinez-Martinez, S. Ciborowski, X. Zhang, A. I. Boldyrev, K. Bowen",
   "venue": "<i>Angewandte Chemie International Edition</i>, 2019, 59(23), 58, 13789-13793.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://onlinelibrary.wiley.com/doi/abs/10.1002/anie.201907089"
   },
   "note": "vip article - top 10%",
@@ -383,7 +383,7 @@
   "authors": "C. Liu, N. V. Tkachenko, I. A. Popov, <b>N. Fedik</b>, X. Min, A. I. Boldyrev, Z.-M. Sun",
   "venue": "<i>Angewandte Chemie International Edition</i>, 2019, 58(25), 8367-8371.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://onlinelibrary.wiley.com/doi/abs/10.1002/anie.201907089"
   },
   "note": null,
@@ -402,7 +402,7 @@
   "authors": "M. Kulichenko, <b>N. Fedik</b>, K. Bozhenko, A. I. Boldyrev",
   "venue": "<i>The Journal of Physical Chemistry B</i>, 2019, 123(18), 4065-4069.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://pubs.acs.org/doi/abs/10.1021/acs.jpcb.9b01744"
   },
   "note": null,
@@ -417,7 +417,7 @@
   "authors": "<b>N. Fedik</b>, M. Kulichenko, A. I. Boldyrev",
   "venue": "<i>Chemical Physics</i>, 2019, 522, 134-137.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://pubs.acs.org/doi/abs/10.1021/acs.jpcb.9b01744"
   },
   "note": null,
@@ -436,7 +436,7 @@
   "authors": "M. Kulichenko, <b>N. Fedik</b>, K. V. Bozhenko, A. I. Boldyrev",
   "venue": "<i>Chemistry – A European Journal</i>, 2019, 25(20), 5311-5315.",
   "link": {
-   "label": "full text",
+   "label": "open access",
    "url": "https://par.nsf.gov/servlets/purl/10099153"
   },
   "note": null,
@@ -451,7 +451,7 @@
   "authors": "<b>N. Fedik</b>, A. I. Boldyrev, A. Muñoz-Castro",
   "venue": "<i>Physical Chemistry Chemical Physics</i>, 2019, 21(45), 25215-25219.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://pubs.rsc.org/en/content/articlelanding/2019/cp/c9cp04477a"
   },
   "note": null,
@@ -466,7 +466,7 @@
   "authors": "N. V. Tkachenko, D. Steglenko, <b>N. Fedik</b>, N. M. Boldyreva, R. M. Minyaev, V. I. Minkin, A. I. Boldyrev",
   "venue": "<i>Physical Chemistry Chemical Physics</i>, 2019, 21(36), 19764-19771.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://pubs.rsc.org/en/content/articlelanding/2019/cp/c9cp03786a"
   },
   "note": null,
@@ -481,7 +481,7 @@
   "authors": "<b>N. Fedik</b>, M. E. Kletskii, O. N. Burov, A. V. Lisovin, S. V. Kurbatov, V. A. Chistyakov, P. G. Morozov",
   "venue": "<i>Nitric Oxide</i>, 2019, 93, 15-24.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://www.sciencedirect.com/science/article/abs/pii/S1089860319301958"
   },
   "note": null,
@@ -496,7 +496,7 @@
   "authors": "O. A. Gapurenko, R. M. Minyaev, <b>N. Fedik</b>, V. V. Koval, A. I. Boldyrev, V. I. Minkin",
   "venue": "<i>Structural Chemistry</i>, 2019, 30(3), 805-814.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://link.springer.com/article/10.1007/s11224-019-1279-5"
   },
   "note": null,
@@ -511,7 +511,7 @@
   "authors": "<b>N. Fedik</b>, A. I. Boldyrev",
   "venue": "<i>The Journal of Physical Chemistry A</i>, 2018, 122(43), 8585-8590.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://pubs.acs.org/doi/abs/10.1021/acs.jpca.8b07937"
   },
   "note": null,
@@ -526,7 +526,7 @@
   "authors": "М. Е. Kletskii, O. N. Burov, <b>N. Fedik</b>, S. V. Kurbatov",
   "venue": "<i>Nitric Oxide</i>, 2017, 62, 44-51.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://www.sciencedirect.com/science/article/abs/pii/S1089860316301422"
   },
   "note": null,
@@ -541,7 +541,7 @@
   "authors": "A. F. Pozharskii, V. A. Ozeryanski, V. I. Mikshiev, A. S. Antonov, A. V.Chernyshev, A. V. Metelitsa, G. S. Borodkin, <b>N. Fedik</b>, O.V. Dyablo",
   "venue": "<i>Journal of Organic Chemistry</i>, 2016, 81(13), 5574-5587.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://pubs.acs.org/doi/abs/10.1021/acs.joc.6b00917"
   },
   "note": null,
@@ -556,7 +556,7 @@
   "authors": "М. Е. Kletskii, O. N. Burov, <b>N. Fedik</b>, S. V. Kurbatov",
   "venue": "<i>Chemistry of Hetererocylic Compounds</i>, 2016, 52(09), 700-710.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://link.springer.com/article/10.1007/s10593-016-1952-1"
   },
   "note": null,
@@ -571,7 +571,7 @@
   "authors": "D. A. Svetlichnyy, <b>N. Fedik</b>",
   "venue": "<i>St. Petersburg State University</i>, 2016, 3(61), 171-179 (DOI: 10.21638/11701/spbu04.2016.205).",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://dspace.spbu.ru/bitstream/11701/3935/1/Svetlichniy.pdf"
   },
   "note": null,
@@ -586,7 +586,7 @@
   "authors": "O. V. Dyablo, A. F. Pozharskii, E. A. Shmoilova, V. A. Ozeryanski, <b>N. Fedik</b>, K. Yu. Suponitsky",
   "venue": "<i>Journal of Molecular Structure</i>, 2015, 1107, 305-315.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://www.sciencedirect.com/science/article/abs/pii/S0022286015304609"
   },
   "note": null,
@@ -601,7 +601,7 @@
   "authors": "O.N. Burov, М.Е. Kletskii, <b>N. Fedik</b>, А. N. Lisovin, S.V. Kurbatov",
   "venue": "<i>Chemistry of Hetererocylic Compounds</i>, 2015, 51(11/12), 997-1007.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://link.springer.com/article/10.1007/s10593-016-1810-1"
   },
   "note": null,
@@ -616,7 +616,7 @@
   "authors": "O. N. Burov, М. Е. Kletskii, <b>N. Fedik</b>, А. N. Lisovin, S. V. Kurbatov",
   "venue": "<i>Chemistry of Heterocylic Compounds</i>, 2015, 51(11/12), 951-960.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://hgs.osi.lv/index.php/hgs/article/view/2719"
   },
   "note": null,
@@ -631,7 +631,7 @@
   "authors": "P. G. Morozov, S. V. Kurbatov, Yu. P. Semenyuk, O. N. Burov, М. Е. Kletskii, <b>N. Fedik</b>, K. F. Suzdalev",
   "venue": "<i>Chemistry of Heterocylic Compounds</i>, 2015, 51(10), 903-912.",
   "link": {
-   "label": "on publisher site",
+   "label": "paper",
    "url": "https://hgs.osi.lv/index.php/hgs/article/view/2710"
   },
   "note": null,
