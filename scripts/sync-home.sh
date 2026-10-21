@@ -17,21 +17,6 @@ for f in "$SRC"/img/*.webp; do
   cp "$f" "$DST/img/"
 done
 
-# the page file is a body fragment with its title, links and styles at the top; give it a proper document
-python3 -I - "$SRC/home-sidebar.html" "$DST/index.html" <<'PY'
-import sys
-src, dst = sys.argv[1:3]
-t = open(src, encoding='utf-8').read()
-# the CV page is not published yet, so its nav entry comes out of the home page's sidebar copy
-import re
-t, n = re.subn(r'\n[ \t]*<a href="cv\.html"[^\n]*</a>', '', t)
-print(f'removed {n} CV nav link(s)')
-cut = t.find('<!-- review bar')
-if cut < 0: cut = t.find('<div class="shell">')
-head, body = t[:cut], t[cut:]
-doc = ('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
-       '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n'
-       + head.strip() + '\n</head>\n<body>\n' + body.strip() + '\n</body>\n</html>\n')
-open(dst, 'w', encoding='utf-8').write(doc)
-PY
+# production index.html: see prepare-home.py
+python3 -I "$(dirname "$0")/prepare-home.py" "$SRC/home-sidebar.html" "$DST/index.html"
 echo "synced home page from $SRC"

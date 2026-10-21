@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Sidebar Home</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<title>Nikita Fedik</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap">
@@ -373,14 +374,6 @@ footer { margin-top: auto; padding: 14px 40px 16px; font-size: 15px; color: var(
 </style>
 </head>
 <body>
-<!-- review bar: tools for trying options and measuring; it sits above the site and is not part of the design -->
-<div class="review" role="toolbar" aria-label="Review controls">
-  <span class="review-tag">review</span>
-  <button type="button" class="review-btn" id="styleBtn" aria-expanded="false" aria-controls="stylePanel">fonts and colors</button>
-  <button type="button" class="review-btn" id="perfBtn" aria-pressed="false">perf</button>
-  <output class="perf-hud" id="perfHud" hidden></output>
-</div>
-
 <div class="shell">
   <aside class="side">
     <div class="me">
@@ -463,13 +456,6 @@ footer { margin-top: auto; padding: 14px 40px 16px; font-size: 15px; color: var(
     <figure>Byron photo 4</figure><figure>Byron photo 5</figure><figure>Byron photo 6</figure>
   </div>
 </dialog>
-
-<div class="style-panel" id="stylePanel" role="dialog" aria-label="Style options" hidden>
-  <fieldset id="accents"><legend>Accent</legend></fieldset>
-  <fieldset id="fonts"><legend>Typeface</legend></fieldset>
-  <fieldset id="tags"><legend>Tagline aside</legend></fieldset>
-  <p>For trying options only. Your choice is remembered in this browser.</p>
-</div>
 
 <script type="importmap">
 { "imports": {
@@ -1126,7 +1112,7 @@ ACCENTS.forEach((a, i) => {
   lab.querySelector('input').setAttribute('aria-label', a.name);
   lab.querySelector('input').checked = (saved.accent ?? 0) === i;
   lab.querySelector('input').addEventListener('change', () => { setAccent(a); save({ accent: i }); });
-  accentBox.append(lab);
+  accentBox?.append(lab);
 });
 FONTS.forEach((f, i) => {
   const lab = document.createElement('label');
@@ -1136,7 +1122,7 @@ FONTS.forEach((f, i) => {
   lab.querySelector('span').style.fontFamily = `'${f.display}', system-ui, sans-serif`;
   lab.querySelector('input').checked = (saved.font ?? 0) === i;
   lab.querySelector('input').addEventListener('change', () => { setFont(f); save({ font: i }); });
-  fontBox.append(lab);
+  fontBox?.append(lab);
 });
 
 const TAGS = ['[by trial and render]', '[self-taught, GPU-assisted]', '[unlicensed]', '[in beta]', '[no formal training, lots of renders]'];
@@ -1148,19 +1134,19 @@ TAGS.forEach((t, i) => {
   lab.querySelector('span').textContent = t;
   lab.querySelector('input').checked = (saved.tag ?? 0) === i;
   lab.querySelector('input').addEventListener('change', () => { tagEm.textContent = t; save({ tag: i }); });
-  tagBox.append(lab);
+  tagBox?.append(lab);
 });
 tagEm.textContent = TAGS[saved.tag ?? 0];
 setAccent(ACCENTS[saved.accent ?? 0]);
 setFont(FONTS[saved.font ?? 0]);
 const styleBtn = document.getElementById('styleBtn'), panel = document.getElementById('stylePanel');
-styleBtn.addEventListener('click', () => {
+styleBtn?.addEventListener('click', () => {
   FONTS.forEach(f => loadFamily(f.display));   // preview fonts load only when someone opens the panel
   panel.hidden = !panel.hidden;
   styleBtn.setAttribute('aria-expanded', String(!panel.hidden));
   if (!panel.hidden) panel.querySelector('input:checked').focus();
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.hidden) { panel.hidden = true; styleBtn.setAttribute('aria-expanded', 'false'); styleBtn.focus(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && panel && !panel.hidden) { panel.hidden = true; styleBtn.setAttribute('aria-expanded', 'false'); styleBtn.focus(); } });
 
 // ---- perf readout in the review bar: measured live in this browser ----
 const perfBtn = document.getElementById('perfBtn'), perfHud = document.getElementById('perfHud');
@@ -1184,7 +1170,7 @@ function perfTick() {
   }
   requestAnimationFrame(perfTick);
 }
-perfBtn.addEventListener('click', () => {
+perfBtn?.addEventListener('click', () => {
   perfOn = !perfOn;
   perfBtn.setAttribute('aria-pressed', String(perfOn));
   perfHud.hidden = !perfOn;
@@ -1470,9 +1456,9 @@ async function fetchGame(start) {
     await wait(reduceMotion ? 200 : 1100);
     hush();
     show('sit');
-    // listen only for this round's gallery, so a send-off round leaves no stale listener behind
-    gallery.addEventListener('close', leave, { once: true });
-    gallery.showModal();
+    // a happy moment on the spot, then he heads off (the photo gallery comes later)
+    await wait(reduceMotion ? 300 : 900);
+    leave();
   }, { once: true });
 }
 

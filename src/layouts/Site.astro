@@ -15,6 +15,7 @@ const current = Astro.props.current ?? 'home';
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>{title} | Nikita Fedik</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   {description && <meta name="description" content={description}>}
   <script is:inline>try { const s = JSON.parse(localStorage.getItem('nf-style') || '{}'); if (s.theme) document.documentElement.dataset.theme = s.theme; } catch (e) {}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
