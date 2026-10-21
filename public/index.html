@@ -1009,7 +1009,10 @@ function buildDemo(box, act) {
         // about 30 frames a second, 20 on touch screens, where the same work weighs more
         if (now - last < (touch ? 48 : 30)) return;
         const dt = Math.min(0.06, (now - last) / 1000), dk = dark(); last = now;
+        let firsts = 0;
         tiles.forEach(t => {
+          // the first draws are spread over a few frames, three tiles at a time
+          if (t.dS === undefined && ++firsts > 3) return;
           if (!t.drag && !rm) t.spin += dt * 0.45;
           t.tip += (t.tipTo - t.tip) * Math.min(1, dt * 8);
           // a tile that has not moved since its last frame (reduced motion, once it settles) keeps that frame
@@ -1101,7 +1104,8 @@ function buildDemo(box, act) {
   }
   demoApp.nextBatch = nextBatch;
   demoApp.show = show;
-  show(demoApp.screen === 'simulate' && !demoApp.running ? 'select' : demoApp.screen);
+  // the app's frame goes up in this frame and its screen in the next, so entering the demo is two short frames
+  requestAnimationFrame(() => { if (app.isConnected) show(demoApp.screen === 'simulate' && !demoApp.running ? 'select' : demoApp.screen); });
 }
 function demoInfo(d) {
   const p = d.name && (demoApp.prog[d.name] = demoApp.prog[d.name] || {});
@@ -1375,7 +1379,9 @@ function paintRender() {
 function paintPhoto() {
   if (!reel3d) return;
   // the photo is picked once (size and theme); a resize or a theme switch picks again
-  if (stopF > 2.5 && !photo.src) loadPhoto();
+  // the photo is asked for once the reel reaches its first scene (well after load, well before the illustration) and
+  // loads in idle time, so neither the page load nor a phone scrolling past the illustration feels the work
+  if (stopF > 0.6 && !photo.src && !photo.asked) { photo.asked = true; (window.requestIdleCallback || setTimeout)(() => { if (!photo.src) loadPhoto(); }, { timeout: 3000 }); }
   reel3d.setScrub(illScrub);
   paintRender();
   // how far the scroll has left the illustration: 0 on it, 1 a whole scene away (same easing as the 3D blend)
@@ -1499,9 +1505,6 @@ function showReel(r) {
   reel3d = r;
   if (PERF) window.__reel = reel3d;   // measuring only
   if (!reel3d) return;
-  // the illustration's photo loads and is prepared while the page is idle after the reel starts, not on the way to the
-  // illustration, where a phone scrolling past would feel the work
-  (window.requestIdleCallback || setTimeout)(() => { if (!photo.src) loadPhoto(); }, { timeout: 4000 });
   reel3d.onInfo((name, data) => {
     if (name === 'viz-wipe') { const r = document.getElementById('vizWipe'); if (r) r.value = Math.round(data * 100); return; }
     if (name === 'demo') { demoInfo(data); return; }
