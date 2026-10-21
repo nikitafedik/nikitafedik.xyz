@@ -40,14 +40,3 @@ function applyTheme(toDark, origin) {
 }
 root.dataset.theme = dark ? 'dark' : 'light';
 mountSky(document.getElementById('skySlot'), { dark, onChange: (d, o) => applyTheme(d, o) });
-// the phone menu: the bar's button opens the tabs, links and theme switch; a link, the dimmed page, Escape or a wider
-// window closes it
-const menuBtn = document.getElementById('menuBtn'), sideMenu = document.getElementById('sideMenu');
-if (menuBtn && sideMenu) {
-  const setMenu = open => { document.documentElement.classList.toggle('menu-open', open); menuBtn.setAttribute('aria-expanded', String(open)); };
-  menuBtn.addEventListener('click', () => setMenu(menuBtn.getAttribute('aria-expanded') !== 'true'));
-  sideMenu.addEventListener('click', e => { if (e.target.closest('a')) setMenu(false); });
-  document.querySelector('.menu-scrim')?.addEventListener('click', () => setMenu(false));
-  addEventListener('keydown', e => { if (e.key === 'Escape') setMenu(false); });
-  matchMedia('(min-width: 900px)').addEventListener('change', () => setMenu(false));
-}
