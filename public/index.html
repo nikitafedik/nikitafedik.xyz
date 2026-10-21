@@ -1300,8 +1300,9 @@ const peel = { cells: null, shown: null, bmp: null };
 const idle = () => new Promise(res => (window.requestIdleCallback || setTimeout)(res, { timeout: 800 }));
 async function preparePeel() {
   if (!reel3d) return;
-  const r = reel3d.photoRect(), k = Math.min(1.5, window.devicePixelRatio || 1), src = photo.src;
-  const w = Math.min(shotImg.naturalWidth, Math.round(r.w * k)), h = Math.min(shotImg.naturalHeight, Math.round(r.h * k));
+  // sized for the largest the photo can be on this screen (it may be prepared before the camera reaches the shot)
+  const r = reel3d.photoRect(), k = Math.min(1.5, window.devicePixelRatio || 1), src = photo.src, nw = shotImg.naturalWidth, nh = shotImg.naturalHeight;
+  const w = Math.min(nw, Math.round(Math.max(r.w, innerWidth, innerHeight * 1.6) * k)), h = Math.round(w * nh / nw);
   let small = shotImg, big = null;
   if (window.createImageBitmap) {
     try { [small, big] = await Promise.all([createImageBitmap(shotImg, { resizeWidth: 176, resizeHeight: 110, resizeQuality: 'medium' }), createImageBitmap(shotImg, { resizeWidth: w, resizeHeight: h, resizeQuality: 'high' })]); }
@@ -1337,7 +1338,7 @@ function peelTo(p) {
 }
 const photo = { on: false, ready: false, timer: 0, src: '' };
 function photoSrc() {
-  const dark = document.documentElement.dataset.theme === 'dark', big = (shotEl.offsetWidth || innerWidth) * (window.devicePixelRatio || 1) > 1300;
+  const dark = document.documentElement.dataset.theme === 'dark', big = (shotEl.offsetWidth || innerWidth) * Math.min(2, window.devicePixelRatio || 1) > 1300;
   return `img/illus-${dark ? 'dark' : 'light'}${big ? '' : '-1200'}.webp`;
 }
 // the clip runs from the canvas's left edge to the window's right edge
@@ -1498,6 +1499,9 @@ function showReel(r) {
   reel3d = r;
   if (PERF) window.__reel = reel3d;   // measuring only
   if (!reel3d) return;
+  // the illustration's photo loads and is prepared while the page is idle after the reel starts, not on the way to the
+  // illustration, where a phone scrolling past would feel the work
+  (window.requestIdleCallback || setTimeout)(() => { if (!photo.src) loadPhoto(); }, { timeout: 4000 });
   reel3d.onInfo((name, data) => {
     if (name === 'viz-wipe') { const r = document.getElementById('vizWipe'); if (r) r.value = Math.round(data * 100); return; }
     if (name === 'demo') { demoInfo(data); return; }
