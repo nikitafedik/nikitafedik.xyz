@@ -3,6 +3,7 @@
 // Markdown pages can use it too:  ---  layout: ../layouts/Site.astro  title: ...  ---
 import Sidebar from '../components/Sidebar.astro';
 import '../styles/site.css';
+import { headTags, HOME_DESCRIPTION } from '../data/seo.mjs';
 interface Props { title: string; description?: string; current?: 'home' | 'projects' | 'publications'; frontmatter?: { title?: string; description?: string } }
 const fm = Astro.props.frontmatter;
 const title = Astro.props.title ?? fm?.title ?? 'Nikita Fedik';
@@ -16,7 +17,7 @@ const current = Astro.props.current ?? 'home';
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>{title} | Nikita Fedik</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  {description && <meta name="description" content={description}>}
+  <Fragment set:html={headTags({ path: Astro.url.pathname, title: `${title} | Nikita Fedik`, description: description || HOME_DESCRIPTION })} />
   <script is:inline>try { const s = JSON.parse(localStorage.getItem('nf-style') || '{}'); if (s.theme) document.documentElement.dataset.theme = s.theme; } catch (e) {}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
