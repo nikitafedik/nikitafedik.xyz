@@ -43,8 +43,15 @@ for name in ('styleBtn', 'perfBtn', 'perfHud', 'panel', 'accentBox', 'fontBox', 
     for m in re.finditer(rf'^{name}\.(addEventListener|append|setAttribute|hidden|innerHTML|querySelector|focus)', body, re.M):
         sys.exit(f'unguarded top-level {name}.{m.group(1)} at body line {body[:m.start()].count(chr(10)) + 1}; guard it before deploying')
 
+# production layout rules, the same as src/styles/site.css: no browser-default body margin (the artifact viewer
+# used to supply that reset), the content column centered beside the sidebar, the whole layout capped on very wide
+# screens
+LAYOUT = ('<style>html, body { margin: 0; padding: 0; } .content { margin-inline: auto; } '
+          'footer { width: 100%; max-width: 1080px; margin-left: auto; margin-right: auto; } '
+          '.shell { max-width: 1600px; margin-inline: auto; }</style>\n')
 doc = ('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
        '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n'
        '<link rel="icon" href="favicon.svg" type="image/svg+xml">\n'
+       + LAYOUT
        + head.strip() + '\n</head>\n<body>\n' + body.strip() + '\n</body>\n</html>\n')
 open(dst, 'w', encoding='utf-8').write(doc)
