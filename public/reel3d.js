@@ -265,7 +265,7 @@ export const MOLS = {
   'CO@O':  { atoms: [['O', 0, 0, 0], ['C', 0, 1.15, 0]], bonds: [[0, 1]], binds: false, h: 2.9, e: -0.11 },
   'NH3@H': { atoms: [['N', 0, 0.38, 0], ['H', 0.62, 0, 0.32], ['H', -0.62, 0, 0.32], ['H', 0, 0, -0.66]], bonds: [[0, 1], [0, 2], [0, 3]], binds: false, h: 2.6, e: -0.08 },
   'CO2@O': { atoms: [['O', 0, 0, 0], ['C', 0, 1.16, 0], ['O', 0, 2.32, 0]], bonds: [[0, 1], [1, 2]], binds: false, desorbs: true, h: 3.3, e: -0.04 },
-  'N2@N':  { atoms: [['N', 0, 0, 0], ['N', 0, 1.1, 0]], bonds: [[0, 1]], binds: false, h: 3.0, e: -0.08 }
+  'N2@N':  { atoms: [['N', 0, 0, 0], ['N', 0, 1.1, 0]], bonds: [[0, 1]], binds: false, desorbs: true, h: 3.3, e: -0.03 }
 };
 
 // shapes already built, for shapes that derive from another one (the parity plot reads the molecule table)
