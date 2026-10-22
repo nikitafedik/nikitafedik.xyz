@@ -649,8 +649,16 @@ document.documentElement.lang = 'en';
 // wheel and trackpad scrolling glides (Lenis): each notch eases in over a few frames instead of jumping. It loads only
 // for a mouse or trackpad: phones scroll natively (Lenis would only add work to every finger move), and reduced
 // motion keeps plain scrolling
-let lenis = null;
-if (window.matchMedia('(pointer: fine)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) import('https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.mjs').then(({ default: Lenis }) => { lenis = new Lenis({ lerp: 0.085, autoRaf: true, allowNestedScroll: true }); }).catch(() => {});
+let lenis = null, lenisKick = () => {};
+if (window.matchMedia('(pointer: fine)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) import('https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.mjs').then(({ default: Lenis }) => {
+  lenis = new Lenis({ lerp: 0.085, autoRaf: false, allowNestedScroll: true });
+  // its frame loop runs only while a glide is in progress, started by the wheel, keys or a scroll to a skill; left
+  // running all the time it restyled the page on every frame even with nothing moving
+  let raf = 0, kicked = 0;
+  const tick = t => { lenis.raf(t); raf = lenis.animate.isRunning || t - kicked < 120 ? requestAnimationFrame(tick) : 0; };
+  lenisKick = () => { kicked = performance.now(); if (!raf) { lenis.time = kicked; raf = requestAnimationFrame(tick); } };
+  ['wheel', 'keydown', 'pointerdown'].forEach(ev => addEventListener(ev, lenisKick, { passive: true }));
+}).catch(() => {});
 if (!document.querySelector('meta[name=description]')) document.head.append(Object.assign(document.createElement('meta'), { name: 'description', content: 'Nikita Fedik, computational chemist: chemistry and materials with AI, scientific illustration, demos and tutorials.' }));
 import { mountSky } from './sky.js';
 // the Kekule swap on the current or hovered tab: every 2.6 s the double bonds slide to the other structure (2.68 s
@@ -817,6 +825,9 @@ function paintIntro() {
     const k = lay.k, soft = (a, b, sgn) => { const d = Math.abs(a - b); return (sgn < 0 ? Math.min(a, b) : Math.max(a, b)) + sgn * (d < k ? (k - d) * (k - d) / (4 * k) : 0); };
     const y = soft(lay.head, soft(lay.wait, ly + lay.bots[n - 1] + 40, -1), 1);
     hand.off = Math.max(0, y - lay.head); hand.p = T > 0 ? 1 - Math.min(1, hand.off / T) : 1;
+    // the text's bottom fade rises with the heading, so no line shows through it while it moves
+    const mb = Math.round(Math.min(lay.mb, y - 36)) + 'px';
+    if (introPin._mb !== mb) { introPin._mb = mb; introPin.style.setProperty('--mb', mb); }
   } else { const g = headRise(up); hand.off = T - g; hand.p = T > 0 ? g / T : 1; }
   hand.s = s / lay.reveal; hand.past = raw - lay.len;
 }
@@ -1056,14 +1067,14 @@ function buildDemo(box, act) {
       body.append(grid, el('div', { className: 'app-actions' }, note, go));
       // the cells are built when the batch opens in simulate; while picking, the 3D view is empty
       if (!demoApp.running) act('layout', []);
-      // one loop for all turntables, only while this screen is up; about 30 frames a second
-      let raf = 0, last = performance.now();
+      // one loop for all turntables, only while this screen is up: it wakes about 30 times a second (20 on touch
+      // screens, where the same work weighs more), not on every display frame
+      let raf = 0, timer = 0, last = performance.now();
       const dark = () => document.documentElement.dataset.theme === 'dark';
+      const next = () => { timer = setTimeout(() => { raf = requestAnimationFrame(frame); }, touch ? 48 : 33); };
       const frame = now => {
         if (!app.isConnected) return;
-        raf = requestAnimationFrame(frame);
-        // about 30 frames a second, 20 on touch screens, where the same work weighs more
-        if (now - last < (touch ? 48 : 30)) return;
+        next();
         const dt = Math.min(0.06, (now - last) / 1000), dk = dark(); last = now;
         let firsts = 0;
         tiles.forEach(t => {
@@ -1079,7 +1090,7 @@ function buildDemo(box, act) {
         });
       };
       raf = requestAnimationFrame(frame);
-      tt = { stop: () => cancelAnimationFrame(raf) };
+      tt = { stop: () => { clearTimeout(timer); cancelAnimationFrame(raf); } };
     }
     if (screen === 'simulate') {
       const all = cellList(), pending = all.filter(c => !demoApp.results[c.key]);
@@ -1570,7 +1581,7 @@ reelEl.querySelectorAll('button[data-stop]').forEach(btn => btn.addEventListener
   const top = reelEl.getBoundingClientRect().top + scrollY - tops.pinTop;
   const st = ITEM_STOP[+btn.dataset.stop];
   const y = top + stopScroll(st);
-  if (lenis) lenis.scrollTo(y); else window.scrollTo({ top: y, behavior: rm ? 'auto' : 'smooth' });
+  if (lenis) { lenis.scrollTo(y); lenisKick(); } else window.scrollTo({ top: y, behavior: rm ? 'auto' : 'smooth' });
 }));
 // the scene follows the scroll only; skill names do not preview on hover, so pointing never breaks the flow
 paintHead(); paintPicker();
