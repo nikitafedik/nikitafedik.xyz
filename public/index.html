@@ -752,6 +752,9 @@ function measureGeo() {
   }
 }
 const introLen = () => tops.introLen;
+// where the reel's own track starts: as soon as the intro's lines are all read, so the background starts rearranging
+// (the atoms zoom in and come into focus) while the text scrolls away and the heading glides into place
+const reelLead = () => reduceIntro ? introLen() : Math.min(introLen(), lay.reveal);
 function paintIntro() {
   if (reduceIntro) return;
   const n = introItems.length, raw = -geo.intro, s = Math.min(lay.len, Math.max(0, raw));
@@ -1149,15 +1152,31 @@ let stopF = 0, stopV = 0, shown = -2, reel3d = null, reelRaf = 0, reelVisible = 
 const DWELL_AT = 4, SEGS = [0.6, 1, 2, 1, 1.6, 1, 1];
 let illScrub = 0;
 const stopFrac = st => SEGS.slice(0, st + (st > DWELL_AT ? 1 : 0)).reduce((a, b) => a + b, 0) / SEGS.reduce((a, b) => a + b, 0);
+// the hand-off: the first transition (the blurred atoms zooming in and gathering into molecules) plays across exactly
+// the scroll in which the intro text leaves and the heading glides into place, eased at both ends, so the background
+// rearranges with the text and the scene is formed as the heading lands. The other transitions share the rest
+function handOff(s) {
+  const a = reelLead(), b = introLen(), x = clampN((s - a) / Math.max(1, b - a), 0, 1);
+  return x * x * (3 - 2 * x);
+}
+// the scroll (from where the reel pins) at which stop st sits, for the picker's buttons
+function stopScroll(st) {
+  if (reduceIntro) { const lead = introLen(); return lead + stopFrac(st) * (tops.reelH - tops.pinH - lead); }
+  if (st <= 0) return reelLead();
+  const rest = SEGS.slice(1), upto = SEGS.slice(1, st + (st > DWELL_AT ? 1 : 0));
+  return introLen() + upto.reduce((a, b) => a + b, 0) / rest.reduce((a, b) => a + b, 0) * (tops.reelH - tops.pinH - introLen());
+}
 function readStop() {
+  if (!reduceIntro && -geo.reel < introLen()) { illScrub = 0; return handOff(-geo.reel); }
+  const first = reduceIntro ? 0 : 1, segs = SEGS.slice(first);
   const lead = introLen(), total = tops.reelH - tops.pinH - lead;
   // some transitions get more scroll than others: the surface turning into tokens is twice as long
   // the illustration (stop 4) has its own stretch of scroll (DWELL): there the scene stays and the scroll drives its
   // timeline, so the clay forms, the shutter fires and the render arrives even for a reader who keeps scrolling
-  const f = clampN((-geo.reel - lead) / total, 0, 1), sum = SEGS.reduce((a, b) => a + b, 0);
-  let acc = 0, i = 0;
-  while (i < SEGS.length - 1 && f > (acc + SEGS[i]) / sum) { acc += SEGS[i]; i++; }
-  const x = clampN((f - acc / sum) / (SEGS[i] / sum), 0, 1);
+  const f = clampN((-geo.reel - lead) / total, 0, 1), sum = segs.reduce((a, b) => a + b, 0);
+  let acc = 0, j = 0;
+  while (j < segs.length - 1 && f > (acc + segs[j]) / sum) { acc += segs[j]; j++; }
+  const x = clampN((f - acc / sum) / (segs[j] / sum), 0, 1), i = j + first;
   illScrub = i < DWELL_AT ? 0 : i > DWELL_AT ? 1 : x;
   if (i === DWELL_AT) return DWELL_AT;
   const k = i > DWELL_AT ? i - 1 : i;
@@ -1500,9 +1519,9 @@ new IntersectionObserver(es => {
   if (reelVisible && !reelRaf) reelRaf = requestAnimationFrame(reelLoop);
 }).observe(reelEl);
 reelEl.querySelectorAll('button[data-stop]').forEach(btn => btn.addEventListener('click', () => {
-  const top = reelEl.getBoundingClientRect().top + scrollY - tops.pinTop, total = reelEl.offsetHeight - tops.pinH;
-  const st = ITEM_STOP[+btn.dataset.stop], frac = stopFrac(st);
-  const y = top + introLen() + frac * (total - introLen());
+  const top = reelEl.getBoundingClientRect().top + scrollY - tops.pinTop;
+  const st = ITEM_STOP[+btn.dataset.stop];
+  const y = top + stopScroll(st);
   if (lenis) lenis.scrollTo(y); else window.scrollTo({ top: y, behavior: rm ? 'auto' : 'smooth' });
 }));
 // the scene follows the scroll only; skill names do not preview on hover, so pointing never breaks the flow
