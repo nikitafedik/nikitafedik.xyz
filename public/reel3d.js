@@ -1389,16 +1389,20 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
         const hex = S.lat === '111', dz = hex ? Math.sqrt(3) / 2 : 1, rows = hex ? 4 : 5, Lx = 5 * a, Lz = rows * a * dz;
         const sh = hex ? [[0, 0], [0.5, Math.sqrt(3) / 6], [1, Math.sqrt(3) / 3]] : [[0, 0], [0.5, 0.5], [0, 0]];
         const wrap = (v, L) => { v = ((v + L / 2) % L + L) % L - L / 2; return v; };
-        let top = -1, n = 0;
+        let top = -1, n = 0, x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
         for (let L = 0; L < 3; L++) for (let j = 0; j < rows; j++) for (let i = 0; i < 5; i++) {
           const idx = ids[n++];
           // (111): rows sit half a spacing apart, every second row shifted; layers stack A, B, C
           const x = wrap((i - 2 + (hex ? (j % 2) * 0.5 : 0) + sh[L][0]) * a, Lx), z = wrap((j - (rows - 1) / 2) * a * dz + sh[L][1] * a, Lz);
           setLocal(F, idx, ox + x, oy - L * d, oz + z, r, SLOT[S.c[L ? 1 : 0]]);
+          x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z);
           if (L === 0 && i === 2 && j === 2) top = idx;
         }
         while (n < ids.length) F.size[ids[n++]] = 0;
-        return { surf, top, topCol: SLOT[S.c[0]], off: [ox, oy, oz], min: [ox - Lx / 2, oy - 2 * d - 0.9 * ANG, oz - Lz / 2], max: [ox + Lx / 2, oy + CELL_H, oz + Lz / 2] };
+        // the box drawn around the cell encloses the atoms whole: a periodic cell's walls pass through the wrapped atoms,
+        // which reads as the slab being cut off at its edges
+        const m = r * 1.08;
+        return { surf, top, topCol: SLOT[S.c[0]], off: [ox, oy, oz], min: [ox + x0 - m, oy - 2 * d - 0.9 * ANG, oz + z0 - m], max: [ox + x1 + m, oy + CELL_H, oz + z1 + m] };
       }
       // the cells sit on a grid as seen on screen: rows and columns in the view plane, every cell centred on its slot and
       // the whole grid centred on the origin, so orbiting turns it about its middle. The number of columns is the one
@@ -1672,7 +1676,9 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
     list.forEach(({ min, max }) => { for (let k = 0; k < 8; k++) { v.set(k & 1 ? max[0] : min[0], k & 2 ? max[1] : min[1], k & 4 ? max[2] : min[2]).applyEuler(e); [v.x, v.y, v.z].forEach((c, a) => { lo[a] = Math.min(lo[a], c); hi[a] = Math.max(hi[a], c); }); } });
     const ex = (hi[0] - lo[0]) / 2, ey = (hi[1] - lo[1]) / 2, ez = (hi[2] - lo[2]) / 2;
     forms.demo.center.set((lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2);
-    forms.demo.ext = { x: Math.max(1, ex * 1.06 + ez * 0.18) * 0.84, y: Math.max(0.6, ey * 1.04 + ez * 0.12) * 0.84 };
+    // the whole width of the outer cells stays in the viewport (narrow phone viewports cut them off before); the
+    // height keeps its tighter framing
+    forms.demo.ext = { x: Math.max(1, ex * 1.02 + ez * 0.14) * 0.9, y: Math.max(0.6, ey * 1.04 + ez * 0.12) * 0.84 };
   }
   setCellBoxes(forms.demo.meta.cells);
   cellGeo.setAttribute('position', new THREE.BufferAttribute(cellPos, 3));

@@ -109,7 +109,7 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 /* the intro starts at the very top, already pinned: the text holds still while each line sharpens in turn,
    then it scrolls up and fades out at the top while the skills heading appears in its place in the reel */
 .intro { position: relative; z-index: 2; max-width: 40em; height: calc(100vh + 5 * 28vh); margin-top: -48px; }
-.intro-pin { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--bar, 0px)); height: calc(100vh - var(--bar, 0px)); margin: 0 -24px; padding: 0 24px; overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 var(--mt, 0px), #000 var(--mb, 86%), transparent calc(var(--mb, 86%) + 30px)); mask-image: linear-gradient(transparent, #000 var(--mt, 0px), #000 var(--mb, 86%), transparent calc(var(--mb, 86%) + 30px)); }
+.intro-pin { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--bar, 0px)); height: calc(100vh - var(--bar, 0px)); height: calc(100svh - var(--bar, 0px)); margin: 0 -24px; padding: 0 24px; overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 var(--mt, 0px), #000 var(--mb, 86%), transparent calc(var(--mb, 86%) + 30px)); mask-image: linear-gradient(transparent, #000 var(--mt, 0px), #000 var(--mb, 86%), transparent calc(var(--mb, 86%) + 30px)); }
 .intro-list { position: absolute; left: 24px; right: 24px; top: 0; display: flex; flex-direction: column; gap: 30px; transform: translateY(var(--ly, 0px)); will-change: transform; }
 .intro-list > * { margin: 0; transform: scale(var(--s, 1)); transform-origin: left center; filter: blur(var(--bl, 0px)); opacity: var(--op, 1); text-shadow: var(--ab, none); will-change: transform, filter; }
 .sent-last { display: flex; flex-direction: column; gap: 10px; }
@@ -123,9 +123,11 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 
 /* skills reel: the section pins while scrolling; one particle cloud morphs through a formation per skill,
    and the selector keeps the current skill sharp while the others blur and split into colour fringes */
+/* the pinned intro and reel are as tall as the screen with the phone browser's address bar showing (svh), so
+   nothing pinned sits under the bar; on a desktop svh is the window height */
 /* the reel shares its top with the intro (intro height 100vh + 5 * 28vh, the column gap 72px), set in CSS so nothing jumps at load */
 .reel { position: relative; height: calc(995vh + 5 * 28vh); margin-top: calc(-100vh - 5 * 28vh - 72px); }
-.reel-pin { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--bar, 0px)); height: calc(100vh - var(--bar, 0px)); display: grid; grid-template-columns: minmax(220px, .85fr) minmax(0, 1.5fr); gap: 24px; align-items: center; }
+.reel-pin { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--bar, 0px)); height: calc(100vh - var(--bar, 0px)); height: calc(100svh - var(--bar, 0px)); display: grid; grid-template-columns: minmax(220px, .85fr) minmax(0, 1.5fr); gap: 24px; align-items: center; }
 .reel-picker { position: relative; height: min(68vh, 540px); margin: 0 -24px; padding: 0 24px; }
 .reel-head { position: absolute; left: 24px; right: 24px; top: 0; margin: 0; font-family: var(--display); font-size: var(--t-head); font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; }
 .reel-list { list-style: none; margin: 0; padding: 0; position: absolute; left: 0; right: 0; top: calc(var(--t-head) * 1.6); bottom: 0; overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 20%, #000 80%, transparent); mask-image: linear-gradient(transparent, #000 20%, #000 80%, transparent); }
@@ -687,6 +689,7 @@ function headRise(x) {
 }
 function cacheIntro() {
   const h = introPin.clientHeight || innerHeight, n = introItems.length;
+  lay.phone = matchMedia('(max-width: 899px)').matches;
   lay.tops = introItems.map(el => el.offsetTop); lay.bots = introItems.map(el => el.offsetTop + el.offsetHeight);
   const textH = lay.bots[n - 1];
   // the greeting starts level with the top of the sidebar on a desktop
@@ -756,7 +759,9 @@ function paintIntro() {
   // only when its look visibly changes
   introItems.forEach((el, i) => {
     const ad = Math.round(Math.max(0, i - F) * 40) / 40;
-    lensStyle(el, ad, ad > 1 ? Math.max(0.3, 0.68 - (ad - 1) * 0.2).toFixed(3) : undefined);
+    // on a phone the waiting lines stay readable as text, lightly blurred, so there is plainly more to read below
+    if (lay.phone) lensStyle(el, Math.min(1.3, ad * 0.6), ad > 1 ? Math.max(0.5, 0.78 - (ad - 1) * 0.1).toFixed(3) : undefined);
+    else lensStyle(el, ad, ad > 1 ? Math.max(0.3, 0.68 - (ad - 1) * 0.2).toFixed(3) : undefined);
   });
   // the top edge softens as the text rises, so the lines fade out above the heading
   const mt = Math.min(lay.fade, Math.max(0, rise)).toFixed(0) + 'px';
@@ -1442,13 +1447,16 @@ const SPRING = touch ? 22 : 38;
 function reelLoop(now) {
   if (!reelVisible) { reelRaf = 0; return; }
   reelRaf = requestAnimationFrame(reelLoop);
-  // the intro text and the heading follow the scroll on every frame; on touch screens the rest (the 3D scene, the
-  // picker) draws at 30 fps
+  // the intro text and the heading follow the scroll on every frame. The scene and the picker also draw every frame
+  // while the scroll moves them (at 30 fps they visibly stutter against a phone's scrolling); on touch screens they
+  // drop to 30 fps once the scene is still
   measureGeo(); paintIntro(); paintHead();
-  if (touch && now - lastFrame < 32) return;
+  const target = readStop();
+  const moving = Math.abs(target - stopF) > 0.001 || Math.abs(stopV) > 0.002 || (reel3d && reel3d.animating);
+  if (touch && !moving && now - lastFrame < 32) return;
   lastFrame = now;
   // the displayed position chases the scroll position with a damped spring, so flicks glide instead of jumping
-  const target = readStop(), frameDt = Math.min(0.25, Math.max(1 / 240, (now - (reelLoop.t || now)) / 1000 || 1 / 60));
+  const frameDt = Math.min(0.25, Math.max(1 / 240, (now - (reelLoop.t || now)) / 1000 || 1 / 60));
   reelLoop.t = now;
   if (rm) { stopF = target; stopV = 0; }
   else {
