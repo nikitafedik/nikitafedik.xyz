@@ -161,7 +161,10 @@ footer { margin-top: auto; padding: 14px 40px 16px; font-size: 15px; color: var(
 /* cover chip under the spinning molecule; the large cover opens in a dialog that grows out of the chip */
 .pub { grid-template-columns: 100px minmax(0, 1fr); gap: 0 10px; }
 /* number, spinning molecule and cover chip stacked and centered in the left column */
-.pub .n { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.pub .n { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; position: relative; align-self: start; }
+/* the cover chip hangs under the molecule outside the layout, so an entry with a cover is no taller than the others and
+   the spacing down the list stays even */
+.pub .n .cv-chip { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); margin: 0; }
 .mol { width: 34px; height: 34px; overflow: visible; }
 .mol line { stroke: #9AA3B2; stroke-width: .045; stroke-linecap: round; }
 .mol circle { stroke: color-mix(in srgb, var(--ink) 35%, transparent); stroke-width: .02; }

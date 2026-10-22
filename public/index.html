@@ -113,6 +113,15 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 .intro-list { position: absolute; left: 24px; right: 24px; top: 0; display: flex; flex-direction: column; gap: 30px; transform: translateY(var(--ly, 0px)); will-change: transform; }
 .intro-list > * { margin: 0; transform: scale(var(--s, 1)); transform-origin: left center; filter: blur(var(--bl, 0px)); opacity: var(--op, 1); text-shadow: var(--ab, none); will-change: transform, filter; }
 .sent-last { display: flex; flex-direction: column; gap: 10px; }
+/* the page's first paint, before the script runs, already shows the script's first state: the text at its place and
+   the waiting lines blurred; the heading and the skills list stay hidden until the script has placed them */
+.intro-list { --ly: 48px; }
+@media (max-width: 899px) { .intro-list { --ly: max(24px, calc((100svh - var(--bar, 0px)) * .06)); } }
+@media (prefers-reduced-motion: no-preference) {
+  .intro-list > :nth-child(n+3) { --bl: 3.4px; --op: .68; }
+  .intro-list > :nth-child(n+4) { --bl: 7px; --op: .4; }
+}
+html:not(.intro-ready) .reel-head, html:not(.intro-ready) .reel-list { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { .intro { height: auto; } .intro-pin { position: static; height: auto; overflow: visible; -webkit-mask-image: none; mask-image: none; } .intro-list { position: static; transform: none; } }
 .intro h1 { margin: 0; font-weight: 700; font-size: var(--t-head); line-height: 1.05; letter-spacing: -0.02em; }
 .intro h1 mark { color: inherit; background: linear-gradient(transparent 60%, color-mix(in srgb, var(--accent) 55%, transparent) 60%); padding-inline: 2px; }
@@ -1528,6 +1537,7 @@ reelEl.querySelectorAll('button[data-stop]').forEach(btn => btn.addEventListener
 }));
 // the scene follows the scroll only; skill names do not preview on hover, so pointing never breaks the flow
 paintHead(); paintPicker();
+document.documentElement.classList.add('intro-ready');
 // the particle cloud loads quietly once the page has settled
 const whenIdle = window.requestIdleCallback || (cb => setTimeout(cb, 800));
 const startReel = () => whenIdle(() => import('./reel3d.js').then(m => {
@@ -1583,7 +1593,8 @@ function loadFamily(fam) {
 }
 function setFont(f) {
   loadFamily(f.display);
-  root.style.setProperty('--display', `'${f.display}', 'Segoe UI', system-ui, sans-serif`);
+  // Roboto keeps its metric-matched fallback, so the text does not shift when the font arrives
+  root.style.setProperty('--display', `'${f.display}', ${f.display === 'Roboto' ? "'Roboto Fallback', " : ''}'Segoe UI', system-ui, sans-serif`);
   // every pairing keeps a mono face for the secondary voice
   const mono = f.secondary || 'Roboto Mono';
   loadFamily(mono);
