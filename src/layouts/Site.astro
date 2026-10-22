@@ -17,6 +17,9 @@ const current = Astro.props.current ?? 'home';
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>{title} | Nikita Fedik</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <!-- page transitions are opted into here, in the page itself: the browser decides at the first paint, and a rule in
+       the stylesheet alone was sometimes read too late. The animations themselves live in site.css -->
+  <style is:inline>@view-transition { navigation: auto; } @media (prefers-reduced-motion: reduce) { @view-transition { navigation: none; } }</style>
   <Fragment set:html={headTags({ path: Astro.url.pathname, title: `${title} | Nikita Fedik`, description: description || HOME_DESCRIPTION })} />
   <script is:inline>try { const s = JSON.parse(localStorage.getItem('nf-style') || '{}'); if (s.theme) document.documentElement.dataset.theme = s.theme; } catch (e) {}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">

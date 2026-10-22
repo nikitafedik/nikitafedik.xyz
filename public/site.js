@@ -31,7 +31,9 @@ function applyTheme(toDark, origin) {
   save({ theme: dark ? 'dark' : 'light' });
   const set = () => { root.dataset.theme = dark ? 'dark' : 'light'; };
   if (reduceMotion || !document.startViewTransition) { set(); return; }
+  root.classList.add('vt-theme');
   const vt = document.startViewTransition(set);
+  vt.finished.finally(() => root.classList.remove('vt-theme'));
   vt.ready.then(() => {
     const r = Math.hypot(Math.max(origin.x, innerWidth - origin.x), Math.max(origin.y, innerHeight - origin.y));
     root.animate({ clipPath: [`circle(0px at ${origin.x}px ${origin.y}px)`, `circle(${r}px at ${origin.x}px ${origin.y}px)`] },
