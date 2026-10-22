@@ -17,7 +17,9 @@ const pubs = (await getCollection('publications')).map(e => e.data).sort((a, b) 
       const note = !own && p.cover ? p.cover.label : p.note;
       return (
         <li class="pub">
-          <span class="n">{p.n}{p.molecule && <svg class="mol" data-mol={p.molecule} viewBox="-1 -1 2 2" aria-hidden="true"></svg>}{own && p.cover!.image && <button type="button" class="cv-chip" data-cover={`img/covers/${p.cover!.image}-lg.webp`} data-label={cap} title={cap}>see my cover</button>}</span>
+          <span class="n">{p.n}{own && p.cover!.image
+            ? <button type="button" class="cv-chip cv-tile" data-cover={`img/covers/${p.cover!.image}-lg.webp`} data-label={cap} title={cap}>{p.molecule && <svg class="mol" data-mol={p.molecule} viewBox="-1 -1 2 2" aria-hidden="true"></svg>}<span>see my cover</span></button>
+            : p.molecule && <svg class="mol" data-mol={p.molecule} viewBox="-1 -1 2 2" aria-hidden="true"></svg>}</span>
           <div class="body">
             <p class="t" set:html={p.title} />
             <p class="au" set:html={p.authors} />

@@ -676,7 +676,7 @@ const introEl = document.querySelector('.intro'), introList = document.getElemen
 // orange glow, as a hint to keep scrolling; it rises with the text, slows to a stop in its place in the reel and
 // sharpens as it lands, then stays. lay holds the layout both steps are worked out from (cacheIntro, after the reel
 // exists); hand tells the picker where the heading is and how far the scroll is past the intro
-const lay = { tops: [], bots: [], top0: 0, limit: 0, shift: 0, s1: 0, settle: 0, mb: 0, head: 0, wait: 0, dec: 1, reveal: 1, ramp: 1, v0: 0, fade: 8, len: 1 };
+const lay = { tops: [], bots: [], top0: 0, limit: 0, shift: 0, s1: 0, settle: 0, mb: 0, head: 0, wait: 0, dec: 1, reveal: 1, ramp: 1, v0: 0, fade: 8, len: 1, flow: false, yF: 1, k: 1 };
 const hand = { off: 0, p: 1, s: 0, past: 0 };
 // how far the text has risen, s pixels into the intro. On a desktop the intro starts pinned and the text holds still
 // while the lines sharpen. On a phone the intro arrives from below the sidebar: the text glides to a stop instead of
@@ -684,6 +684,15 @@ const hand = { off: 0, p: 1, s: 0, past: 0 };
 // reaches the bottom, then rises just enough, eased in. Then it scrolls up one to one after a soft start from the
 // speed it already had
 function introRise(s) {
+  // touch screens: the text moves with the finger from the start, and each line sharpens as it rises past the focus
+  // line, two thirds of the way down the screen (holding the text still under a moving finger reads as stuck, and
+  // letting it go again as a jump)
+  if (lay.flow) {
+    const n = introItems.length, tf = s + lay.yF - lay.top0;
+    let F = n - 1;
+    for (let i = 0; i < n - 1; i++) if (tf < lay.tops[i + 1]) { F = i + Math.max(0, (tf - lay.tops[i]) / (lay.tops[i + 1] - lay.tops[i])); break; }
+    return { F: Math.max(1, F), up: s, rise: s };
+  }
   const n = introItems.length, u = Math.min(1, Math.max(0, s / lay.reveal)), F = 1 + u * (n - 2);
   const R0 = lay.settle, settle = R0 ? (s < R0 ? s - s * s / (2 * R0) : R0 / 2) - R0 / 2 : 0;
   const b = s - lay.reveal, R = lay.ramp, v0 = lay.v0;
@@ -735,6 +744,14 @@ function cacheIntro() {
   const y0 = lay.top0 - lay.shift, T = lay.wait - lay.head;
   const travel = Math.max(lay.ramp, T > 0 ? T + lay.dec / 2 : 0, y0 + lay.tops[n - 1]);
   lay.len = lay.reveal + travel + (1 - lay.v0) * lay.ramp / 2;
+  lay.flow = matchMedia('(pointer: coarse)').matches;
+  if (lay.flow) {
+    // the heading waits at the bottom until the end of the text comes up to it, follows the text and slows into its
+    // place; lay.k is the width of those two soft turns. The reveal ends when the last line reaches the focus line
+    lay.yF = h * 0.66; lay.k = h * 0.14; lay.shift = 0; lay.settle = 0;
+    lay.reveal = Math.max(1, lay.top0 + lay.tops[n - 1] - lay.yF + 24);
+    lay.len = Math.max(lay.top0 + lay.bots[n - 1] + 40 - lay.head + lay.k, lay.top0 + lay.tops[n - 1]);
+  }
   introPin.style.setProperty('--mb', lay.mb.toFixed(0) + 'px');
 }
 // where the intro and the reel sit on screen this frame, worked out from the scroll offset: their places on the page
@@ -780,8 +797,15 @@ function paintIntro() {
   // the top edge softens as the text rises, so the lines fade out above the heading
   const mt = Math.min(lay.fade, Math.max(0, rise)).toFixed(0) + 'px';
   if (introPin._mt !== mt) { introPin._mt = mt; introPin.style.setProperty('--mt', mt); }
-  const T = lay.wait - lay.head, g = headRise(up);
-  hand.off = T - g; hand.p = T > 0 ? g / T : 1; hand.s = s / lay.reveal; hand.past = raw - lay.len;
+  const T = lay.wait - lay.head;
+  if (lay.flow) {
+    // the heading's place on screen: the lower of where it waits and just under the text's end, then no higher than its
+    // place in the reel, each turn softened over lay.k so its speed never jumps
+    const k = lay.k, soft = (a, b, sgn) => { const d = Math.abs(a - b); return (sgn < 0 ? Math.min(a, b) : Math.max(a, b)) + sgn * (d < k ? (k - d) * (k - d) / (4 * k) : 0); };
+    const y = soft(lay.head, soft(lay.wait, ly + lay.bots[n - 1] + 40, -1), 1);
+    hand.off = Math.max(0, y - lay.head); hand.p = T > 0 ? 1 - Math.min(1, hand.off / T) : 1;
+  } else { const g = headRise(up); hand.off = T - g; hand.p = T > 0 ? g / T : 1; }
+  hand.s = s / lay.reveal; hand.past = raw - lay.len;
 }
 
 // ---- skills reel ----
