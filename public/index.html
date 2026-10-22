@@ -1152,12 +1152,14 @@ let stopF = 0, stopV = 0, shown = -2, reel3d = null, reelRaf = 0, reelVisible = 
 const DWELL_AT = 4, SEGS = [0.6, 1, 2, 1, 1.6, 1, 1];
 let illScrub = 0;
 const stopFrac = st => SEGS.slice(0, st + (st > DWELL_AT ? 1 : 0)).reduce((a, b) => a + b, 0) / SEGS.reduce((a, b) => a + b, 0);
-// the hand-off: the first transition (the blurred atoms zooming in and gathering into molecules) plays across exactly
-// the scroll in which the intro text leaves and the heading glides into place, eased at both ends, so the background
-// rearranges with the text and the scene is formed as the heading lands. The other transitions share the rest
+// the hand-off: the first transition (the blurred atoms zooming in and gathering into molecules) plays across the
+// scroll in which the intro text leaves and the heading glides into place, so the background rearranges with the text
+// and the scene is formed as the heading lands. The other transitions share the rest
 function handOff(s) {
-  const a = reelLead(), b = introLen(), x = clampN((s - a) / Math.max(1, b - a), 0, 1);
-  return x * x * (3 - 2 * x);
+  // it starts while the last line sharpens and keeps one steady pace until the heading lands, so the particles move
+  // from the first scroll and the scene is whole only once the text has gone; the scene's spring softens both ends
+  const a = reelLead() - lay.reveal / Math.max(1, introItems.length - 2), b = introLen();
+  return clampN((s - a) / Math.max(1, b - a), 0, 1);
 }
 // the scroll (from where the reel pins) at which stop st sits, for the picker's buttons
 function stopScroll(st) {
