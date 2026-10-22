@@ -343,8 +343,10 @@ label.app-row { cursor: pointer; }
 .legend i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0,0,0,.18); }
 .mock-status { margin: 2px 0 0; font-family: var(--secondary); font-size: 12px; color: var(--faint); min-height: 1.4em; }
 @media (max-width: 899px) {
-  .reel-pin { grid-template-columns: 1fr; grid-template-rows: 30vh 1fr; gap: 0; align-items: stretch; }
-  .reel-picker { height: 30vh; }
+  .reel-pin { grid-template-columns: 1fr; grid-template-rows: 32vh 1fr; gap: 0; align-items: stretch; }
+  .reel-picker { height: 32vh; }
+  /* the current skill sits in the upper part of the list, leaving room for the next one below it */
+  .reel-item { top: 36%; }
   .reel-head { top: 14px; }
   .reel-list { top: calc(var(--t-head) * 1.6 + 14px); }
   .reel-stage { height: auto; padding-bottom: 12px; }
@@ -1186,6 +1188,9 @@ function paintHead() {
     }
   }
 }
+// the gap between skills in the picker; tighter on phones, so the next skill always shows, blurred, under the current
+// one as a hint that there is more below
+const PICK_STEP = matchMedia('(max-width: 899px)').matches ? 58 : 104;
 function paintPicker() {
   const pf = pickerPos(stopF);
   // the skill's text and the list fade in over the first stretch of scroll after the intro, and out the same way on
@@ -1199,7 +1204,7 @@ function paintPicker() {
     const key = d.toFixed(3);
     if (el._pk === key) return;
     el._pk = key;
-    el.style.setProperty('--y', `calc(-50% + ${(Math.sign(d) * Math.pow(ad, 0.8) * 104).toFixed(1)}px)`);
+    el.style.setProperty('--y', `calc(-50% + ${(Math.sign(d) * Math.pow(ad, 0.8) * PICK_STEP).toFixed(1)}px)`);
     el.style.setProperty('--s', (1 - Math.min(ad, 2.2) * 0.15).toFixed(3));
     el.style.setProperty('--o', Math.max(0, 1 - ad * 0.32).toFixed(2));
     el.style.setProperty('--b', rm ? '0px' : Math.min(7, ad * 3.4).toFixed(2) + 'px');
