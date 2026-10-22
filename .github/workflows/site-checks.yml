@@ -1,0 +1,41 @@
+name: Site checks
+# Runs the Playwright site checks (tests/) against every Vercel deployment. Vercel tells GitHub when a deployment is
+# ready (a repository_dispatch event, vercel.deployment.success, carrying its URL and commit); this job checks out
+# that commit and tests that URL. It can also be started by hand with a URL (Actions > Site checks > Run workflow).
+on:
+  repository_dispatch:
+    types: [vercel.deployment.success]
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Deployment URL to test
+        required: true
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.client_payload.git.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Run the site checks
+        run: npx playwright test
+        env:
+          CI: 'true'
+          BASE_URL: ${{ github.event.client_payload.url || inputs.url }}
+          # previews sit behind Vercel's Deployment Protection; see tests/README.md for this secret
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          # shared CI machines are slower than a desktop and draw WebGL in software
+          PERF_LONG_TASK_MS: '600'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7

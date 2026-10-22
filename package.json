@@ -6,12 +6,17 @@
     "dev": "astro dev",
     "build": "astro build",
     "build:artifact": "astro build && node scripts/relativize.mjs dist",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "test": "playwright test",
+    "check": "astro build && playwright test"
   },
   "dependencies": {
     "astro": "7.3.5"
   },
   "engines": {
     "node": "22.x"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0"
   }
 }
