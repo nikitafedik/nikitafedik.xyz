@@ -110,12 +110,18 @@ footer { margin-top: auto; padding: 14px 40px 16px; font-size: 15px; color: var(
   .menu-btn svg { width: 20px; height: 20px; fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linejoin: round; transition: transform .3s cubic-bezier(.2,.8,.2,1); }
   .menu-open .menu-btn svg { transform: rotate(30deg); }
   .menu-btn:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
-  .side-menu { position: fixed; left: 0; right: 0; top: var(--bar); z-index: 59; max-height: calc(100dvh - var(--bar)); overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
-    padding: 10px 16px 18px; background: var(--mica); box-shadow: 0 24px 40px -20px rgba(0, 0, 0, .35);
-    opacity: 0; transform: translateY(-8px); visibility: hidden; transition: opacity .2s, transform .2s, visibility 0s .2s; }
-  .menu-open .side-menu { opacity: 1; transform: none; visibility: visible; transition: opacity .2s, transform .2s; }
-  .side-menu .elsewhere { margin-top: 0; }
-  .menu-scrim { display: block; position: fixed; inset: var(--bar) 0 0; z-index: 58; background: rgba(10, 12, 16, .35); opacity: 0; visibility: hidden; transition: opacity .2s, visibility 0s .2s; }
+  /* the menu is a small card under its button, so most of the page stays in view (and a theme switch shows on it) */
+  .side-menu { position: fixed; right: 10px; top: calc(var(--bar) + 6px); z-index: 59; width: min(300px, calc(100vw - 20px)); max-height: calc(100dvh - var(--bar) - 16px); overflow-y: auto;
+    display: flex; flex-direction: column; gap: 0; padding: 6px; border-radius: 16px; background: var(--paper); box-shadow: inset 0 0 0 1px var(--line), 0 18px 40px -18px var(--shadow);
+    transform-origin: top right; opacity: 0; transform: translateY(-6px) scale(.97); visibility: hidden; transition: opacity .2s, transform .2s, visibility 0s .2s; }
+  .menu-open .side-menu { opacity: 1; transform: none; visibility: visible; transition: opacity .2s, transform .25s cubic-bezier(.2,.8,.2,1); }
+  .side-menu .tabs a { min-height: 42px; padding: 0 12px; }
+  .side-menu .tabs a[aria-current="page"], .side-menu .tabs a:hover, .side-menu .elsewhere a:hover { background: var(--well); }
+  .side-menu .elsewhere { flex-direction: row; justify-content: space-between; margin: 4px 0 0; padding-top: 4px; border-top: 1px solid var(--line); }
+  .side-menu .elsewhere a { gap: 6px; min-height: 42px; padding: 0 6px; font-size: 12px; }
+  .side-menu .sky-slot { min-height: 0; margin-top: 0; padding: 4px 6px 0; border-top-color: var(--line); }
+  .side-menu .pk-sky { min-height: 52px; }
+  .menu-scrim { display: block; position: fixed; inset: var(--bar) 0 0; z-index: 58; background: rgba(10, 12, 16, .18); opacity: 0; visibility: hidden; transition: opacity .2s, visibility 0s .2s; }
   .menu-open .menu-scrim { opacity: 1; visibility: visible; transition: opacity .2s; }
 }
 /* moving between pages: the sidebar (or the phone bar) stays put and only the content changes: the old page fades
@@ -128,6 +134,8 @@ footer { margin-top: auto; padding: 14px 40px 16px; font-size: 15px; color: var(
 @keyframes page-out { to { opacity: 0; } }
 @keyframes page-in { from { opacity: 0; transform: translateY(10px); } }
 html.vt-theme::view-transition-old(root), html.vt-theme::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+/* during a theme switch the bar and menu belong to the page, so the circle sweeps over them too */
+html.vt-theme .side { view-transition-name: none; }
 /* the mono face for small supporting lines, the same as the home page */
 .me span em, .elsewhere, .meta, footer, .topbar { font-family: var(--secondary); }
 .me span em, .meta, footer, .topbar { font-size: .88em; letter-spacing: -0.01em; }

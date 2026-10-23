@@ -36,8 +36,10 @@ function applyTheme(toDark, origin) {
   vt.finished.finally(() => root.classList.remove('vt-theme'));
   vt.ready.then(() => {
     const r = Math.hypot(Math.max(origin.x, innerWidth - origin.x), Math.max(origin.y, innerHeight - origin.y));
+    // on a phone the circle grows at an even pace, so the sweep is seen crossing the page
+    const phone = matchMedia('(max-width: 899px)').matches;
     root.animate({ clipPath: [`circle(0px at ${origin.x}px ${origin.y}px)`, `circle(${r}px at ${origin.x}px ${origin.y}px)`] },
-      { duration: 750, easing: 'cubic-bezier(.2,.8,.2,1)', pseudoElement: '::view-transition-new(root)' });
+      { duration: phone ? 950 : 750, easing: phone ? 'cubic-bezier(.35,0,.25,1)' : 'cubic-bezier(.2,.8,.2,1)', pseudoElement: '::view-transition-new(root)' });
   });
 }
 root.dataset.theme = dark ? 'dark' : 'light';
