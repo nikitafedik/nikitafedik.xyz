@@ -1882,7 +1882,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
   const camCenter = forms.dust.center.clone(), camTarget = new THREE.Vector3();
   let photoOn = false, scrubT = 0, partK = 1, keepK = 1;
   let camDist = 15.5, stop = 0, forced = null, motion = 0, last = performance.now(), t0 = last, offX = 0, offY = 0, fitW = 0.55, fitH = 0.62, W = 1, H = 1;
-  let shownA = forms.dust, shownB = forms.dust, shownT = 0;
+  let shownA = forms.dust, shownB = forms.dust, shownT = 0, drawn = false;
   function size() {
     const r = canvas.getBoundingClientRect();
     renderer.setPixelRatio(software ? 1 : Math.min(prCap, window.devicePixelRatio || 1));
@@ -1915,6 +1915,10 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
       A = forms[ORDER[a]]; B = forms[ORDER[b]]; t = smooth(0.1, 0.9, s - a);
     }
     shownA = A; shownB = B; shownT = t;
+    // the first frame of the intro starts settled (colours and camera in place, as the prerendered intro picture shows
+    // them), so the live 3D hands over from that picture without drifting; elsewhere the reel eases in as before
+    const settleNow = !drawn && A === forms.dust && (B === A || t === 0);   // at the very top the next scene's share is 0
+    drawn = true;
     const weight = F => A === B ? (A === F ? 1 : 0) : (A === F ? 1 - t : 0) + (B === F ? t : 0);
     const clock = (now - t0) / 1000;
     Object.values(CTRL).forEach(c => c.update(frameDt, weight, clock));
@@ -1928,7 +1932,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
     const famDist = fam => Math.max(...MOL_FORMS.filter(F => F.meta.mol === fam).map(F => fitDist(F.ext.x, F.ext.y)));
     const dOf = F => F.meta.mol ? famDist(F.meta.mol) : null, molDist = dOf(A) ?? dOf(B);
     const dA = dOf(A), dB = dOf(B), fitAB = fitDist(A.ext.x + (B.ext.x - A.ext.x) * t, A.ext.y + (B.ext.y - A.ext.y) * t, weight(forms.dust));
-    const wantDist = dive * (dA !== null && dB !== null ? dA + (dB - dA) * t : dA !== null ? dA + (fitAB - dA) * t : dB !== null ? fitAB + (dB - fitAB) * t : fitAB), kk = reduce ? 1 : Math.min(1, frameDt * 3);
+    const wantDist = dive * (dA !== null && dB !== null ? dA + (dB - dA) * t : dA !== null ? dA + (fitAB - dA) * t : dB !== null ? fitAB + (dB - fitAB) * t : fitAB), kk = reduce || settleNow ? 1 : Math.min(1, frameDt * 3);
     // the illustration shot keeps one camera pose on every screen, so the Blender photo of it lines up: the distance
     // is fixed (a reference frame of 0.55 x 0.6 at 16:10) and the fit to this screen is done with zoom, which only scales
     const wIll = weight(forms.illModel), tvI = Math.tan(THREE.MathUtils.degToRad(15)), ext = forms.illModel.ext;
@@ -1980,7 +1984,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
       const sTarget = A.size[i] + (B.size[i] - A.size[i]) * e, ds = sTarget - S[i];
       S[i] += ds * ks; if (Math.abs(ds) > err) err = Math.abs(ds);
       // a formation can carry its own per-particle colours (the image mosaics); otherwise colours come from slots
-      const ca = A.rgb ? tcA.fromArray(A.rgb, k3) : pal[A.col[i]], cb = B.rgb ? tcB.fromArray(B.rgb, k3) : pal[B.col[i]], f = Math.min(1, frameDt * 5);
+      const ca = A.rgb ? tcA.fromArray(A.rgb, k3) : pal[A.col[i]], cb = B.rgb ? tcB.fromArray(B.rgb, k3) : pal[B.col[i]], f = settleNow ? 1 : Math.min(1, frameDt * 5);
       const dr = ca.r + (cb.r - ca.r) * e - C[k3], dg = ca.g + (cb.g - ca.g) * e - C[k3 + 1], db = ca.b + (cb.b - ca.b) * e - C[k3 + 2];
       C[k3] += dr * f; C[k3 + 1] += dg * f; C[k3 + 2] += db * f;
       const dc = Math.max(Math.abs(dr), Math.abs(dg), Math.abs(db)); if (dc > err) err = dc;

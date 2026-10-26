@@ -8,6 +8,7 @@ Playwright tests for the whole site, run against the built site or a deployed UR
 | `intro.spec.ts` | The home intro, sampled every 20 px both ways: no speed jumps, "What I do best" lands sharp in its place and never covers a line, the first paint is already in place |
 | `reel.spec.ts` | Each skill button lands on its scene; the demo runs from picking to results |
 | `transitions.spec.ts` | Every page change runs a view transition |
+| `poster.spec.ts` | The intro's prerendered pictures match the live intro they hand over to (fails when the dust scene, lens or colours change; bake them again, see `perf/README.md`) |
 | `perf.spec.ts` | Nothing keeps running at rest (frame loops, 3D redraws, restyles per second); a whole-page touch scroll on a phone with a 4x slower CPU has no long freezes |
 
 Each test runs twice: at 1440 x 900 and as a 390 x 844 touch phone.

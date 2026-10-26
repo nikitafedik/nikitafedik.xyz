@@ -168,10 +168,8 @@ html:not(.intro-ready) .reel-head, html:not(.intro-ready) .reel-list { visibilit
 .reel-stage > * { pointer-events: auto; }
 .reel-canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; z-index: 0; pointer-events: none; }
 /* the intro's out-of-focus atoms as a small prerendered picture: on screen from the first paint, it hands over to the
-   live 3D as the canvas fades in. Dimmed like the out-of-focus canvas (1 - 0.62 light, 1 - 0.84 dark) */
-.reel-poster { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; z-index: 0; pointer-events: none; object-fit: cover; opacity: .38; }
-:root[data-theme="dark"] .reel-poster { opacity: .16; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .reel-poster { opacity: .16; } }
+   live 3D as the canvas fades in. The picture already holds the dimmed canvas as seen over the page colour */
+.reel-poster { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; z-index: 0; pointer-events: none; object-fit: cover; }
 /* the Blender render of the illustration shot, laid exactly over the camera's view once the clay frame has "rendered";
    when the scroll moves on it breaks into soft, drifting pixels drawn on its canvas */
 /* the photo is clipped on the left where the 3D canvas starts, so it never reaches the sidebar; on the right it runs to
@@ -645,8 +643,10 @@ if (menuBtn && sideMenu) {
               const cw = Math.min(1000, wide ? vw - 355 : vw - (vw <= 560 ? 32 : 80)), ch = wide ? vh : vh - 56;
               if (cw <= 0 || ch <= 0) return;
               const coarse = mm('(pointer: coarse)'), t = document.documentElement.dataset.theme, dark = t ? t === 'dark' : mm('(prefers-color-scheme: dark)');
-              const shapes = coarse ? [0.40, 0.46, 0.53, 0.62] : [0.65, 0.75, 0.85, 0.95, 1.05, 1.15, 1.30, 1.50, 1.75], a = cw / ch;
+              const shapes = coarse ? [0.40, 0.46, 0.53, 0.62, 0.75, 0.90, 1.05, 1.25, 1.55, 2.00, 2.40] : [0.65, 0.75, 0.85, 0.95, 1.05, 1.15, 1.30, 1.50, 1.75], a = cw / ch;
               const s = shapes.reduce((b, x) => Math.abs(Math.log(x / a)) < Math.abs(Math.log(b / a)) ? x : b);
+              // a shape far from every picture gets none: the canvas fades in on its own, as it always did
+              if (Math.abs(Math.log(s / a)) > 0.15) { p.hidden = true; return; }
               const src = `img/intro/${coarse ? 'm' : 'd'}${s.toFixed(2).replace('.', '')}-${dark ? 'dark' : 'light'}.webp`;
               if (p.getAttribute('src') !== src) p.src = src;
               p.hidden = false;
@@ -1561,7 +1561,7 @@ function paintFrame(dt) {
   const opG = op;
   if (opG !== paintFrame.op) { reelCanvas.style.opacity = opG; paintFrame.op = opG; }
   // the prerendered intro picture hands over to the canvas while it fades in, then leaves the page
-  if (reelPoster) { if (fadeIn >= 1) { reelPoster.remove(); reelPoster = null; } else reelPoster.style.opacity = ((1 - dim) * (1 - fadeIn)).toFixed(3); }
+  if (reelPoster) { if (fadeIn >= 1) { reelPoster.remove(); reelPoster = null; } else reelPoster.style.opacity = (1 - fadeIn).toFixed(3); }
   reel3d.setFit(mix('w'), mix('h'));
 }
 addEventListener('resize', () => { paintLabels.bw = 0; measureFrame(); if (demoApp.fit) demoApp.fit(); });
