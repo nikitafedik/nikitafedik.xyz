@@ -12,6 +12,7 @@ import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const coarse = window.matchMedia('(pointer: coarse)').matches;
@@ -21,29 +22,33 @@ const rand = (i, k) => { const x = Math.sin(i * 12.9898 + k * 78.233) * 43758.54
 // the room lighting never changes, so it ships prebaked: img/room-env.webp holds the filtered (PMREM) environment
 // in RGBE, mantissas on the left half, exponent (red) and alpha (green) on the right. Filtering it on load compiled and
 // ran the PMREM shaders on the main thread, about 1 s on a first visit
-async function loadRoomEnv() {
+// the GPU turns the RGBE texels into half floats in one small pass: no JS loop over the 786k texels and no readback
+const RGBE_DECODE = `uniform sampler2D tSrc; uniform vec2 uSize;
+  void main() {
+    // output texel (x, y) reads the mantissas at (x, y) and the exponent and alpha at (x + width, y); row 0 is the
+    // image's first row, as in the file (no flip)
+    vec2 p = gl_FragCoord.xy;
+    vec4 m = texture2D(tSrc, vec2(p.x / (2.0 * uSize.x), p.y / uSize.y));
+    vec4 e = texture2D(tSrc, vec2((p.x + uSize.x) / (2.0 * uSize.x), p.y / uSize.y));
+    float E = floor(e.r * 255.0 + 0.5);
+    gl_FragColor = E > 0.0 ? vec4(floor(m.rgb * 255.0 + 0.5) * exp2(E - 136.0), e.g > 0.5 ? 1.0 : 0.0) : vec4(0.0);
+  }`;
+async function loadRoomEnv(renderer) {
   // loaded as an image, not with fetch: some hosts allow images but block fetch
   const img = new Image();
   img.src = new URL('img/room-env.webp', document.baseURI).href;
   await img.decode();
-  const bmp = await createImageBitmap(img, { colorSpaceConversion: 'none', premultiplyAlpha: 'none' });
-  const W2 = bmp.width, w = W2 / 2, h = bmp.height, c = document.createElement('canvas');
-  c.width = W2; c.height = h;
-  const g = c.getContext('2d', { willReadFrequently: true });
-  g.drawImage(bmp, 0, 0);
-  const src = g.getImageData(0, 0, W2, h).data, out = new Uint16Array(w * h * 4), toHalf = THREE.DataUtils.toHalfFloat, one = toHalf(1);
-  for (let y = 0; y < h; y++) {
-    if ((y & 127) === 127) await new Promise(r => setTimeout(r));   // decode in slices so no frame waits on it
-    for (let x = 0; x < w; x++) {
-      const m = (y * W2 + x) * 4, e = m + w * 4, o = (y * w + x) * 4;
-      if (!src[e]) continue;
-      const f = 2 ** (src[e] - 136);
-      out[o] = toHalf(src[m] * f); out[o + 1] = toHalf(src[m + 1] * f); out[o + 2] = toHalf(src[m + 2] * f); out[o + 3] = src[e + 1] ? one : 0;
-    }
-  }
-  const t = new THREE.DataTexture(out, w, h, THREE.RGBAFormat, THREE.HalfFloatType);
-  Object.assign(t, { mapping: THREE.CubeUVReflectionMapping, colorSpace: THREE.LinearSRGBColorSpace, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: false, needsUpdate: true });
-  return t;
+  const w = img.width / 2, h = img.height;
+  const src = Object.assign(new THREE.Texture(img), { colorSpace: THREE.NoColorSpace, premultiplyAlpha: false, flipY: false, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, generateMipmaps: false, needsUpdate: true });
+  const rt = new THREE.WebGLRenderTarget(w, h, { type: THREE.HalfFloatType, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: false, depthBuffer: false });
+  const quad = new FullScreenQuad(new THREE.ShaderMaterial({ uniforms: { tSrc: { value: src }, uSize: { value: new THREE.Vector2(w, h) } }, vertexShader: 'void main() { gl_Position = vec4(position.xy, 0.0, 1.0); }', fragmentShader: RGBE_DECODE, depthTest: false, depthWrite: false, toneMapped: false }));
+  const prev = renderer.getRenderTarget();
+  renderer.setRenderTarget(rt);
+  quad.render(renderer);
+  renderer.setRenderTarget(prev);
+  quad.material.dispose(); quad.dispose(); src.dispose();
+  Object.assign(rt.texture, { mapping: THREE.CubeUVReflectionMapping, colorSpace: THREE.LinearSRGBColorSpace });
+  return rt.texture;
 }
 const PERF_SYNC = /[?&]perf\b/.test(location.search);
 // how many of the bottom atoms are still forming out of the steam when the shutter fires (it must match the rendered
@@ -678,7 +683,7 @@ export function initReel(canvas, readAccent) {
   renderer.toneMappingExposure = 0.9;
   const scene = new THREE.Scene();
   // filtering the room here is the fallback if the baked file cannot load; only then is the room's module fetched
-  const envReady = loadRoomEnv().then(t => { scene.environment = t; }, () => import('three/addons/environments/RoomEnvironment.js').then(({ RoomEnvironment }) => { scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture; }));
+  const envReady = loadRoomEnv(renderer).then(t => { scene.environment = t; }, () => import('three/addons/environments/RoomEnvironment.js').then(({ RoomEnvironment }) => { scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture; }));
   const hemi = new THREE.HemisphereLight(0xffffff, 0x7a8396, 0.6); scene.add(hemi);
   const key = new THREE.DirectionalLight(0xffffff, 2.0); key.position.set(5, 10, 8); scene.add(key);
   const rim = new THREE.DirectionalLight(0xffe2cc, 0.6); rim.position.set(-8, 3, -6); scene.add(rim);
