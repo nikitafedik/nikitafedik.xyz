@@ -1,0 +1,18 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>bake photo samples</title>
+<script type="module">
+// The 176x110 sample of each illustration photo, made exactly the way the page made it before (createImageBitmap,
+// medium quality, drawn into a read-back canvas), returned as raw RGBA for perf/bake-photo-samples.py
+const out = {};
+for (const name of ['illus-dark', 'illus-light', 'illus-dark-1200', 'illus-light-1200']) {
+  const img = new Image(); img.src = `/cur/img/${name}.webp`; await img.decode();
+  const small = await createImageBitmap(img, { resizeWidth: 176, resizeHeight: 110, resizeQuality: 'medium' });
+  const c = document.createElement('canvas'); c.width = 176; c.height = 110;
+  const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(small, 0, 0, 176, 110);
+  const d = g.getImageData(0, 0, 176, 110).data;
+  let s = ''; for (let i = 0; i < d.length; i += 32768) s += String.fromCharCode(...d.subarray(i, i + 32768));
+  out[name] = btoa(s);
+}
+window.__result = out;
+</script>

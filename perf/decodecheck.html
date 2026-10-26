@@ -1,0 +1,32 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>photo decode check</title>
+<script type="module">
+// Main-thread cost of the ways to get the illustration photo into the peel canvas and the 176x110 sample, after
+// img.decode(). Long tasks are counted by an observer; each step runs in its own task.
+const long = []; new PerformanceObserver(l => l.getEntries().forEach(e => long.push(Math.round(e.duration)))).observe({ type: 'longtask' });
+const frame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 30)));
+const out = {};
+async function step(name, fn) {
+  await frame(); const n0 = long.length, t0 = performance.now();
+  await fn();
+  out[name] = { ms: +(performance.now() - t0).toFixed(1) };
+  await frame(); out[name].longTasks = long.slice(n0);
+}
+const load = async src => { const i = new Image(); i.src = src + '?' + Math.random(); await i.decode(); return i; };
+const SRC = '/cur/img/illus-dark.webp', W = 1600, H = 1000;
+let img = await load(SRC);
+await step('createImageBitmap resize 176x110', () => createImageBitmap(img, { resizeWidth: 176, resizeHeight: 110, resizeQuality: 'medium' }));
+img = await load(SRC);
+await step('createImageBitmap resize 1600x1000', () => createImageBitmap(img, { resizeWidth: W, resizeHeight: H, resizeQuality: 'high' }));
+img = await load(SRC);
+await step('createImageBitmap no resize', () => createImageBitmap(img));
+img = await load(SRC);
+await step('drawImage to 1600x1000 canvas', () => { const c = document.createElement('canvas'); c.width = W; c.height = H; c.getContext('2d').drawImage(img, 0, 0, W, H); c.getContext('2d').getImageData(0, 0, 1, 1); });
+img = await load(SRC);
+await step('drawImage to 176x110 readback canvas', () => { const c = document.createElement('canvas'); c.width = 176; c.height = 110; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0, 176, 110); g.getImageData(0, 0, 176, 110); });
+const small = await load('/cur/img/c60.webp');
+await step('tiny prebaked sample: drawImage + getImageData', () => { const c = document.createElement('canvas'); c.width = 176; c.height = 110; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(small, 0, 0, 176, 110); g.getImageData(0, 0, 176, 110); });
+window.__result = out;
+document.body.textContent = JSON.stringify(out);
+</script>
