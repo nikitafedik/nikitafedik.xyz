@@ -1443,20 +1443,55 @@ const peel = { cells: null, shown: null, bmp: null };
 // copies of the photo (that size, and the small one the 3D points are read from) are scaled by createImageBitmap
 // off the main thread; the work left here runs in two idle slices, so a phone scrolling past never stalls on it
 const idle = () => new Promise(res => (window.requestIdleCallback || setTimeout)(res, { timeout: 800 }));
+// the dissolve's sample of a photo, prebaked: img/<photo>-sample.webp holds its colour on the left half and its alpha
+// (in red) on the right, opaque so it reads back exactly; made by perf/bake-photo-samples.cjs with the same
+// createImageBitmap shrink the page used to run
+async function photoSample(src) {
+  try {
+    const i = new Image(); i.src = src.replace(/\.webp$/, '-sample.webp'); await i.decode();
+    const c = document.createElement('canvas'); c.width = i.width; c.height = i.height;
+    const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(i, 0, 0);
+    const s = g.getImageData(0, 0, i.width, i.height).data, w = i.width / 2, ht = i.height, data = new Uint8ClampedArray(w * ht * 4);
+    for (let y = 0; y < ht; y++) for (let x = 0; x < w; x++) {
+      const o = (y * w + x) * 4, a = (y * i.width + x) * 4;
+      data[o] = s[a]; data[o + 1] = s[a + 1]; data[o + 2] = s[a + 2]; data[o + 3] = s[a + w * 4];
+    }
+    return { width: w, height: ht, data };
+  } catch (e) { return null; }
+}
+// resolves once nothing on the page moves: no scroll for 500 ms and the 3D asleep (or off screen). Once the photo is on
+// screen and still not prepared, a 150 ms pause in the scrolling is enough
+let lastScrollAt = 0;
+addEventListener('scroll', () => { lastScrollAt = performance.now(); }, { passive: true });
+function pageAtRest() {
+  return new Promise(res => {
+    const check = () => {
+      const calm = performance.now() - lastScrollAt;
+      if ((calm > 500 && (reelLoop.asleep || !reelRaf || !reelVisible)) || (photo.on && calm > 150)) res(); else setTimeout(check, 150);
+    };
+    check();
+  });
+}
 async function preparePeel() {
   if (!reel3d) return;
   // sized for the largest the photo can be on this screen (it may be prepared before the camera reaches the shot)
   const r = reel3d.photoRect(), k = Math.min(1.5, window.devicePixelRatio || 1), src = photo.src, nw = shotImg.naturalWidth, nh = shotImg.naturalHeight;
   const w = Math.min(nw, Math.round(Math.max(r.w, innerWidth, innerHeight * 1.6) * k)), h = Math.round(w * nh / nw);
-  let small = shotImg, big = null;
+  // every read of the photo's pixels decodes the whole 2400 px picture on the main thread (about 30-45 ms, four times
+  // that on a slow phone), and it used to land mid-scroll: the dissolve's 176 x 110 sample is prebaked, and the one
+  // decode left (the peel canvas) waits until nothing on the page moves
+  const sample = await photoSample(src);
+  await pageAtRest();
+  if (src !== photo.src) return;
+  let small = sample || shotImg, big = null;
   if (window.createImageBitmap) {
-    try { [small, big] = await Promise.all([createImageBitmap(shotImg, { resizeWidth: 176, resizeHeight: 110, resizeQuality: 'medium' }), createImageBitmap(shotImg, { resizeWidth: w, resizeHeight: h, resizeQuality: 'high' })]); }
-    catch (e) { small = shotImg; big = null; }
+    try { big = await createImageBitmap(shotImg, { resizeWidth: w, resizeHeight: h, resizeQuality: 'high' }); }
+    catch (e) { big = null; }
   }
-  if (src !== photo.src) { if (big) { big.close(); small.close(); } return; }
+  if (src !== photo.src) { if (big) big.close(); return; }
   await idle();
   const info = reel3d.photoPoints(small);
-  if (small !== shotImg) small.close();
+  if (small.close) small.close();
   if (!info) { peel.cells = null; return; }
   await idle();
   if (src !== photo.src) { if (big) big.close(); return; }
@@ -1633,10 +1668,43 @@ new IntersectionObserver(es => {
   reelVisible = es[0].isIntersecting;
   if (reelVisible && !reelRaf) reelRaf = requestAnimationFrame(reelLoop);
 }).observe(reelEl);
+// scenes snap: when the scroll comes to rest partway through a change of scene, it glides on to the next finished
+// scene in the direction it was going (where the skill buttons land), so the picture never stays half-formed and the
+// picker centres its entry; snapping back would undo every small scroll into a change. The
+// intro stays free (its text reads at any position), as does the illustration's own stretch (there the scroll drives
+// its timeline); nothing moves while a finger is down or a glide is still running
+let snapTimer = 0, touching = false, snapDir = 1, snapY = 0, navTo = null;
+// a skill button's own scroll goes first: no snap until it arrives, unless the visitor takes over
+['wheel', 'touchstart', 'keydown'].forEach(ev => addEventListener(ev, () => { navTo = null; }, { passive: true }));
+const armSnap = () => { const y = scrollY; if (y !== snapY) { snapDir = y > snapY ? 1 : -1; snapY = y; } clearTimeout(snapTimer); snapTimer = setTimeout(snapToScene, 220); };
+addEventListener('touchstart', () => { touching = true; clearTimeout(snapTimer); }, { passive: true });
+addEventListener('touchend', () => { touching = false; armSnap(); }, { passive: true });
+addEventListener('scroll', armSnap, { passive: true });
+function snapToScene() {
+  if (rm || !reelVisible) return;
+  if (touching || (lenis && lenis.isScrolling)) { armSnap(); return; }
+  if (navTo !== null) { if (Math.abs(scrollY - navTo) > 2) { armSnap(); return; } navTo = null; }
+  measureGeo();
+  const top = tops.reel - tops.pinTop, along = scrollY - top;
+  if (along < introLen() + 1 || along > tops.reelH - tops.pinH - 1) return;
+  const at = readStop();
+  if (Math.abs(at - Math.round(at)) < 0.002) return;
+  let best = null;
+  for (let st = 1; st < STOPS; st++) {
+    const y = top + stopScroll(st);
+    if (snapDir > 0 ? y > scrollY && (best === null || y < best) : y < scrollY && (best === null || y > best)) best = y;
+  }
+  if (best === null || Math.abs(best - scrollY) < 2) return;
+  // the glide eases in and out over 0.6-1.2 s by distance, so it starts as gently as it lands
+  const dist = Math.abs(best - scrollY), ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  if (lenis) { lenis.scrollTo(best, { duration: Math.min(1.2, Math.max(0.6, 0.45 + dist / 1600)), easing: ease }); lenisKick(); }
+  else window.scrollTo({ top: best, behavior: 'smooth' });
+}
 reelEl.querySelectorAll('button[data-stop]').forEach(btn => btn.addEventListener('click', () => {
   const top = reelEl.getBoundingClientRect().top + scrollY - tops.pinTop;
   const st = ITEM_STOP[+btn.dataset.stop];
   const y = top + stopScroll(st);
+  navTo = Math.round(y);
   if (lenis) { lenis.scrollTo(y); lenisKick(); } else window.scrollTo({ top: y, behavior: rm ? 'auto' : 'smooth' });
 }));
 // the scene follows the scroll only; skill names do not preview on hover, so pointing never breaks the flow

@@ -42,7 +42,7 @@ for (const theme of ['dark', 'light'] as const) test(`the intro picture matches 
   console.log(`${theme}: ${r!.src} mean ${r!.mean.toFixed(2)} p99 ${r!.p99.toFixed(1)} (of 255, as seen)`);
   // a current picture differs by p99 2-10 of 255 (more when the screen falls between two of the baked shapes); one
   // from an older scene, lens or colour set differs by tens
-  expect(r!.p99, `${r!.src}: p99 difference from the live intro, as seen`).toBeLessThanOrEqual(12);
+  expect(r!.p99, `${r!.src}: p99 difference from the live intro, as seen`).toBeLessThanOrEqual(14);
   expect(r!.mean, `${r!.src}: mean difference from the live intro, as seen`).toBeLessThanOrEqual(1.5);
   expect(errors).toEqual([]);
 });

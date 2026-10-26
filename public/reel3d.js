@@ -750,10 +750,16 @@ export function initReel(canvas, readAccent) {
   })();
   // sample the photo into points: one per cell where the image is not transparent; alpha goes in position.z
   function photoPoints(img) {
-    const GW = 176, GH = 110, c = document.createElement('canvas'); c.width = GW; c.height = GH;
-    const g = c.getContext('2d', { willReadFrequently: true });
-    g.drawImage(img, 0, 0, GW, GH);
-    const d = g.getImageData(0, 0, GW, GH).data, pos = [], col = [], seed = [], start = new Float32Array(GW * GH);
+    const GW = 176, GH = 110;
+    // a prebaked sample arrives as its pixels; a picture is shrunk here (that decodes the whole photo)
+    let d = img.data;
+    if (!d) {
+      const c = document.createElement('canvas'); c.width = GW; c.height = GH;
+      const g = c.getContext('2d', { willReadFrequently: true });
+      g.drawImage(img, 0, 0, GW, GH);
+      d = g.getImageData(0, 0, GW, GH).data;
+    }
+    const pos = [], col = [], seed = [], start = new Float32Array(GW * GH);
     const vn = (x, y) => { const xi = Math.floor(x), yi = Math.floor(y), fx = x - xi, fy = y - yi, sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy), r = (a, b) => rand(a * 57 + b * 131, 207);
       return (r(xi, yi) * (1 - sx) + r(xi + 1, yi) * sx) * (1 - sy) + (r(xi, yi + 1) * (1 - sx) + r(xi + 1, yi + 1) * sx) * sy; };
     for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) start[y * GW + x] = Math.min(1, Math.max(0, 0.7 * vn(x / 13, y / 13) + 0.3 * rand(y * GW + x, 208)));
@@ -1136,6 +1142,8 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
         studio.add(g.scene);
         if (studio.userData.props) studio.userData.props.visible = false;
         anim = true;
+        // the set arrives after start-up: compile and draw it once now, unseen, so the studio does not stall later
+        return ready.then(() => warm()).then(() => warmDraw());
       })
       .catch(() => {});
   }
@@ -1950,8 +1958,13 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
     else { keepK = keepT; partK = partT; }
     if (dis.pts.visible) { dis.mat.uniforms.uD.value = camDist; dis.mat.uniforms.uCell.value = H * renderer.getPixelRatio() * camera.zoom / dis.rows; }
     camera.zoom = (1 + (dIll / fitIll - 1) * wIll) * tele;
-    if (forms.illModel.meta.frozen && wIll > 0.5) { camCenter.copy(camTarget); camDist = wantD; }
-    else { camCenter.lerp(camTarget, kk); camDist += (wantD - camDist) * kk; }
+    // the held photo needs the exact pose; leaving it, the camera goes from following the pose to easing toward the next
+    // framing gradually (a hard switch at half way stopped a fast zoom-out dead in one frame)
+    const hold = forms.illModel.meta.frozen ? smooth(0.4, 0.85, wIll) : 0, kc = kk + (1 - kk) * hold;
+    camCenter.lerp(camTarget, kc); camDist += (wantD - camDist) * kc;
+    // the camera still easing toward its framing counts as motion: the reel keeps full frame rate and stays awake until
+    // it arrives (at 30 fps a slow zoom stepped visibly, and asleep it froze half way)
+    if (Math.abs(wantD - camDist) > camDist * 0.0005 || camCenter.distanceToSquared(camTarget) > 1e-6) anim = true;
     camera.position.set(camCenter.x, camCenter.y + camDist * 0.04, camCenter.z + camDist);
     camera.lookAt(camCenter);
     camera.updateMatrixWorld(); holder.updateMatrixWorld();
@@ -2101,9 +2114,28 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
     textures.forEach(t => { try { renderer.initTexture(t); } catch (e) {} });
     return done;
   }
-  // the page shows the reel once this settles: lighting in place, every shader compiled in parallel, so the first
-  // frames never wait on the GPU driver
-  const ready = envReady.then(() => warm()).catch(() => {}).then(() => { governFrom = performance.now() + 2000; });
+  // compiling is not the whole cost: on Windows the driver finishes a shader the first time it draws with it, so every
+  // object appearing for the first time mid-scroll stalled the GPU (about 120 ms when the atoms gather, more for the
+  // studio). Each object is drawn once, unseen, into a tiny target, with nothing hidden, culled or empty
+  const warmTarget = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, samples: composer.renderTarget1.samples, depthBuffer: true });
+  function warmDraw() {
+    const undo = [];
+    scene.traverse(o => {
+      if (!o.visible) { o.visible = true; undo.push(() => { o.visible = false; }); }
+      if (o.frustumCulled) { o.frustumCulled = false; undo.push(() => { o.frustumCulled = true; }); }
+      if (o.isInstancedMesh && o.count === 0) { o.count = 1; undo.push(() => { o.count = 0; }); }
+      const g = o.geometry;
+      if (g && g.drawRange && g.drawRange.count === 0) { g.drawRange.count = Infinity; undo.push(() => { g.drawRange.count = 0; }); }
+      [].concat(o.material || []).forEach(m => { if (m.visible === false) { m.visible = true; undo.push(() => { m.visible = false; }); } });
+    });
+    const prev = renderer.getRenderTarget();
+    try { renderer.setRenderTarget(warmTarget); renderer.render(scene, camera); } catch (e) {}
+    renderer.setRenderTarget(prev);
+    for (let i = undo.length - 1; i >= 0; i--) undo[i]();
+  }
+  // the page shows the reel once this settles: lighting in place, every shader compiled in parallel and drawn once, so
+  // no frame waits on the GPU driver
+  const ready = envReady.then(() => warm()).then(() => warmDraw()).catch(() => {}).then(() => { governFrom = performance.now() + 2000; });
   return {
     ready,
     setStop(f) { stop = f; },
