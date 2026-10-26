@@ -401,11 +401,26 @@ label.app-row { cursor: pointer; }
 .yard { position: fixed; left: 0; bottom: 0; width: 0; height: 0; z-index: 70; }
 .flyball { position: fixed; left: 0; top: 0; width: 22px; height: 22px; z-index: 71; pointer-events: none; }
 .byron { position: fixed; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); left: 0; padding: 8px 12px 6px; pointer-events: none; }
-.byron-art { display: block; margin: 0; font-family: var(--secondary); font-size: 15px; line-height: 1; color: color-mix(in oklab, #D0712F 82%, var(--ink)); white-space: pre; }
+/* Byron is a line drawing in one SVG, 20.4em x 10em (306 x 150 at 15px): data-pose shows one body drawing, and the
+   eye and mouth states are classes. Mirrored, he faces right */
+.byron-art { display: block; width: 20.4em; height: 10em; overflow: visible; font-size: 15px; color: color-mix(in oklab, #D0712F 82%, var(--ink));
+  fill: none; stroke: currentColor; stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
 .byron.right .byron-art { transform: scaleX(-1); }
-/* the C60 sits in the mouth cell of the current frame: --r row, --c column, counted in the art's own grid */
-.byron-mouth { position: absolute; width: 20px; height: 20px; font-family: var(--secondary); font-size: 15px; line-height: 1; left: calc(12px + (var(--c, 0) + .5) * 1ch - 10px); top: calc(8px + (var(--r, 0) + .5) * 1em - 10px); }
-.byron.right .byron-mouth { left: auto; right: calc(12px + (var(--c, 0) + .5) * 1ch - 10px); }
+.byron-art [data-pose], .by-ruff-pick, .by-blink, .by-tongue { display: none; }
+.byron-art[data-pose="stand"] [data-pose="stand"], .byron-art[data-pose="pickup"] [data-pose="stand"], .byron-art[data-pose="sit"] [data-pose="sit"],
+.byron-art[data-pose="lie"] [data-pose="lie"], .byron-art[data-pose="lie1"] [data-pose="lie"], .byron-art[data-pose="pickup"] .by-ruff-pick,
+.byron-art.blink .by-blink, .byron-art.pant .by-tongue { display: inline; }
+.byron-art[data-pose="pickup"] .by-ruff, .byron-art.blink .by-eye { display: none; }
+/* his side stare: the iris slides to the back corner, white shows at the front, the upper lid drops */
+.by-iris, .by-lid, .by-lidline { transition: transform .25s cubic-bezier(.3,.7,.3,1), opacity .2s; }
+.by-lid { transform-box: fill-box; transform-origin: top; transform: scaleY(0); }
+.by-lidline { opacity: 0; transform: translateY(-2.4px); }
+.byron.stare .by-iris { transform: translate(2.4px, .4px); }
+.byron.stare .by-lid { transform: none; }
+.byron.stare .by-lidline { opacity: 1; transform: none; }
+/* the C60 sits at his mouth: --mx, --my in the drawing's 306 x 150 units */
+.byron-mouth { position: absolute; width: 20px; height: 20px; font-size: 15px; left: calc(12px + var(--mx, 0) * 1em / 15 - 10px); top: calc(8px + var(--my, 0) * 1em / 15 - 10px); }
+.byron.right .byron-mouth { left: auto; right: calc(12px + var(--mx, 0) * 1em / 15 - 10px); }
 .byron-mouth[hidden] { display: none; }
 @media (max-width: 480px) { .byron-art, .byron-mouth { font-size: 13px; } }
 /* what to do with Byron: a small card in the page's own language, a hairline paper card with mono capitals like the nav */
@@ -418,6 +433,8 @@ label.app-row { cursor: pointer; }
 .pet-btn.go { background: var(--accent); color: var(--on-accent); }
 .pet-btn.go:hover { background: var(--accent); transform: translateY(-1px); }
 .pet-btn.go:active { transform: scale(.97); }
+.pet-btn:disabled { opacity: .38; cursor: default; }
+.pet-btn:disabled:hover { background: none; }
 .woof { position: absolute; left: 4px; top: -30px; padding: 4px 10px; border-radius: 12px; background: var(--ink); color: var(--bg); font-family: var(--secondary); font-weight: 700; font-size: 14px; white-space: nowrap; transform-origin: bottom left; }
 .byron.right .woof { left: auto; right: 4px; transform-origin: bottom right; }
 .heart { position: fixed; z-index: 72; color: #F05A7E; font-size: 20px; pointer-events: none; }
@@ -539,7 +556,7 @@ html.vt-theme::view-transition-old(root), html.vt-theme::view-transition-new(roo
 /* during a theme switch the bar and menu belong to the page, so the circle sweeps over them too */
 html.vt-theme .side { view-transition-name: none; }
 /* two voices: the display face for names, headings and sentences; the mono face for every small supporting line */
-.me span em, .elsewhere, .meta, footer, .topbar, .style-panel p, .byron-art, .reel-readout, .reel-label, .ctl-range, .mock-h span, .ads-row, .legend, .mock-status { font-family: var(--secondary); }
+.me span em, .elsewhere, .meta, footer, .topbar, .style-panel p, .reel-readout, .reel-label, .ctl-range, .mock-h span, .ads-row, .legend, .mock-status { font-family: var(--secondary); }
 .me span em, .meta, footer, .topbar { font-size: .88em; letter-spacing: -0.01em; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
 </style>
@@ -1880,28 +1897,31 @@ mountSky(document.getElementById('skySlot'), { dark, onChange: (d, o) => applyTh
 const ballBtn = document.getElementById('ballBtn'), yard = document.querySelector('.yard');
 const gallery = document.getElementById('byronGallery');
 const BALL = '<img src="img/c60.webp" alt="" draggable="false">';
-// Byron, side view facing left, after a dog's profile photo: a long straight muzzle rising gently to the stop with the
-// dark nose at its tip, the eye at the stop, a tall upright ear, a compact body on short legs and a tail curled up to his
-// back. Every frame is the same 34 x 10 grid. t is the art, m is the cell [row, column] of his mouth, where the C60 sits;
-// x shifts a frame's body in columns (head-down pickup) so his legs stay put when it shows.
-const DOG = {
-  stand: {"t": "        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\_____________    _   \n  `-.__                   `-.( )  \n       `-.                   /    \n          \\  ____________   /     \n          | |            | |      \n          | |            | |      \n         _|_|           _|_|      ", "m": [4, 1]},
-  run1: {"t": "        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\_____________    _   \n  `-.__                   `-.( )  \n       `-.                   /    \n          \\  ____________   /     \n         / /              \\ \\     \n        / /                \\ \\    \n       /_/_                 \\_\\_  ", "m": [4, 1]},
-  run2: {"t": "        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\_____________    _   \n  `-.__                   `-.( )  \n       `-.                   /    \n          \\  ____________   /     \n           \\ \\          / /       \n            \\ \\        / /        \n            '-'-      /_/_        ", "m": [4, 1]},
-  run3: {"t": "        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\_____________    _   \n  `-.__                   `-.( )  \n       `-.                   /    \n          \\  ____________   /     \n          | |            | |      \n          / /            \\ \\      \n         /_/_             \\_\\_    ", "m": [4, 1]},
-  trot1: {"t": "        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\_____________    _   \n  `-.__                   `-.( )  \n       `-.                   /    \n          \\  ____________   /     \n         / ||            || \\     \n        / / |            | \\ \\    \n       /_/ _|_          _|_ \\_\\   ", "m": [4, 1]},
-  trot2: {"t": "        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\_____________    _   \n  `-.__                   `-.( )  \n       `-.                   /    \n          \\  ____________   /     \n          || \\          / ||      \n          | \\ \\        / / |      \n         _|_ \\_\\      /_/ _|_     ", "m": [4, 1]},
-  pickup: {"t": "                                  \n                                  \n                                  \n           .______________    _   \n     /\\    /               `-.( ) \n    / /\\  /                   /   \n   _.' o`'  _____________   /     \n @'        | |           | |      \n  `-.__.-' | |           | |      \n          _|_|          _|_|      ", "m": [8, 1]},
-  sit1: {"t": "                                  \n        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\                     \n  `-.__      \\                    \n       `-.    `.    _             \n          | |   \\  ( )            \n          | | .-.)  /             \n         _|_|(__'--'              ", "m": [5, 1]},
-  sit: {"t": "                                  \n        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\                     \n  `-.__      \\                    \n       `-.    `.    _             \n          | |   \\  ( )            \n          | | .-.)  /             \n         _|_|(__'--'              ", "m": [5, 1]},
-  sitwag: {"t": "                                  \n        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\                     \n  `-.__      \\                    \n       `-.    `.                  \n          | |   \\ _               \n          | | .-.)( )             \n         _|_|(__'-'/              ", "m": [5, 1]},
-  sitpant: {"t": "                                  \n        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\                     \n  `U.__      \\                    \n       `-.    `.    _             \n          | |   \\  ( )            \n          | | .-.)  /             \n         _|_|(__'--'              ", "m": [5, 1]},
-  sitblink: {"t": "                                  \n        /\\                        \n       / /\\                       \n   _.-' -  \\                      \n @'         \\                     \n  `-.__      \\                    \n       `-.    `.    _             \n          | |   \\  ( )            \n          | | .-.)  /             \n         _|_|(__'--'              ", "m": [5, 1]},
-  lie1: {"t": "                                  \n        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\_____________    _   \n  `-.__                   `-.( )  \n       `-.                   /    \n          \\  ____________   /     \n           \\ \\          / /       \n          __\\_\\________/_/__      ", "m": [5, 1]},
-  lie: {"t": "                                  \n                                  \n                                  \n                                  \n        /\\                        \n       / /\\                       \n   _.-' o  \\                      \n @'         \\_______________      \n  `-.__                    `-.  _ \n       `-.____________________)( )", "m": [8, 1]},
-  lieblink: {"t": "                                  \n                                  \n                                  \n                                  \n        /\\                        \n       / /\\                       \n   _.-' -  \\                      \n @'         \\_______________      \n  `-.__                    `-.  _ \n       `-.____________________)( )", "m": [8, 1]}
+// Byron, side view facing left, after his photos: a long blunt muzzle with a round nose, a round dark eye, a tall upright
+// ear, a fluffy ruff, a compact body on short legs and a plume of a tail curled over his back. One line drawing in a
+// 306 x 150 box; poses are body drawings shown by data-pose, the legs swing from their hips and shoulders
+const BYRON = '<g class="by-body"><g data-pose="stand"><path d="M110 40Q112.2 41.2 114.6 40.9Q114.4 42.5 114 43Q116.2 44.2 117.9 44.1Q118.4 45.5 118.1 45.9Q120.6 46.7 123.3 46.2Q123 47.6 122.6 48.3Q125.1 48.9 127 48.3Q127.5 49.6 127.2 50.2Q129.8 50.7 132.1 49.8Q132.2 51.3 132 52"/><path d="M132 52C138.3 52.5 157 54.5 170 55C183 55.5 199.7 55.2 210 55C220.3 54.8 226 54 232 54C238 54 242 53.8 246 55C250 56.2 254.3 60 256 61"/><path d="M270 74Q271.5 76.6 274 78.2Q272.8 79.2 272 79.4Q273.1 82 275 83.1Q274.2 84.7 273.6 84.9Q274.3 87.6 277.3 89.8Q274.8 90.4 273.8 90.7Q273.5 93.5 275.1 96Q273.1 96.3 272.2 96.2Q271.6 99.1 273 102.8Q270.8 101.9 269.7 101.4Q268.5 104 269.3 108.1Q267.2 106.5 266.1 105.9Q264.5 108.3 264.3 111.5Q262.7 110.6 262 110"/><path d="M226 98C221 98.8 208.7 102 196 103C183.3 104 162.5 104.5 150 104C137.5 103.5 125.8 100.7 121 100"/><path d="M106 72Q116 84 120 99" stroke-width=".85" opacity=".5"/><g class="by-ruff"><path d="M62 70Q63.4 72.7 63.3 75.7Q64.9 75.3 65.6 74.8Q67.2 77.3 67 79.4Q68.9 79.8 69.4 79.4Q71.2 81.9 71.2 85.4Q73.1 84.2 73.9 83.5Q76.1 85.5 76.6 88.2Q78.3 87.5 78.8 86.9Q81.1 89 82 92.3Q83.4 90.9 83.9 90.1Q86 92.3 86.9 95.7Q88.2 94.5 88.8 93.6Q90.8 95.9 91.1 98.5Q92.8 98.2 93.3 97.6Q95 100.2 95.4 104.6Q96.8 102.7 97.6 101.8Q99.4 104.3 99.7 107.7Q101.3 106.7 102 106"/></g><g class="by-ruff-pick"><path d="M100 97Q100.2 98.7 99.3 101.5Q100.5 100.3 101.3 99.9Q101.7 101.6 101 103.6Q102.1 103.2 102.7 103Q102.8 104.7 101.8 108Q103.1 106.4 104 106"/></g><g class="by-leg"><path d="M101 106C101.4 108 103 114.3 103.5 118C104 121.7 104.1 125.2 104 128C103.9 130.8 103.7 132.9 103 135C102.3 137.1 100.5 139.6 100 140.5C97.5 141.5 94.5 143 94.5 145.5Q94.5 148 98 148L110.5 148Q114 148 114 145C113.9 144.2 113.3 142.2 113.5 140C113.7 137.8 114.6 134.7 115 132C115.4 129.3 115.8 127 116 124C116.2 121 116 118 116.5 114C117 110 118.6 102.3 119 100"/><path d="M101.5 148Q101.8 145.6 103.5 144.6" stroke-width=".85"/></g><g class="by-leg"><path d="M131 104C131.4 106.3 133 114 133.5 118C134 122 134.1 125.2 134 128C133.9 130.8 133.7 132.9 133 135C132.3 137.1 130.5 139.6 130 140.5C127.5 141.5 124.5 143 124.5 145.5Q124.5 148 128 148L140.5 148Q144 148 144 145C143.9 144.2 143.3 142.2 143.5 140C143.7 137.8 144.6 134.7 145 132C145.4 129.3 145.8 127 146 124C146.2 121 146 117.2 146.5 114C147 110.8 148.6 106.1 149 104.5" opacity=".5"/><path d="M131.5 148Q131.8 145.6 133.5 144.6" stroke-width=".85" opacity=".5"/></g><g class="by-leg"><path d="M262 110C261.7 111 260.6 114 260 116C259.4 118 259 120 258.5 122C258 124 257.4 125.7 257 128C256.6 130.3 256.2 133.2 256 136C255.8 138.8 255.6 143.5 255.5 145Q255.5 148 252 148L243 148Q239.5 148 239.5 145.5Q239.5 143 242.5 142.5C242.8 141.4 244.1 138.2 244.5 136C244.9 133.8 245.5 131.5 245 129C244.5 126.5 242.9 123.7 241.5 121C240.1 118.3 238 115.5 236.5 113C235 110.5 233.8 108.5 232.5 106C231.2 103.5 229.2 99.3 228.5 98"/><path d="M246.5 148Q246.8 145.6 248.5 144.6" stroke-width=".85"/></g><g class="by-leg"><path d="M232 101C231.7 103.5 230.6 112.5 230 116C229.4 119.5 229 120 228.5 122C228 124 227.4 125.7 227 128C226.6 130.3 226.2 133.2 226 136C225.8 138.8 225.6 143.5 225.5 145Q225.5 148 222 148L213 148Q209.5 148 209.5 145.5Q209.5 143 212.5 142.5C212.8 141.4 214.1 138.2 214.5 136C214.9 133.8 215.5 131.5 215 129C214.5 126.5 212.9 123.7 211.5 121C210.1 118.3 208 115.5 206.5 113C205 110.5 203.8 108.2 202.5 106C201.2 103.8 199.2 100.6 198.5 99.5" opacity=".5"/><path d="M216.5 148Q216.8 145.6 218.5 144.6" stroke-width=".85" opacity=".5"/></g></g><g data-pose="sit"><path d="M110 55Q112.3 56.9 114.7 57.2Q114.5 58.9 113.9 59.3Q116.1 61.3 117.7 61.5Q118.1 63.4 117.8 63.7Q119.9 65.7 122.7 66.1Q122 67.8 121.4 68.3Q123.5 70.4 125.5 70.8Q125.5 72.6 125 73"/><path d="M125 73C126.8 75.5 131.8 83.2 136 88C140.2 92.8 145.3 97.7 150 102C154.7 106.3 160.3 110 164 114C167.7 118 170.7 124 172 126"/><path d="M172 126Q173.8 128.3 176.4 129.7Q175.4 130.7 174.6 131Q175.6 133.6 177.5 134.4Q176.5 136.2 176 136.4Q175.8 139.2 177.9 141.9Q175.4 141.9 174.4 141.8Q173.6 144.6 174.4 147Q172.7 147.3 172 147"/><path d="M160 112C140 108 128 124 133 146"/><path d="M133 146L124 147Q120 148 122 145L128 142" stroke-width=".85"/><path d="M172 148L134 148"/><path d="M99 110C99.4 111.3 101 115 101.5 118C102 121 102.1 125.2 102 128C101.9 130.8 101.7 132.9 101 135C100.3 137.1 98.5 139.6 98 140.5C95.5 141.5 92.5 143 92.5 145.5Q92.5 148 96 148L108.5 148Q112 148 112 145C111.9 144.2 111.3 142.2 111.5 140C111.7 137.8 112.6 134.7 113 132C113.4 129.3 113.8 127 114 124C114.2 121 114 116.7 114.5 114C115 111.3 116.6 109 117 108"/><path d="M99.5 148Q99.8 145.6 101.5 144.6" stroke-width=".85"/><path d="M106 87Q114 98 120 107" stroke-width=".85" opacity=".5"/><path d="M62 85Q63.5 87.7 63.5 90.7Q65.1 90.3 65.7 89.7Q67.5 92.1 67.4 94.3Q69.3 94.5 69.8 94.1Q71.8 96.3 72.1 99.9Q73.9 98.4 74.6 97.7Q77.1 99.4 78 102Q79.6 101 80 100.3Q82.5 102 84 105.3Q85 103.7 85.5 102.7Q87.9 104.7 89.3 108Q90.3 106.5 90.8 105.6Q93.1 107.6 93.9 110.1Q95.5 109.4 95.9 108.8Q98 111 99.3 115.5Q100.2 113.1 101 112"/></g><g data-pose="lie"><path d="M110 100Q112.8 101.3 115.1 100.9Q115.5 102.7 115.1 103.3Q117.9 104.5 119.6 104.2Q120.7 105.8 120.4 106.2Q123.5 106.8 126.1 105.9Q126.5 107.5 126.1 108.2Q129.2 108.8 131 107.9Q132.1 109.4 132 110"/><path d="M132 110C140 110.5 163.7 112.5 180 113C196.3 113.5 218 112.8 230 113C242 113.2 246.2 112.7 252 114C257.8 115.3 262.8 119.8 265 121"/><path d="M279 134Q280.7 135.8 283.5 136.9Q282.3 137.7 281.5 138.1Q281.7 140.2 283.6 141.1Q281.8 142.4 281.3 142.7Q280.7 145.1 281.7 148.4Q279.9 147.4 279 147"/><path d="M282 148L136 148"/><path d="M226 147C222 132 234 122 250 126C260 130 264 142 258 147"/><path d="M226 147L210 147Q204 147 207 143L216 141" stroke-width=".85"/><path d="M136 148C128 140 112 134 92 135L76 136Q68 137 68 142Q68 147 76 147L136 148"/><path d="M76 142L80 142M80 147L80 143" stroke-width=".85"/><path d="M62 130Q64.4 131.1 65.9 133.3Q66.9 132.1 67.1 131.4Q69.6 132.3 70.6 133.9Q72.1 133.2 72.3 132.6Q74.7 133.6 76.7 136.3Q77.2 134.5 77.4 133.6Q80 134.4 81.7 136.4Q82.6 135.1 82.7 134.3Q85.3 135.2 87.6 138Q87.8 136 88 135"/></g><g class="by-head"><path d="M8.5 50.5Q9 45.5 15 45.5Q20.5 46 20.5 51Q20 55.5 14 56Q8.5 55.5 8.5 50.5Z" fill="currentColor" stroke="none"/><path d="M19 46.5C21.5 46 28.8 44.4 34 43.5C39.2 42.6 45.5 41.9 50 41C54.5 40.1 58.3 39.2 61 38C63.7 36.8 64.2 35.8 66 34C67.8 32.2 71 28.2 72 27"/><g class="by-ear"><path d="M72 27L84 4Q86 1 88 4L100 29"/><path d="M79 24L86 9L93 26" stroke-width=".85"/></g><path d="M100 29C100.8 29.8 103.3 32.2 105 34C106.7 35.8 109.2 39 110 40"/><g class="by-eye"><clipPath id="byron-eye"><circle cx="66.5" cy="43.5" r="3.8499999999999996"/></clipPath><g clip-path="url(#byron-eye)"><g class="by-iris"><circle cx="66.5" cy="43.5" r="3.55" fill="currentColor" stroke="none"/><circle cx="67.7" cy="42.2" r="1.1" style="fill:var(--bg)" stroke="none"/></g><rect class="by-lid" x="62.2" y="38.2" width="8.6" height="3.6" style="fill:var(--bg)" stroke="none"/></g><circle cx="66.5" cy="43.5" r="4.3" stroke-width=".8"/><path class="by-lidline" d="M63.1 41.95Q66.5 41.35 69.9 41.95" stroke-width=".9"/></g><path d="M62 44Q66.5 47 71 44" class="by-blink"/><path d="M97 36Q97.4 38.9 99 41.1Q97.8 41.9 97 41.8Q96.9 44.7 98.1 46.1Q96.7 47.6 96.2 47.5Q95.2 50.2 96.4 53Q94.2 52.9 93.4 52.6Q91.7 55 91.9 57.2Q89.9 57.3 89.4 56.9Q87.3 58.8 86.9 61.6Q85.1 60.7 84.6 60.1Q82.2 61.8 81.3 64.3Q79.7 63.3 79.4 62.6Q76.8 64.1 76.1 65.8Q74.3 65.5 74 65" stroke-width=".85"/><path d="M10.5 55Q10 61.5 16.5 63"/><path d="M16.5 63C17.1 63.6 17.8 65.6 20 66.5C22.2 67.4 26 68 30 68.5C34 69 39.7 69.3 44 69.5C48.3 69.7 53 69.2 56 69.5C59 69.8 61 70.8 62 71"/><path d="M16.5 63Q29 64.5 41 62.5" stroke-width=".85"/><path d="M24 65Q25 73 30 74Q35 74 34 66" class="by-tongue" stroke-width=".85"/></g><g class="by-tail"><path d="M90.0 74.0Q92.6 70.5 94.7 70.0Q95.0 67.0 94.5 66.6Q96.5 62.7 98.0 62.1Q98.5 58.7 98.1 58.5Q99.6 54.5 101.9 53.2Q101.1 50.4 100.4 50.2Q101.2 45.9 102.8 44.7Q102.0 41.6 101.4 41.5Q101.5 36.9 103.2 35.1Q101.6 32.3 100.8 32.3Q100.1 28.0 101.4 25.9Q99.2 23.8 98.5 23.9Q96.6 20.0 97.2 18.3Q94.6 16.1 94.1 16.3Q91.3 13.0 91.5 9.9Q88.4 9.8 87.7 10.3Q84.0 8.1 83.4 5.7Q80.2 6.0 79.8 6.5Q75.6 5.3 73.9 2.6Q71.3 4.2 71.0 5.0Q66.6 4.6 64.3 2.3Q62.2 4.2 62.1 5.1Q57.8 5.3 55.9 3.8Q53.5 5.6 53.6 6.3Q49.2 6.7 45.5 4.6Q44.8 7.4 45.1 8.6Q40.8 9.9 37.7 8.7Q36.6 11.4 36.9 12.3Q33.0 14.2 28.7 13.3Q29.1 16.3 29.7 17.5Q26.3 20.3 21.8 20.3Q23.0 23.2 23.8 24.2Q21.5 27.9 18.3 28.7Q19.3 31.6 20.1 32.2Q18.4 36.2 13.5 39.3Q17.0 40.4 18.6 40.8Q16.4 44.7 12.2 46.7Q14.4 48.7 15.6 49.2Q14.3 53.3 9.2 56.7Q13.3 57.5 15.0 57.9M76.0 62.0C90.0 45.0 85.0 20.0 66.0 19.0C48.0 18.0 34.0 30.0 33.0 41.0C33.0 47.0 32.0 52.0 31.0 57.0M15.0 58.0Q16.8 58.9 16.5 61.0Q18.7 59.7 19.0 58.8Q21.0 59.3 21.0 60.7Q23.0 59.6 23.1 59.0Q25.1 59.3 25.5 61.7Q27.1 59.5 27.1 58.4Q29.1 58.2 29.7 59.8Q31.1 57.8 30.9 57.0"/><path d="M23 44Q20 50 21 56M27 45Q26 51 27 56" stroke-width=".9"/></g></g>';
+const LEGS = [[111,100],[139,104],[248,104],[221,102]];   // pivots: near front, far front, near hind, far hind
+// each body drawing: where the head goes, the tail box [x, y, turn, scale], and the mouth point the C60 sits on
+const POSE = {
+  stand: { head: '', tail: [180, 0, 0, 1], mouth: [21, 64] },
+  pickup: { head: 'rotate(-58 110 45)', ear: 'rotate(34 86 28)', tail: [180, 0, 0, 1], mouth: [79.0, 130.5] },
+  sit: { head: 'translate(0 15)', tail: [82, 55.5, 38, 0.72], mouth: [21, 79] },
+  lie1: { head: 'translate(0 48)', tail: [189, 60, 0, 1], mouth: [21, 112] },
+  lie: { head: 'translate(0 60)', tail: [189, 60, 0, 1], mouth: [21, 124] }
 };
-const DOG_W = DOG.stand.t.indexOf('\n');
+// frames: pose, legs (degrees each leg swings, + reaches forward), y (a bob), ta (tail turn), pant, blink
+const DOG = {
+  stand: {},
+  run1: { legs: [22, 14, -20, -12], y: -2, ta: -3 },
+  run2: { legs: [-16, -8, 20, 12], ta: 2 },
+  run3: { legs: [6, -4, -6, 4], y: -1, ta: -1 },
+  trot1: { legs: [14, -9, -12, 9], ta: -2 },
+  trot2: { legs: [-9, 14, 9, -12], ta: 2 },
+  pickup: { pose: 'pickup' },
+  sit1: { pose: 'sit' }, sit: { pose: 'sit' }, sitwag: { pose: 'sit', ta: 8 }, sitpant: { pose: 'sit', pant: true }, sitblink: { pose: 'sit', blink: true },
+  lie1: { pose: 'lie1' }, lie: { pose: 'lie' }, lieblink: { pose: 'lie', blink: true }
+};
 let busy = false, justDragged = false;
 const tween = (dur, step) => new Promise(res => {
   const t0 = performance.now();
@@ -1957,46 +1977,54 @@ async function fetchGame(start) {
   const dog = document.createElement('div');
   dog.className = 'byron';
   dog.setAttribute('aria-hidden', 'true');
-  const art = document.createElement('pre');
-  art.className = 'byron-art';
+  const art = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  art.setAttribute('class', 'byron-art');
+  art.setAttribute('viewBox', '0 0 306 150');
+  art.innerHTML = BYRON;
+  const legEls = art.querySelectorAll('.by-leg'), headEl = art.querySelector('.by-head'), tailEl = art.querySelector('.by-tail'), bodyEl = art.querySelector('.by-body'), earEl = art.querySelector('.by-ear');
   const mouth = document.createElement('span');
   mouth.className = 'byron-mouth';
   mouth.innerHTML = BALL;
   mouth.hidden = true;
   dog.append(art, mouth);
   yard.append(dog);
-  // x is where his legs stand (box left for an unshifted frame); a frame with x columns of shift moves the box so the legs stay put
-  let x = 0, cur = '', shift = 0, chW = 9, seq = 0;
+  // x is the left edge of his box; k is the drawing's scale (1 at the 15px size)
+  let x = 0, cur = '', k = 1, seq = 0;
   const right = () => dog.classList.contains('right');
-  const put = () => { dog.style.left = (x + (right() ? 1 : -1) * shift * chW) + 'px'; };
+  const put = () => { dog.style.left = x + 'px'; };
   const face = d => { if (d) { dog.classList.toggle('right', d > 0); put(); } };
   function show(name) {
-    const f = DOG[name];
+    const f = DOG[name], pn = f.pose || 'stand', p = POSE[pn], legs = f.legs || [0, 0, 0, 0], y = f.y || 0;
     cur = name;
-    art.textContent = f.t;
-    mouth.style.setProperty('--r', f.m[0]);
-    mouth.style.setProperty('--c', f.m[1]);
-    shift = f.x || 0;
+    art.dataset.pose = pn;
+    art.classList.toggle('blink', !!f.blink);
+    art.classList.toggle('pant', !!f.pant);
+    legEls.forEach((g, i) => g.setAttribute('transform', `rotate(${legs[i]} ${LEGS[i][0]} ${LEGS[i][1]})`));
+    bodyEl.setAttribute('transform', `translate(0 ${y})`);
+    headEl.setAttribute('transform', p.head);
+    earEl.setAttribute('transform', p.ear || '');
+    const [tx, ty, ta, ts] = p.tail;
+    tailEl.setAttribute('transform', `translate(${tx} ${ty}) rotate(${ta + (f.ta || 0)} 90 74) translate(90 74) scale(${ts}) translate(-90 -74)`);
+    mouth.style.setProperty('--mx', p.mouth[0]);
+    mouth.style.setProperty('--my', p.mouth[1] + y);
     put();
   }
   // frame sequences: each play() cancels the one before it; with reduced motion only the last frame shows
   async function play(names, ms, loop = false) {
     const id = ++seq;
+    dog.classList.remove('stare');
     if (reduceMotion) { show(names[names.length - 1]); return; }
     do {
       for (const n of names) { if (id !== seq) return; show(n); await wait(ms); }
     } while (loop && id === seq);
   }
-  const hush = () => { seq++; };
+  const hush = () => { seq++; dog.classList.remove('stare'); };
   show('run2');
   const dogW = dog.getBoundingClientRect().width || 330;
-  chW = art.getBoundingClientRect().width / DOG_W || 9;
+  k = art.getBoundingClientRect().width / 306 || 1;
   // box left that puts a frame's mouth at screen x
-  const mouthOff = name => 12 + (DOG[name].m[1] + 0.5) * chW;
-  const boxFor = (name, mx, r) => {
-    const s = (DOG[name].x || 0) * chW;
-    return r ? mx - s - dogW + mouthOff(name) : mx + s - mouthOff(name);
-  };
+  const mouthOff = name => 12 + POSE[DOG[name].pose || 'stand'].mouth[0] * k;
+  const boxFor = (name, mx, r) => r ? mx - dogW + mouthOff(name) : mx - mouthOff(name);
   const GALLOP = ['run1', 'run2', 'run3', 'run2'], TROT = ['trot1', 'stand', 'trot2', 'stand'];
   // gallop most of the way, then trot and ease to a stop
   async function run(to, brake = true) {
@@ -2049,10 +2077,12 @@ async function fetchGame(start) {
         for (let i = 0; i < 3; i++) { await step('sitwag', 150); await step('sit', 150); }
         await step('sitpant', 260); await step('sit', 260); await step('sitpant', 260); await step('sit', 700);
         await step('sitblink', 140);
+        // now and then, the side stare
+        if (round === 1) { await step('sit', 500); dog.classList.add('stare'); await step('sit', 1500); dog.classList.remove('stare'); await step('sit', 400); }
       }
       await step('sit', 300); await step('lie1', 240);
       for (;;) { await step('lie', 2200); await step('lieblink', 140); await step('lie', 1600); await step('lieblink', 140); }
-    } catch { /* cancelled */ }
+    } catch { dog.classList.remove('stare'); /* cancelled */ }
   }
   // back up to sitting before the next thing
   async function rise() {
@@ -2066,6 +2096,8 @@ async function fetchGame(start) {
   const pet = Object.assign(document.createElement('button'), { type: 'button', className: 'pet-btn go', innerHTML: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 14s-5.5-3.3-5.5-7A3 3 0 0 1 8 5a3 3 0 0 1 5.5 2c0 3.7-5.5 7-5.5 7z"/></svg>Pet' });
   const shoo = Object.assign(document.createElement('button'), { type: 'button', className: 'pet-btn', innerHTML: 'Send off<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M3 8h9M9 4.5 12.5 8 9 11.5"/></svg>' });
   pet.setAttribute('aria-label', 'Pet Byron'); shoo.setAttribute('aria-label', 'Send Byron off');
+  // he wants a pet first: Send off stays greyed out until he has had one
+  shoo.disabled = true; shoo.title = 'Pet him first';
   bar.append(pet, shoo);
   yard.append(bar);
   bar.style.left = Math.max(16, Math.min(innerWidth - bar.offsetWidth - 16, homeX + dogW / 2 - bar.offsetWidth / 2)) + 'px';
@@ -2112,8 +2144,11 @@ async function fetchGame(start) {
     woof.remove();
     leave();
   }, { once: true });
+  // petting: hearts and a wag, then he settles back into waiting, happy; after the first pet he can be sent off
+  let petting = false;
   pet.addEventListener('click', async () => {
-    bar.remove();
+    if (petting || !bar.isConnected) return;
+    petting = true;
     await rise();
     const d = dog.getBoundingClientRect();
     for (let i = 0; i < 6; i++) {
@@ -2129,12 +2164,11 @@ async function fetchGame(start) {
     }
     play(['sitwag', 'sit'], 160, true);
     await wait(reduceMotion ? 200 : 1100);
-    hush();
-    show('sit');
-    // a happy moment on the spot, then he heads off (the photo gallery comes later)
-    await wait(reduceMotion ? 300 : 900);
-    leave();
-  }, { once: true });
+    if (!bar.isConnected) return;
+    shoo.disabled = false; shoo.removeAttribute('title');
+    petting = false;
+    idle();
+  });
 }
 
 // slingshot: press the ball and pull back; the dotted arc shows direction and strength, release to launch
