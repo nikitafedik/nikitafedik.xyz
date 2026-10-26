@@ -55,7 +55,7 @@ const N = coarse ? 560 : 820;
 // colour slots
 // slots 10-13 are a height ramp from the accent toward slate, built from the current accent
 const SLOT = { G: 0, L: 1, A: 2, CU: 3, CU2: 4, OK: 5, CLAY: 6, O: 7, N: 8, H: 9, C: 0, R1: 10, R2: 11, R3: 12, R4: 13, BOND: 14, INK: 15, PT: 16, PT2: 17, AU: 18, AU2: 19, Na: 20, B: 21, Al: 22, Sn: 23 };
-const PALETTE = ['#5B6578', '#C9CFDA', null, '#B8703F', '#8E5530', '#3FA96B', '#BCC0C7', '#D9553F', '#3D7BFF', '#F2F4F8', 0.35, 0.62, 0.85, 1, '#9AA3B2', 'ink', '#B4BAC4', '#858C98', '#E1B54A', '#B08A2E', '#8A5CE0', '#E8877F', '#C4A98F', '#5E8F8F'];   // the last is a bond grey that reads on light and dark
+const PALETTE = ['#5B6578', '#C9CFDA', null, '#B8703F', '#8E5530', '#3FA96B', '#BCC0C7', '#D9553F', '#3D7BFF', '#F2F4F8', 0.35, 0.62, 0.85, 1, '#9AA3B2', 'ink', '#B4BAC4', '#858C98', '#E1B54A', '#B08A2E', '#8A5CE0', ['#E8877F', '#D0645A'], ['#C4A98F', '#9C7F64'], '#5E8F8F'];   // the last is a bond grey that reads on light and dark
 
 const LensShader = {
   uniforms: { tDiffuse: { value: null }, uAmount: { value: 0.007 }, uBlur: { value: 0 }, uTexel: { value: new THREE.Vector2(1 / 800, 1 / 600) }, toneMappingExposure: { value: 0.9 }, uGrain: { value: 0 }, uSeed: { value: 0 }, uGrade: { value: 0 } },
@@ -1583,9 +1583,13 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
     delay[i] = rand(i, 4) * 0.3;
   }
   const P = new Float32Array(forms.dust.pos), S = new Float32Array(forms.dust.size), C = new Float32Array(N * 3);
-  const slate = new THREE.Color('#7D8698');
+  // slate is the cool grey the height ramp and the token edges fade toward; on the light page it is deeper, so the
+  // energy surface and its ramp keep their contrast against the pale background
+  const slate = new THREE.Color('#7D8698'), isDark = () => document.documentElement.dataset.theme === 'dark';
+  const setSlate = () => slate.set(isDark() ? '#7D8698' : '#4E5869');
+  setSlate();
   const ink = () => (getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#131722');
-  const palette = () => PALETTE.map(h => typeof h === 'number' ? new THREE.Color(getAccent()).lerp(slate, h) : h === 'ink' ? new THREE.Color(ink()).lerp(slate, 0.25) : new THREE.Color(h || getAccent()));
+  const palette = () => { setSlate(); return PALETTE.map(h => Array.isArray(h) ? new THREE.Color(h[isDark() ? 0 : 1]) : typeof h === 'number' ? new THREE.Color(getAccent()).lerp(slate, h) : h === 'ink' ? new THREE.Color(ink()).lerp(slate, 0.25) : new THREE.Color(h || getAccent())); };
   // the theme changes the ink colour of sketch lines, so rebuild the palette when it flips
   new MutationObserver(() => { pal = palette(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   let pal = palette(), lastAccent = getAccent();
@@ -1647,7 +1651,12 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
     const pts = new THREE.Points(geo, mat);
     pts.frustumCulled = false; pts.visible = false; pts.renderOrder = -1;
     holder.add(pts);
-    return { pts, mat, rgb, geo, col, paint(pal) { col.forEach((c, i) => pal[c].toArray(rgb, i * 3)); geo.attributes.color.needsUpdate = true; } };
+    const hGrey = new THREE.Color('#8E96A3'), tc = new THREE.Color();
+    return { pts, mat, rgb, geo, col, paint(pal) {
+      const light = !isDark();
+      col.forEach((c, i) => { tc.copy(light && (c === SLOT.H || c === SLOT.L) ? hGrey : pal[c]); if (light) tc.multiplyScalar(0.82); tc.toArray(rgb, i * 3); });
+      geo.attributes.color.needsUpdate = true;
+    } };
   })();
   function setGlows() {
     const t = 0.85 + 0.15 * Math.sin(performance.now() / 500);
@@ -1980,7 +1989,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
     paintEdges(weight);
     paintGlyphs(clamp(stop, 0, ORDER.length - 1));
     cellMat.opacity = 0.55 * smooth(0.4, 1, weight(forms.demo)); cellLines.visible = cellMat.opacity > 0.01;
-    haze.mat.uniforms.uAlpha.value = 0.5 * smooth(0.35, 1, weight(forms.aiMols)); haze.pts.visible = haze.mat.uniforms.uAlpha.value > 0.01;
+    haze.mat.uniforms.uAlpha.value = (isDark() ? 0.5 : 0.42) * smooth(0.35, 1, weight(forms.aiMols)); haze.pts.visible = haze.mat.uniforms.uAlpha.value > 0.01;
     if (haze.pts.visible) { if (haze.pal !== pal) { haze.paint(pal); haze.pal = pal; } haze.mat.uniforms.uScale.value = H * renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(15))); }
     paintBonds();
     motion = clamp(speed / Math.max(frameDt, 1e-3) / N / 4);
