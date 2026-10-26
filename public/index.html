@@ -167,6 +167,11 @@ html:not(.intro-ready) .reel-head, html:not(.intro-ready) .reel-list { visibilit
 .reel-stage { position: relative; z-index: 1; height: min(92vh, 820px); display: flex; flex-direction: column; justify-content: flex-end; pointer-events: none; }
 .reel-stage > * { pointer-events: auto; }
 .reel-canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; z-index: 0; pointer-events: none; }
+/* the intro's out-of-focus atoms as a small prerendered picture: on screen from the first paint, it hands over to the
+   live 3D as the canvas fades in. Dimmed like the out-of-focus canvas (1 - 0.62 light, 1 - 0.84 dark) */
+.reel-poster { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; z-index: 0; pointer-events: none; object-fit: cover; opacity: .38; }
+:root[data-theme="dark"] .reel-poster { opacity: .16; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .reel-poster { opacity: .16; } }
 /* the Blender render of the illustration shot, laid exactly over the camera's view once the clay frame has "rendered";
    when the scroll moves on it breaks into soft, drifting pixels drawn on its canvas */
 /* the photo is clipped on the left where the 3D canvas starts, so it never reaches the sidebar; on the right it runs to
@@ -540,6 +545,27 @@ html.vt-theme .side { view-transition-name: none; }
 .me span em, .meta, footer, .topbar { font-size: .88em; letter-spacing: -0.01em; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
 </style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.min.js",
+  "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.js": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.min.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/",
+  "animejs": "https://cdn.jsdelivr.net/npm/animejs@4.5.0/dist/bundles/anime.esm.min.js"
+} }
+</script>
+<!-- the 3D engine and its three.js modules download while the page loads, behind what the first paint needs (the
+     import map comes first: a module preload before it would make the browser ignore the map); the reel itself
+     starts once the page is idle -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.min.js" fetchpriority="low">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.min.js" fetchpriority="low">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/postprocessing/EffectComposer.js" fetchpriority="low">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/postprocessing/RenderPass.js" fetchpriority="low">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/postprocessing/ShaderPass.js" fetchpriority="low">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/postprocessing/Pass.js" fetchpriority="low">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/postprocessing/MaskPass.js" fetchpriority="low">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/shaders/CopyShader.js" fetchpriority="low">
+<link rel="modulepreload" href="reel3d.js" fetchpriority="low">
 </head>
 <body>
 <div class="shell">
@@ -602,7 +628,34 @@ if (menuBtn && sideMenu) {
 
       <section class="reel" id="skills" aria-labelledby="reelTitle">
         <div class="reel-pin">
+          <img class="reel-poster" id="reelPoster" alt="" aria-hidden="true" decoding="async" hidden>
           <canvas class="reel-canvas" id="reelCanvas" aria-hidden="true"></canvas>
+          <script>
+          // the prerendered intro picture closest to this canvas's shape, for the theme and pointer (phones draw fewer
+          // atoms): img/intro/{d|m}<width/height x100>-{dark|light}.webp, made by perf/capture-intro.cjs and
+          // perf/bake-intro-posters.py; bake them again whenever the intro scene changes
+          (() => {
+            const p = document.getElementById('reelPoster'), mm = q => window.matchMedia(q).matches;
+            if (mm('(prefers-reduced-motion: reduce)')) return;
+            const pick = () => {
+              if (!p.isConnected) return;
+              // the canvas's shape from the window size and the layout rules (sidebar and padding from 900 px, a 56 px
+              // bar below), so picking never forces a layout while the page is still loading
+              const vw = innerWidth, vh = innerHeight, wide = vw >= 900;
+              const cw = Math.min(1000, wide ? vw - 355 : vw - (vw <= 560 ? 32 : 80)), ch = wide ? vh : vh - 56;
+              if (cw <= 0 || ch <= 0) return;
+              const coarse = mm('(pointer: coarse)'), t = document.documentElement.dataset.theme, dark = t ? t === 'dark' : mm('(prefers-color-scheme: dark)');
+              const shapes = coarse ? [0.40, 0.46, 0.53, 0.62] : [0.65, 0.75, 0.85, 0.95, 1.05, 1.15, 1.30, 1.50, 1.75], a = cw / ch;
+              const s = shapes.reduce((b, x) => Math.abs(Math.log(x / a)) < Math.abs(Math.log(b / a)) ? x : b);
+              const src = `img/intro/${coarse ? 'm' : 'd'}${s.toFixed(2).replace('.', '')}-${dark ? 'dark' : 'light'}.webp`;
+              if (p.getAttribute('src') !== src) p.src = src;
+              p.hidden = false;
+            };
+            pick();
+            new MutationObserver(pick).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+            addEventListener('resize', pick);
+          })();
+          </script>
           <div class="shot-clip" aria-hidden="true"><div class="shot" id="shot"><img alt="" decoding="async"><canvas></canvas></div></div>
           <div class="reel-labels" id="reelLabels" aria-hidden="true"></div>
           <div class="finder" id="finder" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b><b></b><b></b><b></b><s class="sh sh-top"></s><s class="sh sh-bot"></s><u class="flash"></u></div>
@@ -641,14 +694,6 @@ if (menuBtn && sideMenu) {
   </div>
 </dialog>
 
-<script type="importmap">
-{ "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.min.js",
-  "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.js": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.min.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/",
-  "animejs": "https://cdn.jsdelivr.net/npm/animejs@4.5.0/dist/bundles/anime.esm.min.js"
-} }
-</script>
 <script type="module">
 // anime.js only adds small flourishes, so it loads after the page is laid out
 let animate = () => {}, stagger = () => 0;
@@ -1495,6 +1540,7 @@ function paintPhoto() {
   if (peel.cells) peelTo(p);
   reel3d.photoDissolve(p);
 }
+let reelPoster = document.getElementById('reelPoster');
 function paintFrame(dt) {
   if (!reel3d) return;
   if (!frameNow) frameNow = { ...frameWant };
@@ -1514,6 +1560,8 @@ function paintFrame(dt) {
   // the works grid sits where the particles draw the tile frames and takes over from them
   const opG = op;
   if (opG !== paintFrame.op) { reelCanvas.style.opacity = opG; paintFrame.op = opG; }
+  // the prerendered intro picture hands over to the canvas while it fades in, then leaves the page
+  if (reelPoster) { if (fadeIn >= 1) { reelPoster.remove(); reelPoster = null; } else reelPoster.style.opacity = ((1 - dim) * (1 - fadeIn)).toFixed(3); }
   reel3d.setFit(mix('w'), mix('h'));
 }
 addEventListener('resize', () => { paintLabels.bw = 0; measureFrame(); if (demoApp.fit) demoApp.fit(); });
