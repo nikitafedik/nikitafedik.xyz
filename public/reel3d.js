@@ -60,14 +60,14 @@ const N = coarse ? 560 : 820;
 // colour slots
 // slots 10-13 are a height ramp from the accent toward slate, built from the current accent
 const SLOT = { G: 0, L: 1, A: 2, CU: 3, CU2: 4, OK: 5, CLAY: 6, O: 7, N: 8, H: 9, C: 0, R1: 10, R2: 11, R3: 12, R4: 13, BOND: 14, INK: 15, PT: 16, PT2: 17, AU: 18, AU2: 19, Na: 20, B: 21, Al: 22, Sn: 23 };
-const PALETTE = ['#5B6578', '#C9CFDA', null, '#B8703F', '#8E5530', '#3FA96B', '#BCC0C7', '#D9553F', '#3D7BFF', '#F2F4F8', 0.35, 0.62, 0.85, 1, '#9AA3B2', 'ink', '#B4BAC4', '#858C98', '#E1B54A', '#B08A2E', '#8A5CE0', ['#E8877F', '#D0645A'], ['#C4A98F', '#9C7F64'], '#5E8F8F'];   // the last is a bond grey that reads on light and dark
+const PALETTE = ['#5B6578', '#C9CFDA', null, '#B8703F', '#8E5530', '#3FA96B', '#BCC0C7', '#D9553F', '#3D7BFF', ['#F2F4F8', '#C3C9D3'], 0.35, 0.62, 0.85, 1, ['#9AA3B2', '#737C8E'], 'ink', '#B4BAC4', '#858C98', '#E1B54A', '#B08A2E', '#8A5CE0', ['#E8877F', '#D0645A'], ['#C4A98F', '#9C7F64'], '#5E8F8F'];   // a pair is [dark page, light page]: hydrogen and the bond grey (also the cell box) are deeper on the light page
 
 const LensShader = {
-  uniforms: { tDiffuse: { value: null }, uAmount: { value: 0.007 }, uBlur: { value: 0 }, uTexel: { value: new THREE.Vector2(1 / 800, 1 / 600) }, toneMappingExposure: { value: 0.9 }, uGrain: { value: 0 }, uSeed: { value: 0 }, uGrade: { value: 0 } },
+  uniforms: { tDiffuse: { value: null }, uAmount: { value: 0.007 }, uBlur: { value: 0 }, uTexel: { value: new THREE.Vector2(1 / 800, 1 / 600) }, toneMappingExposure: { value: 0.9 }, uGrain: { value: 0 }, uSeed: { value: 0 }, uGrade: { value: 0 }, uStraight: { value: 1 } },
   defines: { ACES_FILMIC_TONE_MAPPING: '', SRGB_TRANSFER: '' },
   vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
   fragmentShader: `
-    uniform sampler2D tDiffuse; uniform float uAmount; uniform float uBlur; uniform vec2 uTexel; uniform float uGrain; uniform float uSeed; uniform float uGrade; varying vec2 vUv;
+    uniform sampler2D tDiffuse; uniform float uAmount; uniform float uBlur; uniform vec2 uTexel; uniform float uGrain; uniform float uSeed; uniform float uGrade; uniform float uStraight; varying vec2 vUv;
     // three.js prepends the tone mapping and colour space functions to every ShaderMaterial
     vec4 tap(vec2 uv, float r) {
       vec4 acc = texture2D(tDiffuse, uv);
@@ -93,9 +93,17 @@ const LensShader = {
       // render noise: per-pixel grain that clears as a progressive render converges
       float n = fract(sin(dot(vUv * vec2(1733.0, 917.0) + uSeed, vec2(12.9898, 78.233))) * 43758.5453);
       c.rgb *= mix(1.0, 0.35 + 1.3 * n, uGrain);
-      gl_FragColor = c * (1.0 - smoothstep(0.84, 1.0, edge));
-      gl_FragColor.rgb = ACESFilmicToneMapping(gl_FragColor.rgb);
-      gl_FragColor = sRGBTransferOETF(gl_FragColor);
+      c *= 1.0 - smoothstep(0.84, 1.0, edge);
+      // the render is premultiplied. On the light page the colour itself is tone mapped and encoded, then scaled back by
+      // the coverage: encoding the premultiplied value lifts every part-covered pixel (edges, out-of-focus atoms, thin
+      // lines) above its alpha, which adds light, a white rim over a pale page. The dark page keeps that lift as a glow
+      if (uStraight > 0.5) {
+        float a = c.a; vec3 s = a > 0.0001 ? c.rgb / a : vec3(0.0);
+        gl_FragColor = vec4(sRGBTransferOETF(vec4(ACESFilmicToneMapping(s), 1.0)).rgb * a, a);
+      } else {
+        gl_FragColor = vec4(ACESFilmicToneMapping(c.rgb), c.a);
+        gl_FragColor = sRGBTransferOETF(gl_FragColor);
+      }
     }`
 };
 
@@ -1704,6 +1712,8 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
   }
   setCellBoxes(forms.demo.meta.cells);
   cellGeo.setAttribute('position', new THREE.BufferAttribute(cellPos, 3));
+  // on the light page the cell box is a deep slate, so its one-pixel lines hold against the pale background
+  const cellDark = new THREE.Color('#7D8698'), cellLight = new THREE.Color('#3A4252');
   const cellMat = new THREE.LineBasicMaterial({ color: '#7D8698', transparent: true, opacity: 0, depthWrite: false, toneMapped: false });
   const cellLines = new THREE.LineSegments(cellGeo, cellMat);
   cellLines.frustumCulled = false;
@@ -2010,7 +2020,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
     }
     paintEdges(weight);
     paintGlyphs(clamp(stop, 0, ORDER.length - 1));
-    cellMat.opacity = 0.55 * smooth(0.4, 1, weight(forms.demo)); cellLines.visible = cellMat.opacity > 0.01;
+    cellMat.color.copy(isDark() ? cellDark : cellLight); cellMat.opacity = (isDark() ? 0.55 : 0.85) * smooth(0.4, 1, weight(forms.demo)); cellLines.visible = cellMat.opacity > 0.01;
     haze.mat.uniforms.uAlpha.value = (isDark() ? 0.5 : 0.42) * smooth(0.35, 1, weight(forms.aiMols)); haze.pts.visible = haze.mat.uniforms.uAlpha.value > 0.01;
     if (haze.pts.visible) { if (haze.pal !== pal) { haze.paint(pal); haze.pal = pal; } haze.mat.uniforms.uScale.value = H * renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(15))); }
     paintBonds();
@@ -2034,11 +2044,13 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
     holder.rotation.y = swayY * (1 - wDemo) + (forms.illModel.meta.orbit || 0) * weight(forms.illModel) + orbY * wDemo;
     holder.rotation.x = orbX * wDemo;
     camera.setViewOffset(W, H, -offX * W, -offY * H, W, H);
-    // the colour fringe shows only while things move; at rest edges stay clean
+    // the colour fringe shows only while things move; at rest edges stay clean (the dark page keeps a trace of it, which
+    // reads as a glow there; on the light page any fringe at rest outlines every atom in red and blue)
     // the illustration's preview is raw: no colour fringe or motion blur there
     const lensK = 1 - weight(forms.illModel);
-    lens.uniforms.uAmount.value = reduce ? 0 : (0.0015 + motion * 0.014) * lensK;
+    lens.uniforms.uAmount.value = reduce ? 0 : ((isDark() ? 0.0015 : 0) + motion * 0.014) * lensK;
     lens.uniforms.uSeed.value = (now % 1000) * 0.013;
+    lens.uniforms.uStraight.value = isDark() ? 0 : 1;
     // half resolution from 12 px of defocus, back to full below 9 px (thin lines alias at half resolution under a
     // lighter blur); the gap keeps small scrolls near the edge from flipping it
     lowRes = defocus > (lowRes ? 9 : 12);
