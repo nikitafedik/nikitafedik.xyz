@@ -973,8 +973,11 @@ const ttShade = g => g._shade ||= (() => {
   return { hi, rim };
 })();
 const ttMolR = () => ttMolMax ||= Math.max(...Object.values(TT_MOLS).flatMap(m => m.atoms.map(([e, x, y, z]) => Math.hypot(x, y - (m.cy || 0), z) + TT_R[e])));
+// each turntable's size, recorded when it changes: reading clientWidth in the drawing loop made the browser lay out the
+// page on the spot in every frame
+const ttSize = new ResizeObserver(es => es.forEach(e => { e.target._w = e.contentRect.width; e.target._h = e.contentRect.height; }));
 function drawTT(cv, model, spin, tip, scale, dark) {
-  const dpr = Math.min(2, window.devicePixelRatio || 1), W = cv.clientWidth || 84, H = cv.clientHeight || 84;
+  const dpr = Math.min(2, window.devicePixelRatio || 1), W = cv._w || 84, H = cv._h || 84;
   if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
   const g = cv.getContext('2d');
   g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
@@ -1084,6 +1087,7 @@ function buildDemo(box, act) {
       const tiles = [], grid = el('div', { className: 'pick' });
       const tile = (group, key, labelHTML, model, scale) => {
         const cv = el('canvas'), sub = el('span', { className: 'tt-sub' });
+        ttSize.observe(cv);
         const b = el('div', { className: 'tt ' + group, tabIndex: 0, role: 'img' }, cv, el('span', { className: 'tt-cap', innerHTML: labelHTML }), sub);
         const t = { b, cv, sub, group, key, model, scale, spin: 0.6 + tiles.length * 0.9, tip: 0, tipTo: 0, drag: null };
         t.refresh = () => {
@@ -1156,7 +1160,9 @@ function buildDemo(box, act) {
           if (!t.drag && !rm) t.spin += dt * 0.45;
           t.tip += (t.tipTo - t.tip) * Math.min(1, dt * 8);
           // a tile that has not moved since its last frame (reduced motion, once it settles) keeps that frame
-          const w = t.cv.clientWidth * (window.devicePixelRatio || 1);
+          // drawn once its size is known (the observer reports it after the first layout)
+          if (t.cv._w === undefined) return;
+          const w = t.cv._w * (window.devicePixelRatio || 1);
           if (t.spin === t.dS && t.tip === t.dT && dk === t.dK && w === t.dW) return;
           t.dS = t.spin; t.dT = t.tip; t.dK = dk; t.dW = w;
           drawTT(t.cv, t.model, t.spin, t.tip, t.scale, dk);
@@ -1763,6 +1769,22 @@ function showReel(r) {
   });
   shown = -2;   // rebuild the current detail so its controls bind to the live reel
   wakeReel();
+  whenIdle(() => calm().then(warmDemo));
+}
+// the first time the demo app is laid out costs a phone about 150 ms (text in new sizes, its grids, the turntables), and
+// it used to land as the visitor scrolled into the demo. At a pause after the 3D is ready, one copy is built out of
+// sight, laid out and drawn for a few frames, then removed; later builds of the real app are about ten times cheaper
+function warmDemo() {
+  if (document.getElementById('demoApp') || demoApp.running) return;
+  const keep = ['meter', 'fit', 'paintRow', 'tabs', 'nextBatch', 'show', 'rows'].map(k => [k, demoApp[k]]);
+  const box = el('div', { className: 'reel-controls', ariaHidden: 'true', inert: true });
+  box.style.cssText = `position: absolute; left: -10000px; top: 0; width: ${document.getElementById('reelControls').clientWidth || 360}px; visibility: hidden; pointer-events: none;`;
+  stageEl.append(box);
+  buildDemo(box, () => {});
+  box.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+  let frames = 0;
+  const done = () => { if (++frames < 10) { requestAnimationFrame(done); return; } box.remove(); keep.forEach(([k, v]) => { demoApp[k] = v; }); };
+  requestAnimationFrame(done);
 }
 document.readyState === 'complete' ? startReel() : window.addEventListener('load', startReel, { once: true });
 

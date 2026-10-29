@@ -56,16 +56,20 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
       const { profile } = await cdp.send('Profiler.stop'); fs.writeFileSync(process.env.PROFILE, JSON.stringify(profile));
     })();
   }
-  // reading swipes: about 160 px each over 200 ms, then a short pause
+  // reading swipes: about 160 px each over 200 ms (SWIPE_PX), then a short pause (PAUSE); TAIL: ms to keep recording
+  // after the last swipe
+  const step = +(process.env.SWIPE_PX || 160) / 10;
   for (let k = 0; k < +(process.env.SWIPES || 24); k++) {
-    let y = 600;
+    let y = Math.min(+H - 20, 100 + step * 10);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: +W / 2, y }] });
-    for (let i = 0; i < 10; i++) { y -= 16; await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: +W / 2, y }] }); await sleep(20); }
+    for (let i = 0; i < 10; i++) { y -= step; await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: +W / 2, y }] }); await sleep(20); }
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     await sleep(+(process.env.PAUSE || 350));
   }
-  await sleep(1500);
+  await sleep(+(process.env.TAIL || 1500));
   if (tracing) await tracing;
+  const end = await p.evaluate(() => ({ y: scrollY, max: document.documentElement.scrollHeight - innerHeight, canvas: document.getElementById('reelCanvas').style.opacity, poster: document.getElementById('reelPoster') ? 'shown' : 'gone', reel: !!window.__reel, lastTouch: (window.__rec.touch.slice(-1)[0] || [0])[0] }));
+  console.log('end state', JSON.stringify(end));
   const rec = await p.evaluate(() => {
     const r = window.__rec, res = performance.getEntriesByType('resource').filter(e => /reel3d|set-clay|room-env|three/.test(e.name));
     r.marks.res = res.map(e => [e.name.split('/').pop().split('?')[0], Math.round(e.responseEnd)]);

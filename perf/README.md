@@ -17,6 +17,7 @@ Measurement scripts for the home page's 3D, run against Windows Chrome over CDP 
 | `poster-check.cjs`, `handoff-video.cjs` | The poster's timing and the hand-off to the live 3D, frame by frame |
 | `postercmp-gpu.cjs`, `drift.cjs` | The poster against the first live frame; how the intro frame changes over its first seconds |
 | `firstscroll.cjs`, `firstscroll-sum.py` | A cold phone load with reading swipes from right after load: frame gaps while the finger is down, long frames with their scripts; `TRACE`, `PROFILE`, `BOOT_TRACE`, `BOOT_PROFILE` add a trace or CPU profile, `EXTRA_CSS` switches a part of the page off |
+| `demo-entry.cjs`, `demo-entry-sum.py` | A trace of scrolling into the demo on a phone (`SECOND=1`: the second entry, `ALLPROC=1`: the GPU process too) and what filled its longest tasks |
 | `trace-sum.py`, `profile-sum.py` | Main-thread time per event in a trace; self time per function in a CPU profile |
 | `scene-shots.cjs` | Still pictures of chosen scenes in both themes (local Chromium, `DPR`, `THEMES`), for checking colours and edges |
 
