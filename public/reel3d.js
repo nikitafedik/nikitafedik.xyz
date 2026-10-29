@@ -16,6 +16,9 @@ import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const coarse = window.matchMedia('(pointer: coarse)').matches;
+// the small canvases the scene paints its textures on are drawn on the CPU: a GPU canvas paints through the GPU process,
+// and its first paint (shaders for gradients, blur and text) held the page's frames for about 250 ms at start-up
+const CPU2D = { willReadFrequently: true };
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
 const rand = (i, k) => { const x = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return x - Math.floor(x); };
@@ -33,11 +36,12 @@ const RGBE_DECODE = `uniform sampler2D tSrc; uniform vec2 uSize;
     float E = floor(e.r * 255.0 + 0.5);
     gl_FragColor = E > 0.0 ? vec4(floor(m.rgb * 255.0 + 0.5) * exp2(E - 136.0), e.g > 0.5 ? 1.0 : 0.0) : vec4(0.0);
   }`;
-async function loadRoomEnv(renderer) {
+async function loadRoomEnv(renderer, calm) {
   // loaded as an image, not with fetch: some hosts allow images but block fetch
   const img = new Image();
   img.src = new URL('img/room-env.webp', document.baseURI).href;
   await img.decode();
+  await calm();
   const w = img.width / 2, h = img.height;
   const src = Object.assign(new THREE.Texture(img), { colorSpace: THREE.NoColorSpace, premultiplyAlpha: false, flipY: false, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, generateMipmaps: false, needsUpdate: true });
   const rt = new THREE.WebGLRenderTarget(w, h, { type: THREE.HalfFloatType, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: false, depthBuffer: false });
@@ -676,7 +680,9 @@ const SHAPES = {
 // the molecule table and parity plot (illGrid, illParity) are kept but out of the sequence for now
 export const ORDER = ['dust', 'aiMols', 'aiPes', 'illSketch', 'illModel', 'demo', 'learn'];
 
-export function initReel(canvas, readAccent) {
+// calm() resolves at a pause in the page's scrolling: every heavy start-up step (uploading the lighting, parsing the
+// clay set, compiling and warming the shaders) waits for one, so none of them lands under a moving finger
+export function initReel(canvas, readAccent, calm = () => Promise.resolve()) {
   // the accent comes from CSS once and again only when the root's style changes, so frames never force a style recalc
   let accentNow = readAccent();
   new MutationObserver(() => { accentNow = readAccent(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'class', 'data-theme'] });
@@ -691,7 +697,7 @@ export function initReel(canvas, readAccent) {
   renderer.toneMappingExposure = 0.9;
   const scene = new THREE.Scene();
   // filtering the room here is the fallback if the baked file cannot load; only then is the room's module fetched
-  const envReady = loadRoomEnv(renderer).then(t => { scene.environment = t; }, () => import('three/addons/environments/RoomEnvironment.js').then(({ RoomEnvironment }) => { scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture; }));
+  const envReady = loadRoomEnv(renderer, calm).then(t => { scene.environment = t; }, () => import('three/addons/environments/RoomEnvironment.js').then(({ RoomEnvironment }) => { scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture; }));
   const hemi = new THREE.HemisphereLight(0xffffff, 0x7a8396, 0.6); scene.add(hemi);
   const key = new THREE.DirectionalLight(0xffffff, 2.0); key.position.set(5, 10, 8); scene.add(key);
   const rim = new THREE.DirectionalLight(0xffe2cc, 0.6); rim.position.set(-8, 3, -6); scene.add(rim);
@@ -699,7 +705,7 @@ export function initReel(canvas, readAccent) {
   // reflections, so it costs little; the finished look comes with the rendered photo
   const MATCAP = (() => {
     const c = document.createElement('canvas'); c.width = c.height = 256;
-    const g = c.getContext('2d');
+    const g = c.getContext('2d', CPU2D);
     g.fillStyle = '#4a4d52'; g.fillRect(0, 0, 256, 256);
     const sph = g.createRadialGradient(112, 100, 20, 128, 128, 128);
     sph.addColorStop(0, '#e2e3e5'); sph.addColorStop(0.45, '#c8cbcf'); sph.addColorStop(0.8, '#a4a8ae'); sph.addColorStop(0.96, '#878b92'); sph.addColorStop(1, '#73777e');
@@ -871,7 +877,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
     // the sweep fades out toward its sides and top, so it melts into the page instead of ending in hard edges
     const fc = document.createElement('canvas');
     fc.width = 256; fc.height = 128;
-    const fg = fc.getContext('2d'), fd = fg.createImageData(256, 128);
+    const fg = fc.getContext('2d', CPU2D), fd = fg.createImageData(256, 128);
     for (let x = 0; x < 256; x++) for (let y = 0; y < 128; y++) {
       const u = x / 255 - 0.5, v = y / 127, a = Math.exp(-((u / 0.16) ** 2)) * Math.max(0, 1 - Math.max(0, (1 - v) - 0.4) / 0.6) * Math.min(1, (1 - v) / 0.42);   // canvas rows run top-down, so (1 - v) is the texture v: 0 at the front edge
       const k = (y * 256 + x) * 4; fd.data[k] = fd.data[k + 1] = fd.data[k + 2] = Math.round(255 * a); fd.data[k + 3] = 255;
@@ -899,7 +905,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
     }
     const sc = document.createElement('canvas');
     sc.width = sc.height = 128;
-    const sg = sc.getContext('2d'), grd = sg.createRadialGradient(64, 64, 4, 64, 64, 64);
+    const sg = sc.getContext('2d', CPU2D), grd = sg.createRadialGradient(64, 64, 4, 64, 64, 64);
     grd.addColorStop(0, 'rgba(0,0,0,0.85)'); grd.addColorStop(1, 'rgba(0,0,0,0)');
     sg.fillStyle = grd; sg.fillRect(0, 0, 128, 128);
     const shMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(sc), transparent: true, opacity: 0, depthWrite: false, toneMapped: false });
@@ -924,7 +930,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
       // a soft contact shadow under the saucer, so the cup sits on the floor
       {
         const c2 = document.createElement('canvas'); c2.width = c2.height = 128;
-        const g2 = c2.getContext('2d'), gr = g2.createRadialGradient(64, 64, 6, 64, 64, 64);
+        const g2 = c2.getContext('2d', CPU2D), gr = g2.createRadialGradient(64, 64, 6, 64, 64, 64);
         gr.addColorStop(0, 'rgba(0,0,0,0.75)'); gr.addColorStop(0.55, 'rgba(0,0,0,0.35)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
         g2.fillStyle = gr; g2.fillRect(0, 0, 128, 128);
         const shM = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c2), transparent: true, opacity: 0, depthWrite: false, toneMapped: false });
@@ -1059,7 +1065,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
     {
       const makeCover = dark => {
         const c = document.createElement('canvas'); c.width = 1024; c.height = 768;
-        const g = c.getContext('2d');
+        const g = c.getContext('2d', CPU2D);
         const bg = g.createRadialGradient(560, 330, 20, 512, 384, 560);
         if (dark) { bg.addColorStop(0, '#5e4a3a'); bg.addColorStop(0.4, '#352b24'); bg.addColorStop(0.75, '#1e1a18'); bg.addColorStop(1, '#141619'); }
         else { bg.addColorStop(0, '#fff6e8'); bg.addColorStop(0.4, '#f1e3cf'); bg.addColorStop(0.75, '#e6e0d8'); bg.addColorStop(1, '#eceff4'); }
@@ -1084,7 +1090,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
       const covers = {}, coverOf = dark => covers[dark ? 'dark' : 'light'] ||= makeCover(dark);
       // a soft ramp as alpha map, slid across so the backdrop is wiped in from left to right with the render
       const rc = document.createElement('canvas'); rc.width = 256; rc.height = 1;
-      const rg = rc.getContext('2d'), ramp = rg.createLinearGradient(0, 0, 256, 0);
+      const rg = rc.getContext('2d', CPU2D), ramp = rg.createLinearGradient(0, 0, 256, 0);
       ramp.addColorStop(0, '#fff'); ramp.addColorStop(0.44, '#fff'); ramp.addColorStop(0.56, '#000'); ramp.addColorStop(1, '#000');
       rg.fillStyle = ramp; rg.fillRect(0, 0, 256, 1);
       const wipe = new THREE.CanvasTexture(rc);
@@ -1100,7 +1106,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
     // falls off toward its edge, a thin dark frame, and a smooth pole; edges stay soft so nothing stair-steps
     const gc = document.createElement('canvas');
     gc.width = 128; gc.height = 192;
-    const gg = gc.getContext('2d');
+    const gg = gc.getContext('2d', CPU2D);
     const rr = (x, y, w, h, r) => { gg.beginPath(); gg.moveTo(x + r, y); gg.arcTo(x + w, y, x + w, y + h, r); gg.arcTo(x + w, y + h, x, y + h, r); gg.arcTo(x, y + h, x, y, r); gg.arcTo(x, y, x + w, y, r); gg.closePath(); };
     gg.filter = 'blur(1.5px)';
     gg.fillStyle = 'rgba(40,44,54,1)'; rr(3, 3, 122, 186, 16); gg.fill();
@@ -1139,6 +1145,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
     studioFade.push([setClay, 1, 'cup']);
     // the model comes as a module (some hosts allow scripts and images but not fetch), decoded and parsed in place
     Promise.all([import('three/addons/loaders/GLTFLoader.js'), import('./set-clay.js')])
+      .then(mods => calm().then(() => mods))
       .then(([{ GLTFLoader }, { default: b64 }]) => new Promise((ok, fail) => {
         const bin = atob(b64), buf = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
@@ -1151,7 +1158,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
         if (studio.userData.props) studio.userData.props.visible = false;
         anim = true;
         // the set arrives after start-up: compile and draw it once now, unseen, so the studio does not stall later
-        return ready.then(() => warm()).then(() => warmDraw());
+        return ready.then(calm).then(() => warm()).then(calm).then(() => warmDraw());
       })
       .catch(() => {});
   }
@@ -1624,7 +1631,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
   // a soft green radial glow on a demo site atom when a molecule binds there, one per molecule
   const glows = (() => {
     const c = document.createElement('canvas'); c.width = c.height = 128;
-    const g = c.getContext('2d'), grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    const g = c.getContext('2d', CPU2D), grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
     grd.addColorStop(0, 'rgba(110,235,160,0.9)'); grd.addColorStop(0.35, 'rgba(63,169,107,0.45)'); grd.addColorStop(1, 'rgba(63,169,107,0)');
     g.fillStyle = grd; g.fillRect(0, 0, 128, 128);
     const mat = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false });
@@ -1726,7 +1733,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
   const atlas = document.createElement('canvas');
   atlas.width = CELL_W * ACOLS * 2; atlas.height = CELL_H * AROWS * 2;   // drawn at 2x for sharp glyphs
   {
-    const g = atlas.getContext('2d');
+    const g = atlas.getContext('2d', CPU2D);
     g.scale(2, 2); g.fillStyle = '#fff'; g.font = '600 24px "Roboto Mono", ui-monospace, Menlo, monospace'; g.textBaseline = 'middle'; g.textAlign = 'center';
     GLYPH_TEXT.forEach((t, k) => g.fillText(t, (k % ACOLS + 0.5) * CELL_W, (Math.floor(k / ACOLS) + 0.5) * CELL_H));
   }
@@ -2147,7 +2154,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
   }
   // the page shows the reel once this settles: lighting in place, every shader compiled in parallel and drawn once, so
   // no frame waits on the GPU driver
-  const ready = envReady.then(() => warm()).then(() => warmDraw()).catch(() => {}).then(() => { governFrom = performance.now() + 2000; });
+  const ready = envReady.then(calm).then(() => warm()).then(calm).then(() => warmDraw()).catch(() => {}).then(() => { governFrom = performance.now() + 2000; });
   return {
     ready,
     setStop(f) { stop = f; },

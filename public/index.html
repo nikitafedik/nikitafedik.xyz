@@ -849,7 +849,7 @@ function cacheIntro() {
 // are read only when the layout changes (cacheTops), so a frame never waits for the browser to lay out the page.
 // The reduced-motion branch still reads the heading and the last line directly
 const geo = { reel: 0, intro: 0, last: 0, head: 0 };
-const tops = { intro: 0, reel: 0, introLen: 1, reelH: 1, pinTop: 0, pinH: 1 };
+const tops = { intro: 0, reel: 0, introLen: 1, reelH: 1, pinTop: 0, pinH: 1, vh: 1 };
 function cacheTops() {
   const y = scrollY;
   tops.intro = introEl.getBoundingClientRect().top + y;
@@ -857,6 +857,9 @@ function cacheTops() {
   // the pins stick under the phone bar, so positions count from there and the pinned height is the pin's own
   tops.pinTop = parseFloat(getComputedStyle(introPin).top) || 0;
   tops.pinH = introPin.clientHeight || innerHeight;
+  // the window height for the frame loop: reading innerHeight in a frame, after the frame's style writes, makes the
+  // browser recalculate styles on the spot
+  tops.vh = innerHeight;
   tops.introLen = Math.max(1, introEl.offsetHeight - tops.pinH);
   tops.reelH = document.getElementById('skills').offsetHeight;
 }
@@ -1343,11 +1346,16 @@ function paintPicker() {
   const pf = pickerPos(stopF);
   // the skill's text and the list fade in over the first stretch of scroll after the intro, and out the same way on
   // the way back: tied to the scroll position, so both directions look the same
-  const after = rm ? 1 : Math.min(1, Math.max(0, hand.past / (innerHeight * 0.16)));
+  const after = rm ? 1 : Math.min(1, Math.max(0, hand.past / (tops.vh * 0.16)));
   reelDetail.style.opacity = rm ? '' : (after * after * (3 - 2 * after)).toFixed(3);
-  reelList.style.opacity = Math.min(after, Math.max(0, (stopF - 0.35) / 0.55)).toFixed(3);
+  const listO = Math.min(after, Math.max(0, (stopF - 0.35) / 0.55)).toFixed(3);
+  reelList.style.opacity = listO;
+  // while the list is invisible (the intro) its entries keep their last look and only the current one is marked; each
+  // entry blurs and casts colour fringes, so restyling them every frame cost a phone several ms
+  const hidden = +listO === 0 && reelItems[0]._pk !== undefined;
   reelItems.forEach((el, i) => {
     const d = i - pf, ad = Math.abs(d);
+    if (hidden) { if ((ad < 0.5) !== el.hasAttribute('aria-current')) { if (ad < 0.5) el.setAttribute('aria-current', 'step'); else el.removeAttribute('aria-current'); } return; }
     // skip the style writes when this item has not moved since the last frame
     const key = d.toFixed(3);
     if (el._pk === key) return;
@@ -1604,8 +1612,9 @@ function paintFrame(dt) {
   const maxBlur = touch ? 20 : 32, focus = rm ? 0 : maxBlur * (1 - Math.min(1, Math.max(0, stopF / 0.75)));
   // the blur runs inside the 3D renderer, so it can ease continuously without the browser re-blurring the page
   reel3d.setDefocus(focus);
-  // the canvas fades in once after loading, then stays dimmed while out of focus
-  const fadeIn = rm ? 1 : Math.min(1, (performance.now() - (paintFrame.born ||= performance.now())) / 700);
+  // the canvas fades in once after loading, then stays dimmed while out of focus. The fade counts drawn frames (each
+  // at most 1/30 s), so a busy moment right after the 3D appears cannot skip it and pop the intro picture away
+  const fadeIn = paintFrame.fade = rm ? 1 : Math.min(1, (paintFrame.fade || 0) + Math.min(dt, 1 / 30) / 0.7);
   // out of focus the background is dimmed, more so on the dark theme where bright spots stand out
   const dim = document.documentElement.dataset.theme === 'dark' ? 0.84 : 0.62;
   const op = (fadeIn * (1 - dim * focus / maxBlur)).toFixed(3);
@@ -1729,10 +1738,18 @@ paintHead(); paintPicker();
 document.documentElement.classList.add('intro-ready');
 // the particle cloud loads quietly once the page has settled
 const whenIdle = window.requestIdleCallback || (cb => setTimeout(cb, 800));
-const startReel = () => whenIdle(() => import('./reel3d.js').then(m => {
-  const r = m.initReel(reelCanvas, () => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
+// each heavy start-up step of the 3D (building the scenes, the lighting, compiling the shaders, the first frame) holds
+// the page for a few hundred ms on a phone, and the intro text, which follows the scroll on every frame, would stop
+// under the finger and then jump. So every step waits for a pause: no finger down and no scrolling for 400 ms
+let calmFinger = false, calmMoved = 0;
+addEventListener('touchstart', () => { calmFinger = true; }, { passive: true });
+['touchend', 'touchcancel'].forEach(ev => addEventListener(ev, e => { calmFinger = e.touches.length > 0; }, { passive: true }));
+addEventListener('scroll', () => { calmMoved = performance.now(); }, { passive: true });
+const calm = () => new Promise(res => { const check = () => !calmFinger && performance.now() - calmMoved > 400 ? res() : setTimeout(check, 100); check(); });
+const startReel = () => whenIdle(() => calm().then(() => import('./reel3d.js')).then(m => {
+  const r = m.initReel(reelCanvas, () => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(), calm);
   // the reel appears once its lighting is loaded and every shader is compiled, so the intro never stalls on it
-  return r && r.ready.then(() => showReel(r));
+  return r && r.ready.then(calm).then(() => showReel(r));
 }));
 function showReel(r) {
   reel3d = r;
