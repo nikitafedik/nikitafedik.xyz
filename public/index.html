@@ -1746,8 +1746,7 @@ addEventListener('touchstart', () => { calmFinger = true; }, { passive: true });
 ['touchend', 'touchcancel'].forEach(ev => addEventListener(ev, e => { calmFinger = e.touches.length > 0; }, { passive: true }));
 addEventListener('scroll', () => { calmMoved = performance.now(); }, { passive: true });
 const calm = () => new Promise(res => { const check = () => !calmFinger && performance.now() - calmMoved > 400 ? res() : setTimeout(check, 100); check(); });
-const startReel = () => whenIdle(() => calm().then(() => import('./reel3d.js')).then(m => {
-  const r = m.initReel(reelCanvas, () => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(), calm);
+const startReel = () => whenIdle(() => calm().then(() => import('./reel3d.js')).then(m => m.initReel(reelCanvas, () => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(), calm)).then(r => {
   // the reel appears once its lighting is loaded and every shader is compiled, so the intro never stalls on it
   return r && r.ready.then(calm).then(() => showReel(r));
 }));

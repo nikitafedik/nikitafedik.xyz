@@ -41,17 +41,22 @@ async function loadRoomEnv(renderer, calm) {
   const img = new Image();
   img.src = new URL('img/room-env.webp', document.baseURI).href;
   await img.decode();
+  // uploaded from an ImageBitmap, prepared off the main thread with no colour or alpha changes (the texels arrive
+  // exactly as stored, checked by perf/envcheck.html?bitmap); uploading the image itself converted it on the main thread
+  const bmp = window.createImageBitmap ? await createImageBitmap(img, { colorSpaceConversion: 'none', premultiplyAlpha: 'none' }).catch(() => null) : null;
   await calm();
+  const t0 = performance.now();
   const w = img.width / 2, h = img.height;
-  const src = Object.assign(new THREE.Texture(img), { colorSpace: THREE.NoColorSpace, premultiplyAlpha: false, flipY: false, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, generateMipmaps: false, needsUpdate: true });
+  const src = Object.assign(new THREE.Texture(bmp || img), { colorSpace: THREE.NoColorSpace, premultiplyAlpha: false, flipY: false, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, generateMipmaps: false, needsUpdate: true });
   const rt = new THREE.WebGLRenderTarget(w, h, { type: THREE.HalfFloatType, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: false, depthBuffer: false });
   const quad = new FullScreenQuad(new THREE.ShaderMaterial({ uniforms: { tSrc: { value: src }, uSize: { value: new THREE.Vector2(w, h) } }, vertexShader: 'void main() { gl_Position = vec4(position.xy, 0.0, 1.0); }', fragmentShader: RGBE_DECODE, depthTest: false, depthWrite: false, toneMapped: false }));
   const prev = renderer.getRenderTarget();
   renderer.setRenderTarget(rt);
   quad.render(renderer);
   renderer.setRenderTarget(prev);
-  quad.material.dispose(); quad.dispose(); src.dispose();
+  quad.material.dispose(); quad.dispose(); src.dispose(); if (bmp) bmp.close();
   Object.assign(rt.texture, { mapping: THREE.CubeUVReflectionMapping, colorSpace: THREE.LinearSRGBColorSpace });
+  if (PERF_SYNC) (window.__build ||= []).push(['lighting', Math.round(performance.now() - t0)]);
   return rt.texture;
 }
 const PERF_SYNC = /[?&]perf\b/.test(location.search);
@@ -681,8 +686,14 @@ const SHAPES = {
 export const ORDER = ['dust', 'aiMols', 'aiPes', 'illSketch', 'illModel', 'demo', 'learn'];
 
 // calm() resolves at a pause in the page's scrolling: every heavy start-up step (uploading the lighting, parsing the
-// clay set, compiling and warming the shaders) waits for one, so none of them lands under a moving finger
-export function initReel(canvas, readAccent, calm = () => Promise.resolve()) {
+// clay set, compiling and warming the shaders) waits for one, so none of them lands under a moving finger. The build
+// itself is split the same way (breath: a new task, then a pause), so no piece of it holds the page for long
+export async function initReel(canvas, readAccent, calm = () => Promise.resolve()) {
+  // with ?perf, how long each piece of the build held the page: window.__build as [where, ms]
+  let pieceT = performance.now();
+  const breath = where => { if (PERF_SYNC) (window.__build ||= []).push([where, Math.round(performance.now() - pieceT)]); return new Promise(r => setTimeout(r, 0)).then(calm).then(() => { pieceT = performance.now(); }); };
+  // resolves when the build is done: work that runs on its own (the clay set) waits for it
+  let builtOk; const built = new Promise(r => { builtOk = r; });
   // the accent comes from CSS once and again only when the root's style changes, so frames never force a style recalc
   let accentNow = readAccent();
   new MutationObserver(() => { accentNow = readAccent(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'class', 'data-theme'] });
@@ -722,6 +733,7 @@ export function initReel(canvas, readAccent, calm = () => Promise.resolve()) {
   // far enough for the demo's long lens, which backs the camera off three times its usual distance
   const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 700);
   scene.add(camera);
+  await breath('renderer');
   // the illustration photo dissolving: the rendered image as soft points on the plane of the camera's view (the same
   // 16:10 frame the photo covers), each with the colour of its patch; as the scroll moves on they drift apart, rise,
   // glow and fade. One draw call; the material exists from the start so warm-up compiles it
@@ -855,6 +867,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
   mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   mesh.frustumCulled = false;   // instances move far from the cached bounds, so never cull the cloud
   const holder = new THREE.Group(); holder.add(mesh); scene.add(holder);
+  await breath('passes and atoms');
   // a small photo studio for the render step: a backdrop sweep (floor curving up into a wall), a soft contact
   // shadow and two softboxes on stands; it fades in with the light
   const studio = new THREE.Group(), studioFade = [];
@@ -914,6 +927,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
     studio.add(sh);
     studioFade.push([shMat, 0.5]);
     shMat.visible = false;   // the viewport preview is raw: no painted shadows
+    await breath('backdrop');
     // a cup of coffee on the floor beside the molecule, steaming: cup and saucer turned on a lathe, a dark coffee
     // surface, and three soft wisps of steam drawn in a small shader
     {
@@ -1102,6 +1116,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
       coverMat.visible = false;
       studio.userData.cover = { mat: coverMat, covers, coverOf, wipe };
     }
+    await breath('cup and props');
     // two softboxes on stands, aimed at the subject: a rounded diffuser that glows brightest in the middle and
     // falls off toward its edge, a thin dark frame, and a smooth pole; edges stay soft so nothing stair-steps
     const gc = document.createElement('canvas');
@@ -1145,7 +1160,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
     studioFade.push([setClay, 1, 'cup']);
     // the model comes as a module (some hosts allow scripts and images but not fetch), decoded and parsed in place
     Promise.all([import('three/addons/loaders/GLTFLoader.js'), import('./set-clay.js')])
-      .then(mods => calm().then(() => mods))
+      .then(mods => built.then(calm).then(() => mods))
       .then(([{ GLTFLoader }, { default: b64 }]) => new Promise((ok, fail) => {
         const bin = atob(b64), buf = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
@@ -1158,10 +1173,11 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
         if (studio.userData.props) studio.userData.props.visible = false;
         anim = true;
         // the set arrives after start-up: compile and draw it once now, unseen, so the studio does not stall later
-        return ready.then(calm).then(() => warm()).then(calm).then(() => warmDraw());
+        return ready.then(calm).then(() => warm(g.scene)).then(calm).then(() => warmDraw(g.scene));
       })
       .catch(() => {});
   }
+  await breath('studio');
   const CLAY_BACK_D = new THREE.Color(0x5a5e66), CLAY_BACK_L = new THREE.Color(0x9a9ea6);
   // stage: backdrop, shadow and cup; l0, l1: the key and the fill softbox; beams: their direction lines
   function setStudio(r, l0 = r, l1 = r, beams = 0, cupR = r, coverR = 0) {
@@ -1229,7 +1245,8 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
     const ext = P.meta && P.meta.frame ? { ...P.meta.frame } : { x: Math.max(1, ex * 1.06 + ez * 0.18), y: Math.max(0.6, ey * 1.04 + ez * 0.12) };
     forms[name] = { pos, size, col, rgb: null, meta: P.meta || { labels: [], euler: new THREE.Euler() }, center: new THREE.Vector3(cx, cy, cz), ext };
   }
-  Object.entries(SHAPES).forEach(([k, fn]) => addFormation(k, fn));
+  for (const [k, fn] of Object.entries(SHAPES)) { await breath('before ' + k); addFormation(k, fn); }
+  await breath('last shape');
   // the demo slab gains molecules above it, so frame it with some headroom
   // the network's incoming molecules and its output surface sit outside the nodes, so widen its frame
   
@@ -1730,6 +1747,7 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
   // so they pick up the same blur and lens as the particles. Scroll-driven, so it plays backwards too.
   const GLYPH_TEXT = ['sim', 'ul', 'ations', 'chem', 'istry', 'ad', 'sorption', 'E', 'CO', '\u2082', 'Cu', '(100)', 'eV', 'relax', 'ation', 'energy', 'surf', 'ace', 'DFT', 'ML', 'IP', 'force', 'basis', 'mol', 'ecule', 'bond', 'H', 'O', 'N', 'C', '\u0394E', 'kT', 'path', 'TS', 'react', 'ion', 'data', 'set', 'train', 'ing'];
   const GLYPHS = coarse ? 90 : 150, CELL_W = 128, CELL_H = 48, ACOLS = 8, AROWS = Math.ceil(GLYPH_TEXT.length / ACOLS);
+  await breath('before atlas');
   const atlas = document.createElement('canvas');
   atlas.width = CELL_W * ACOLS * 2; atlas.height = CELL_H * AROWS * 2;   // drawn at 2x for sharp glyphs
   {
@@ -2111,23 +2129,25 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
   // compile every shader and upload every texture ahead of time, so nothing compiles the first time a scene
   // appears (on Windows each compile goes through Direct3D and can take 50-200 ms): hidden objects are made
   // visible just for the traversal, then restored; compileAsync uses parallel compilation where available
-  function warm() {
+  // root: one part of the scene (compiled with the scene's lights); otherwise the whole scene
+  function warm(root = scene) {
     const hiddenObjs = [];
-    scene.traverse(o => { if (!o.visible) { hiddenObjs.push(o); o.visible = true; } });
+    root.traverse(o => { if (!o.visible) { hiddenObjs.push(o); o.visible = true; } });
     const textures = new Set();
-    scene.traverse(o => {
+    root.traverse(o => {
       const ms = o.material ? [].concat(o.material) : [];
       ms.forEach(m => {
         ['map', 'alphaMap', 'envMap'].forEach(k => { if (m[k]) textures.add(m[k]); });
         if (m.uniforms) Object.values(m.uniforms).forEach(u => { if (u && u.value && u.value.isTexture) textures.add(u.value); });
       });
     });
-    if (studio.userData.cover) Object.values(studio.userData.cover.covers).forEach(t => textures.add(t));
+    if (root === scene && studio.userData.cover) Object.values(studio.userData.cover.covers).forEach(t => textures.add(t));
     // compile for the target the scene really renders into (the effect pipeline's buffer), so the variants match
     let done;
     const prevTarget = renderer.getRenderTarget();
     renderer.setRenderTarget(composer.readBuffer);
-    try { done = renderer.compileAsync ? renderer.compileAsync(scene, camera) : (renderer.compile(scene, camera), Promise.resolve()); } catch (e) { done = Promise.resolve(); }
+    const target = root === scene ? null : scene;
+    try { done = renderer.compileAsync ? renderer.compileAsync(root, camera, target) : (renderer.compile(root, camera, target), Promise.resolve()); } catch (e) { done = Promise.resolve(); }
     renderer.setRenderTarget(prevTarget);
     hiddenObjs.forEach(o => { o.visible = false; });
     textures.forEach(t => { try { renderer.initTexture(t); } catch (e) {} });
@@ -2137,9 +2157,21 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
   // object appearing for the first time mid-scroll stalled the GPU (about 120 ms when the atoms gather, more for the
   // studio). Each object is drawn once, unseen, into a tiny target, with nothing hidden, culled or empty
   const warmTarget = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, samples: composer.renderTarget1.samples, depthBuffer: true });
-  function warmDraw() {
+  // the parts warmed one at a time (each first draw costs the GPU driver time): the holder's children, larger groups
+  // split into theirs, and whatever rides on the camera
+  function warmParts() {
+    const out = [], add = o => { if (o.isGroup && o.children.length > 3) o.children.forEach(add); else out.push(o); };
+    holder.children.forEach(add); camera.children.forEach(add);
+    return out;
+  }
+  // only: draw just this part (its ancestors shown, the other parts hidden); otherwise the whole scene
+  function warmDraw(only) {
     const undo = [];
-    scene.traverse(o => {
+    if (only) {
+      warmParts().forEach(o => { if (o !== only && o.visible) { o.visible = false; undo.push(() => { o.visible = true; }); } });
+      for (let a = only.parent; a; a = a.parent) if (!a.visible) { a.visible = true; undo.push(() => { a.visible = false; }); }
+    }
+    (only || scene).traverse(o => {
       if (!o.visible) { o.visible = true; undo.push(() => { o.visible = false; }); }
       if (o.frustumCulled) { o.frustumCulled = false; undo.push(() => { o.frustumCulled = true; }); }
       if (o.isInstancedMesh && o.count === 0) { o.count = 1; undo.push(() => { o.count = 0; }); }
@@ -2154,7 +2186,17 @@ void main() {`).replace('#include <color_fragment>', `#include <color_fragment>
   }
   // the page shows the reel once this settles: lighting in place, every shader compiled in parallel and drawn once, so
   // no frame waits on the GPU driver
-  const ready = envReady.then(calm).then(() => warm()).then(calm).then(() => warmDraw()).catch(() => {}).then(() => { governFrom = performance.now() + 2000; });
+  const timed = (where, fn) => { const t = performance.now(), r = fn(); if (PERF_SYNC) (window.__build ||= []).push([where, Math.round(performance.now() - t)]); return r; };
+  // part by part, each in its own task at a pause: compile them all (the GPU links them in parallel), then draw each once
+  const warmAll = async () => {
+    const parts = warmParts(), name = p => p.name || p.type, compiled = [];
+    for (const part of parts) { await breath('before compile ' + name(part)); compiled.push(timed('compile ' + name(part), () => warm(part))); }
+    await Promise.all(compiled);
+    for (const part of parts) { await breath('before draw ' + name(part)); timed('draw ' + name(part), () => warmDraw(part)); }
+  };
+  const ready = envReady.then(calm).then(warmAll).catch(() => {}).then(() => { governFrom = performance.now() + 2000; });
+  if (PERF_SYNC) (window.__build ||= []).push(['end', Math.round(performance.now() - pieceT)]);
+  builtOk();
   return {
     ready,
     setStop(f) { stop = f; },

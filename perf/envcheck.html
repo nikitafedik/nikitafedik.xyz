@@ -32,8 +32,10 @@ const RGBE_DECODE = `uniform sampler2D tSrc; uniform vec2 uSize;
     float E = floor(e.r * 255.0 + 0.5);
     gl_FragColor = E > 0.0 ? vec4(floor(m.rgb * 255.0 + 0.5) * exp2(E - 136.0), e.g > 0.5 ? 1.0 : 0.0) : vec4(0.0);
   }`;
+// ?bitmap: upload from an ImageBitmap decoded without colour or alpha changes, as reel3d.js does
+const texSrc = location.search.includes('bitmap') ? await createImageBitmap(img, { colorSpaceConversion: 'none', premultiplyAlpha: 'none' }) : img;
 t0 = performance.now();
-const tex = Object.assign(new THREE.Texture(img), { colorSpace: THREE.NoColorSpace, premultiplyAlpha: false, flipY: false, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, generateMipmaps: false, needsUpdate: true });
+const tex = Object.assign(new THREE.Texture(texSrc), { colorSpace: THREE.NoColorSpace, premultiplyAlpha: false, flipY: false, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, generateMipmaps: false, needsUpdate: true });
 const rt = new THREE.WebGLRenderTarget(w, h, { type: THREE.HalfFloatType, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: false, depthBuffer: false });
 const quad = new FullScreenQuad(new THREE.ShaderMaterial({ uniforms: { tSrc: { value: tex }, uSize: { value: new THREE.Vector2(w, h) } }, vertexShader: 'void main() { gl_Position = vec4(position.xy, 0.0, 1.0); }', fragmentShader: RGBE_DECODE, depthTest: false, depthWrite: false, toneMapped: false }));
 renderer.setRenderTarget(rt); quad.render(renderer);

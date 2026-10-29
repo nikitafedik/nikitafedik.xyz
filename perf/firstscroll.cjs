@@ -36,13 +36,13 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   // BOOT_TRACE=<file>: a Chrome trace of all processes (GPU included) from the start of the load for 4 s
   if (process.env.BOOT_TRACE) { await b.startTracing(null, { path: process.env.BOOT_TRACE, categories: (process.env.TRACE_CATS || 'toplevel,devtools.timeline,gpu,viz,disabled-by-default-devtools.timeline,blink.user_timing').split(',') }); tracing = (async () => { await sleep(4500); await b.stopTracing(); })(); }
   await p.goto(process.env.PAGE + '?perf', { waitUntil: 'load' });
-  if (process.env.BOOT_PROFILE) tracing = (async () => { await p.waitForFunction(() => window.__rec.marks.ready, null, { timeout: 60000 }); await sleep(1500); const { profile } = await cdp.send('Profiler.stop'); fs.writeFileSync(process.env.BOOT_PROFILE, JSON.stringify(profile)); })();
+  if (process.env.BOOT_PROFILE) tracing = (async () => { await p.waitForFunction(() => window.__rec.marks.ready && window.__rec.touch.length, null, { timeout: 60000 }); await sleep(+(process.env.WIN_AFTER || 300)); const { profile } = await cdp.send('Profiler.stop'); fs.writeFileSync(process.env.BOOT_PROFILE, JSON.stringify(profile)); })();
   const loadAt = await p.evaluate(() => Math.round(performance.now()));
   await sleep(+(process.env.DELAY || 300));
-  // TRACE=<file>: a Chrome trace of the reveal, from the reel being ready plus 1.5 s, for 4 s
+  // TRACE=<file>: a Chrome trace of the reveal, for 4 s from WIN_AFTER ms (300) after the reel is ready and a swipe has begun
   if (process.env.TRACE) {
     tracing = (async () => {
-      await p.waitForFunction(() => window.__rec.marks.ready, null, { timeout: 60000 }); await sleep(1500);
+      await p.waitForFunction(() => window.__rec.marks.ready && window.__rec.touch.length, null, { timeout: 60000 }); await sleep(+(process.env.WIN_AFTER || 300));
       await b.startTracing(p, { path: process.env.TRACE, categories: (process.env.TRACE_CATS || 'devtools.timeline,disabled-by-default-devtools.timeline,blink,cc,v8.execute,disabled-by-default-v8.cpu_profiler').split(',') });
       await sleep(4000); await b.stopTracing();
     })();
@@ -50,7 +50,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   // PROFILE=<file>: a CPU profile of the reveal (same window as TRACE), self time per function and line
   if (process.env.PROFILE) {
     tracing = (async () => {
-      await p.waitForFunction(() => window.__rec.marks.ready, null, { timeout: 60000 }); await sleep(1500);
+      await p.waitForFunction(() => window.__rec.marks.ready && window.__rec.touch.length, null, { timeout: 60000 }); await sleep(+(process.env.WIN_AFTER || 300));
       await cdp.send('Profiler.enable'); await cdp.send('Profiler.setSamplingInterval', { interval: 200 }); await cdp.send('Profiler.start');
       await sleep(4000);
       const { profile } = await cdp.send('Profiler.stop'); fs.writeFileSync(process.env.PROFILE, JSON.stringify(profile));
